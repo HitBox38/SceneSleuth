@@ -1,0 +1,4 @@
+interface:
+  display_name: "SceneSleuth Extension"
+  short_description: "Build and verify SceneSleuth browser integration"
+  default_prompt: "Use $scenesleuth-extension to implement and verify this browser extension change."

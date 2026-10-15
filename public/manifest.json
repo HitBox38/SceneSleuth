@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "SceneSleuth",
+  "description": "Table of Contents to help readers on any page!",
+  "version": "1.0",
+  "permissions": ["activeTab", "tabs"],
+  "host_permissions": ["https://github.com/*"],
+  "icons": {
+    "48": "vite.svg"
+  },
+  "action": {
+    "default_popup": "popup/index.html"
+  },
+  "content_scripts": [
+    {
+      "js": ["assets/content.js"],
+      "matches": ["https://github.com/*/pull/*"]
+    }
+  ],
+  "background": {
+    "scripts": ["assets/background.js"],
+    "type": "module"
+  },
+  "web_accessible_resources": [
+    {
+      "matches": ["https://*/*"],
+      "resources": ["assets/*"]
+    }
+  ]
+}

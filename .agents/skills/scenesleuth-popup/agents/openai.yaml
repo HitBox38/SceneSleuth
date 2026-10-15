@@ -1,0 +1,4 @@
+interface:
+  display_name: "SceneSleuth Popup"
+  short_description: "Design accessible, message-driven scene review UI"
+  default_prompt: "Use $scenesleuth-popup to improve the extension popup and verify its UI states."

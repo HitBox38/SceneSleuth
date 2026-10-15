@@ -1,0 +1,4 @@
+interface:
+  display_name: "Godot Scene Diffs"
+  short_description: "Parse and compare Godot scenes with source context"
+  default_prompt: "Use $godot-scene-diffs to improve SceneSleuth's scene parsing and comparison."
