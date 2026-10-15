@@ -6,12 +6,12 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "types": ["firefox-webext-browser"],
+    "types": ["chrome", "firefox-webext-browser", "vite/client"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
@@ -23,10 +23,9 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./popup/src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["popup/src", "content_script", "background"]
 }

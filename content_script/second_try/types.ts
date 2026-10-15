@@ -14,6 +14,5 @@ export interface SceneObject {
   sub_resources: Resource[];
   nodes: Resource[];
   connections: Resource[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }

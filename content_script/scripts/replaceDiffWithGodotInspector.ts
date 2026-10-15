@@ -1,5 +1,5 @@
 import { createGodotInspectorTable } from "./createGodotInspectorTable";
-import { FileDiff } from "./diffParser";
+import type { FileDiff } from "./diffParser";
 
 /**
  * Replaces the diff content with a custom Godot Inspector table

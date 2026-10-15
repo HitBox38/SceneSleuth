@@ -1,5 +1,5 @@
 // import { parseTscnContent, TscnNode, TscnResource } from "./contentParser";
-import { DiffLine } from "./diffParser";
+import type { DiffLine } from "./diffParser";
 
 export interface CodeBlock {
   startLine: number | null;

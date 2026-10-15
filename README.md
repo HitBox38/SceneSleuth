@@ -21,7 +21,7 @@ For example, a future structured view could describe a node's position changing,
 
 ## Getting started
 
-You need Node.js and npm. The repository does not pin a Node version; Node.js 22 is the version used to check these instructions. The npm lockfile is included.
+You need Node.js 22 (22.12 or later) or Node.js 24+, and npm. Node.js 22.16 is used to check these instructions. The npm lockfile is included.
 
 ```sh
 npm ci
@@ -56,14 +56,17 @@ Open `/popup/index.html` on the local URL Vite prints. This is useful for develo
 
 ```sh
 npm run dev       # Start Vite for local UI development
+npm run typecheck # Check all popup, content, background, and Vite TypeScript
 npm run build     # Build all extension entry points into dist/
-npm run lint      # Run ESLint
+npm run lint      # Run Oxlint, including React hooks and accessibility rules
+npm run fmt       # Format supported source and documentation files with Oxfmt
+npm run fmt:check # Check formatting without changing files
 npm run preview   # Serve built files; does not install the extension
 ```
 
 There is no automated test runner configured yet. `test.html` is a saved GitHub diff page used as sample input, not an automated test suite.
 
-The build script starts with `tsc`, but the TypeScript project setup needs attention: `tsconfig.app.json` includes `src/`, while the source lives in `popup/` and `content_script/`. A successful Vite build alone does not establish that the extension has been fully type-checked.
+The build runs TypeScript 7 project checks before bundling. The app project covers `popup/src/`, `content_script/`, and `background/`; the Node project covers all Vite configurations. Oxlint and Oxfmt replace the previous ESLint setup. The saved `test.html` fixture and generated output are excluded from formatting.
 
 ## How it fits together
 
@@ -75,7 +78,7 @@ The build script starts with `tsc`, but the TypeScript project setup needs atten
 - `popup/src/` contains the React UI, styled with Tailwind CSS and shared UI primitives.
 - `public/manifest.json` defines extension permissions and entry points.
 - `vite*.config.ts` define separate popup, content script, and background builds.
-- `background/background.ts` and `content_script/main.ts` are currently empty entry points.
+- `background/background.ts` and `content_script/main.ts` are reserved entry points without runtime behavior.
 
 There is no backend in this repository. The implemented flow reads the GitHub page's DOM and passes data through browser extension messages; it does not fetch complete scene files from a GitHub API.
 
@@ -85,7 +88,7 @@ There is no backend in this repository. The implemented flow reads the GitHub pa
 - **Incomplete input:** the parser reads changed lines, not complete before-and-after scenes. Unchanged nodes, property ownership, and referenced resources may be missing. A trustworthy semantic comparison needs that context or an explicit indication that the result is partial.
 - **GitHub integration:** selectors depend on GitHub's DOM. Navigation within GitHub, delayed rendering, and repeated processing need testing; scene elements are not currently marked processed while the inline renderer is disabled.
 - **Popup feedback:** unsupported pages, missing content scripts, and messaging failures need clear empty or error states instead of indefinite loading.
-- **Development foundations:** repair TypeScript coverage, validate each browser's manifest, and add small fixtures and regression tests for the parser and messaging flow.
+- **Development foundations:** validate each browser's manifest and add small fixtures and regression tests for the parser and messaging flow.
 - **Release polish:** replace the template manifest description, Vite branding, and popup page title before distribution.
 
 ## Contributing with an AI agent

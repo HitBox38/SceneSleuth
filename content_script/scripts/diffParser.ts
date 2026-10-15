@@ -1,5 +1,5 @@
-import { TscnNode, TscnResource } from "./contentParser";
-import { CodeBlock, groupLinesByBrackets } from "./groupLinesByBrackets";
+import type { TscnNode, TscnResource } from "./contentParser";
+import { type CodeBlock, groupLinesByBrackets } from "./groupLinesByBrackets";
 
 export interface DiffLine {
   lineNumber: number | null;

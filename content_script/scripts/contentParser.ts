@@ -1,4 +1,4 @@
-import { DiffLine } from "./diffParser";
+import type { DiffLine } from "./diffParser";
 
 export interface TscnResource {
   type: string;
@@ -141,7 +141,7 @@ const parseExtResource = (lines: DiffLine[], startIndex: number) => {
  */
 function parseNode(
   lines: DiffLine[],
-  startIndex: number
+  startIndex: number,
 ): { resource: TscnNode; endIndex: number } | null {
   const headerLine = lines[startIndex].content.trim();
 

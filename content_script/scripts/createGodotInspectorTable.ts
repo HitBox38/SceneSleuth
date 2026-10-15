@@ -1,4 +1,4 @@
-import { FileDiff } from "./diffParser";
+import type { FileDiff } from "./diffParser";
 import { generateTableRows } from "./generateTableRows";
 
 /**

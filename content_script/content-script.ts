@@ -1,5 +1,5 @@
 import { addGodotInspectorStyles } from "./scripts/addGodotInspectorStyles";
-import { FileDiff, parsePRDiff } from "./scripts/diffParser";
+import { type FileDiff, parsePRDiff } from "./scripts/diffParser";
 // import { replaceDiffWithGodotInspector } from "./scripts/replaceDiffWithGodotInspector";
 
 // Store our parsed diffs
@@ -8,7 +8,7 @@ let isInitialLoadComplete = false;
 
 const processAllDiffElements = () => {
   const customElements = document.querySelectorAll(
-    "copilot-diff-entry:not([data-godot-processed='true'])"
+    "copilot-diff-entry:not([data-godot-processed='true'])",
   );
 
   if (customElements && customElements.length > 0) {
@@ -92,7 +92,7 @@ function setupMessageListener() {
     });
   } else {
     // Chrome
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message.action === "GET_DIFFS") {
         sendResponse({ diffs: parsedDiffs });
       }

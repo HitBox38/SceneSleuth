@@ -1,6 +1,6 @@
-import { TscnNode, TscnResource } from "./contentParser";
-import { DiffLine } from "./diffParser";
-import { CodeBlock } from "./groupLinesByBrackets";
+import type { TscnNode, TscnResource } from "./contentParser";
+import type { DiffLine } from "./diffParser";
+import type { CodeBlock } from "./groupLinesByBrackets";
 
 /**
  * Generates HTML for a table row for each diff line
@@ -31,8 +31,8 @@ export const generateTableRows = (changes: (DiffLine | CodeBlock | TscnResource 
           diffLine.type === "addition"
             ? "addition"
             : diffLine.type === "deletion"
-            ? "deletion"
-            : "";
+              ? "deletion"
+              : "";
 
         return `
         <tr class="${rowClass}">

@@ -13,7 +13,7 @@ This is a TypeScript browser extension with a React popup, Vite builds, and Tail
 - `content_script/scripts/`: diff extraction, parser experiments, inline rendering, and styles.
 - `content_script/second_try/`: alternative parser, currently disconnected.
 - `popup/src/`: popup components, styles, and browser messaging consumer.
-- `background/background.ts`, `content_script/main.ts`: currently empty entry points.
+- `background/background.ts`, `content_script/main.ts`: reserved entry points without runtime behavior.
 - `vite.config.ts`, `vite-content.config.ts`, `vite-background.config.ts`: build entry points.
 - `test.html`: large saved GitHub diff fixture; read relevant sections rather than dumping the whole file.
 - `dist/`: current generated output, ignored by Git. `build/`: older generated output. Edit source files rather than either output directory.
@@ -43,10 +43,12 @@ Run checks appropriate to the change:
 
 ```sh
 npm run lint
+npm run fmt:check
+npm run typecheck
 npm run build
 ```
 
-For source or build configuration changes, check TypeScript project coverage too. `tsconfig.app.json` currently points to a missing `src/` directory, and the build's bare `tsc` invocation is not evidence that all source was checked. `npx tsc -b --pretty false` can expose project configuration failures; report them separately from bundling results.
+TypeScript 7 checks the popup, content scripts, background, and all Vite configurations. The build runs this check before bundling. Use Oxlint's built-in TypeScript, React, and accessibility plugins rather than adding ESLint dependencies or suppression comments. Oxfmt defines formatting; `test.html` remains an unchanged captured fixture.
 
 For extension behavior, verify the built extension in a supported browser: a PR with scene changes, a PR without scene changes, delayed diff loading, navigation between PRs, and popup close/reopen. Confirm that data does not duplicate or leak across tabs. Check relevant page, popup, and background consoles. State which browser and paths you actually exercised.
 

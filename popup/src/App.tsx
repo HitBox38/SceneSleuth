@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import { Loader2 } from "lucide-react";
 
@@ -18,17 +18,52 @@ interface FileDiff {
   };
 }
 
+type DiffMessage =
+  | { action: "NEW_DIFF"; payload: FileDiff }
+  | { action: "ALL_DIFFS"; payload: FileDiff[] };
+
 function App() {
   const [diffs, setDiffs] = useState<FileDiff[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    const requestDiffs = () => {
+      // Request current diffs from content script
+      if (typeof browser !== "undefined") {
+        // Firefox
+        browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+          if (tabs[0]?.id) {
+            browser.tabs
+              .sendMessage(tabs[0].id, { action: "GET_DIFFS" })
+              .then((response) => {
+                if (response && response.diffs) {
+                  setDiffs(response.diffs);
+                  setLoading(false);
+                }
+              })
+              .catch((err) => console.error("Error getting diffs:", err));
+          }
+        });
+      } else {
+        // Chrome
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]?.id) {
+            chrome.tabs.sendMessage(tabs[0].id, { action: "GET_DIFFS" }, (response) => {
+              if (response && response.diffs) {
+                setDiffs(response.diffs);
+                setLoading(false);
+              }
+            });
+          }
+        });
+      }
+    };
+
     // Request diffs when popup opens
     requestDiffs();
 
     // Set up listener for incoming messages
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const messageListener = (message: any) => {
+    const messageListener = (message: DiffMessage) => {
       if (message.action === "NEW_DIFF") {
         setDiffs((prev) => [
           ...prev.filter((d) => d.filePath !== message.payload.filePath),
@@ -59,38 +94,6 @@ function App() {
       }
     };
   }, []);
-
-  const requestDiffs = () => {
-    // Request current diffs from content script
-    if (typeof browser !== "undefined") {
-      // Firefox
-      browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-        if (tabs[0]?.id) {
-          browser.tabs
-            .sendMessage(tabs[0].id, { action: "GET_DIFFS" })
-            .then((response) => {
-              if (response && response.diffs) {
-                setDiffs(response.diffs);
-                setLoading(false);
-              }
-            })
-            .catch((err) => console.error("Error getting diffs:", err));
-        }
-      });
-    } else {
-      // Chrome
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]?.id) {
-          chrome.tabs.sendMessage(tabs[0].id, { action: "GET_DIFFS" }, (response) => {
-            if (response && response.diffs) {
-              setDiffs(response.diffs);
-              setLoading(false);
-            }
-          });
-        }
-      });
-    }
-  };
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { SceneObject, Resource, AttrValue } from "./types";
+import type { SceneObject, Resource, AttrValue } from "./types";
 
 /**
  * Pulls all “+…” lines out of a GitHub diff element into raw .tscn text.
@@ -80,7 +80,6 @@ export function parseScene(text: string): SceneObject {
       const value = parseValue(rhs.trim());
       // support nested keys via "/"
       const parts = key.split("/");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let target: any = scene;
       for (let i = 0; i < parts.length - 1; i++) {
         if (!(parts[i] in target)) target[parts[i]] = {};
