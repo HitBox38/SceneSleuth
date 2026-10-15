@@ -58,6 +58,7 @@ Open `/popup/index.html` on the local URL Vite prints. This is useful for develo
 npm run dev       # Start Vite for local UI development
 npm run typecheck # Check all popup, content, background, and Vite TypeScript
 npm run build     # Build all extension entry points into dist/
+npm run build:check # Verify manifest assets and classic content script syntax
 npm run lint      # Run Oxlint, including React hooks and accessibility rules
 npm run fmt       # Format supported source and documentation files with Oxfmt
 npm run fmt:check # Check formatting without changing files
@@ -66,7 +67,7 @@ npm run preview   # Serve built files; does not install the extension
 
 There is no automated test runner configured yet. `test.html` is a saved GitHub diff page used as sample input, not an automated test suite.
 
-The build runs TypeScript 7 project checks before bundling. The app project covers `popup/src/`, `content_script/`, and `background/`; the Node project covers all Vite configurations. Oxlint and Oxfmt replace the previous ESLint setup. The saved `test.html` fixture and generated output are excluded from formatting.
+The build runs TypeScript 7 project checks before bundling with Vite 8's Rolldown/Oxc toolchain, then checks the manifest's built assets and content script syntax. The app project covers `popup/src/`, `content_script/`, and `background/`; the Node project covers all Vite configurations. Oxlint and Oxfmt replace the previous ESLint setup. The saved `test.html` fixture and generated output are excluded from formatting.
 
 ## How it fits together
 

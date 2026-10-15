@@ -4,8 +4,8 @@ import { defineConfig } from "vite";
 export default defineConfig({
   build: {
     emptyOutDir: false, // So that popup and content build files don't get deleted
-    target: "node16",
-    rollupOptions: {
+    target: "es2022",
+    rolldownOptions: {
       input: {
         background: "./background/background.ts", // Entry Point
       },

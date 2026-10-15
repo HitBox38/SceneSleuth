@@ -15,6 +15,7 @@ This is a TypeScript browser extension with a React popup, Vite builds, and Tail
 - `popup/src/`: popup components, styles, and browser messaging consumer.
 - `background/background.ts`, `content_script/main.ts`: reserved entry points without runtime behavior.
 - `vite.config.ts`, `vite-content.config.ts`, `vite-background.config.ts`: build entry points.
+- `scripts/check-build.mjs`: verifies built manifest assets and classic content script syntax; runs at the end of the build.
 - `test.html`: large saved GitHub diff fixture; read relevant sections rather than dumping the whole file.
 - `dist/`: current generated output, ignored by Git. `build/`: older generated output. Edit source files rather than either output directory.
 
@@ -48,7 +49,7 @@ npm run typecheck
 npm run build
 ```
 
-TypeScript 7 checks the popup, content scripts, background, and all Vite configurations. The build runs this check before bundling. Use Oxlint's built-in TypeScript, React, and accessibility plugins rather than adding ESLint dependencies or suppression comments. Oxfmt defines formatting; `test.html` remains an unchanged captured fixture.
+TypeScript 7 checks the popup, content scripts, background, and all Vite configurations. The build runs this check before bundling with Vite 8 and verifying the built manifest assets. Use `build.rolldownOptions` for bundler configuration. Manifest content scripts must remain classic JavaScript without module imports or exports. Use Oxlint's built-in TypeScript, React, and accessibility plugins rather than adding ESLint dependencies or suppression comments. Oxfmt defines formatting; `test.html` remains an unchanged captured fixture.
 
 For extension behavior, verify the built extension in a supported browser: a PR with scene changes, a PR without scene changes, delayed diff loading, navigation between PRs, and popup close/reopen. Confirm that data does not duplicate or leak across tabs. Check relevant page, popup, and background consoles. State which browser and paths you actually exercised.
 

@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   build: {
     emptyOutDir: false, // So that popup build files don't get deleted
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         content: "./content_script/content-script.ts", // Entry Point
         "content-main": "./content_script/main.ts",
