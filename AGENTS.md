@@ -4,7 +4,7 @@
 
 SceneSleuth helps Godot developers understand `.tscn` scene changes in GitHub pull requests. The intended experience is a structured scene review inside the browser. Read [README.md](README.md) for the current state and known limitations before promising behavior.
 
-This is a TypeScript browser extension with a React popup, Vite builds, and Tailwind CSS. There is no backend or configured automated test runner. Keep changes focused on this architecture unless the task calls for changing it.
+This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tailwind CSS, and React Aria components. Oxlint and Oxfmt handle linting and formatting. There is no backend or configured automated test runner. Keep changes focused on this architecture unless the task calls for changing it.
 
 ## Repository map
 
@@ -30,6 +30,8 @@ This is a TypeScript browser extension with a React popup, Vite builds, and Tail
 - Make DOM processing repeatable without duplicate results or observer loops. Account for GitHub navigation and delayed rendering.
 - Keep popup data scoped to the active tab. The popup can close and reopen while the content script continues running.
 - Use the existing styling and component approach. Include visible loading, empty, unsupported-page, and error states when changing popup data flows.
+- `components.json` uses shadcn's `aria-vega` style. Use `npm run ui -- info` or `npm run ui -- add <component>` with the pinned CLI. Keep new components on the React Aria base.
+- Use `Button` with `onPress`/`isDisabled` for actions and `LinkButton` with `href` for navigation. Preserve React Aria render props, forwarded refs, and state attributes when extending these wrappers; Radix's `asChild` composition is no longer part of the API.
 - Keep permissions tied to actual functionality. Validate Chrome and Firefox behavior separately instead of assuming that `chrome`/`browser` branches establish compatibility.
 
 ## Working with scene diffs

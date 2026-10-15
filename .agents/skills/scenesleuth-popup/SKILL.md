@@ -5,7 +5,7 @@ description: Build or improve SceneSleuth's React extension popup and scene-revi
 
 # SceneSleuth popup UI
 
-Read the root `AGENTS.md`, `popup/src/App.tsx`, and the message producer in `content_script/content-script.ts`. Use the existing React, Tailwind, Lucide, and UI primitive setup. This is an extension popup, not a Next.js application.
+Read the root `AGENTS.md`, `popup/src/App.tsx`, and the message producer in `content_script/content-script.ts`. Use the existing React, Tailwind, Lucide, and React Aria setup. `components.json` selects shadcn's `aria-vega` base; the pinned CLI is available through `npm run ui`. This is an extension popup, not a Next.js application.
 
 ## Design around the review task
 
@@ -24,6 +24,8 @@ Subscribe and request the initial snapshot in an order that does not drop update
 Register and clean up browser listeners in effects. Verify cleanup and duplicate subscriptions under React Strict Mode and after popup reopening. Avoid redundant derived state and speculative memoization. The popup should recover its view from a fresh snapshot rather than relying on an earlier instance remaining mounted.
 
 ## Accessibility and rendering
+
+Use the local React Aria `Button` for actions (`onPress`, `isDisabled`) and `LinkButton` for navigation (`href`). Preserve render-prop class names, children, and refs when adapting wrappers. Style interaction state through React Aria's `data-focus-visible`, `data-hovered`, and `data-disabled` attributes. Keep shadcn additions on the Aria base; the former Radix `Slot`/`asChild` API is removed.
 
 Use semantic buttons, headings, lists, and disclosure controls. Give icon-only controls accessible names. Make loading/error updates available to assistive technology without repeatedly announcing an entire diff. Add visible keyboard focus and ensure added/removed status is conveyed in text or symbols as well as color.
 

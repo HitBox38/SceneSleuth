@@ -63,11 +63,18 @@ npm run lint      # Run Oxlint, including React hooks and accessibility rules
 npm run fmt       # Format supported source and documentation files with Oxfmt
 npm run fmt:check # Check formatting without changing files
 npm run preview   # Serve built files; does not install the extension
+npm run ui -- info # Inspect the shadcn React Aria configuration
 ```
 
 There is no automated test runner configured yet. `test.html` is a saved GitHub diff page used as sample input, not an automated test suite.
 
 The build runs TypeScript 7 project checks before bundling with Vite 8's Rolldown/Oxc toolchain, then checks the manifest's built assets and content script syntax. The app project covers `popup/src/`, `content_script/`, and `background/`; the Node project covers all Vite configurations. Oxlint and Oxfmt replace the previous ESLint setup. The saved `test.html` fixture and generated output are excluded from formatting.
+
+### UI components
+
+Popup primitives use [React Aria Components](https://react-aria.adobe.com/) with shadcn's `aria-vega` configuration and the existing stone color tokens. `npm run ui -- add <component>` runs the pinned shadcn CLI on demand; it downloads CLI tooling through npm rather than adding it to the extension's runtime dependencies.
+
+Use `Button` with `onPress` for actions and `isDisabled` for its disabled state. Use `LinkButton` with `href` for navigation. Both support refs and React Aria render props. The previous Radix `Slot` and `asChild` API have been removed; use a link component when composing a navigation control. Focus, hover, and disabled styling follows React Aria's state attributes.
 
 ## How it fits together
 
@@ -76,7 +83,7 @@ The build runs TypeScript 7 project checks before bundling with Vite 8's Rolldow
 - `content_script/scripts/contentParser.ts` and `groupLinesByBrackets.ts` contain the initial scene parsing experiments.
 - `content_script/second_try/` contains an alternative parser; it is not wired into the active flow.
 - `content_script/scripts/createGodotInspectorTable.ts`, `generateTableRows.ts`, and `replaceDiffWithGodotInspector.ts` contain the unfinished inline view.
-- `popup/src/` contains the React UI, styled with Tailwind CSS and shared UI primitives.
+- `popup/src/` contains the React UI, styled with Tailwind CSS and React Aria primitives configured through shadcn.
 - `public/manifest.json` defines extension permissions and entry points.
 - `vite*.config.ts` define separate popup, content script, and background builds.
 - `background/background.ts` and `content_script/main.ts` are reserved entry points without runtime behavior.
