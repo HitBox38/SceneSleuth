@@ -33,7 +33,7 @@ Render scene content as text. Do not pass file contents to `dangerouslySetInnerH
 
 ## Verification
 
-Exercise the states affected by the change with realistic payloads. Check keyboard use, long filenames, duplicate basenames, empty results, messaging errors, and retry behavior where relevant.
+Exercise the states affected by the change with realistic payloads. The in-page inspector mounts inside a shadow root and enables React Aria shadow-DOM support before rendering. Test pointer and keyboard presses there; a passing standalone inspector does not cover event retargeting across that boundary. Check keyboard use, long filenames, duplicate basenames, empty results, messaging errors, and retry behavior where relevant.
 
 A normal Vite page has no extension runtime. If a task uses a standalone UI fixture, isolate the adapter/mock and do not ship fabricated data as a silent runtime fallback. Verify the real message flow in a loaded extension when the environment supports it, including popup close/reopen and switching active tabs. Report what was mocked and what was tested in the extension.
 

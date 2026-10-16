@@ -128,3 +128,26 @@ test("GitHub-limited diffs stay partial even for newly added scenes", () => {
   assert.equal(file.coverage, "partial");
   assert.ok(file.diagnostics.some((note) => note.includes("limited")));
 });
+
+test("commit-range routes use their own scene snapshot", () => {
+  const full = payload([{ path: "full.tscn", changeType: "MODIFIED" }], []);
+  const range = {
+    payload: {
+      pullRequestsChangesWithRangeRoute: {
+        ...full.payload.pullRequestsChangesRoute,
+        comparison: {
+          fullDiff: { baseOid: "base", headOid: "head" },
+          selectedRange: { baseOid: "base", headOid: "earlier" },
+        },
+        diffSummaries: [{ path: "earlier.tscn", changeType: "MODIFIED" }],
+      },
+    },
+  };
+  const review = reviewGithubData(range, `${url}/earlier`)!;
+  assert.deepEqual(
+    review.files.map((f) => f.filePath),
+    ["earlier.tscn"],
+  );
+  assert.notEqual(review.comparisonKey, reviewGithubData(full, url)?.comparisonKey);
+  assert.ok(review.files[0].reviewUrl?.startsWith(`${url}/earlier#`));
+});

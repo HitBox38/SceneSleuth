@@ -5,6 +5,7 @@ import { reviewGithubData } from "../content_script/scripts/githubReview.ts";
 import { reviewGithubTable } from "../content_script/scripts/githubDom.ts";
 import type { ReviewSnapshot } from "../shared/model.ts";
 import { Button } from "../popup/src/components/ui/button.tsx";
+import { createInspector } from "../ui/contentRoot.tsx";
 import "../ui/review.css";
 
 // Synthetic source only. This page is a development fixture, never a runtime fallback.
@@ -55,6 +56,8 @@ const ready: ReviewSnapshot = {
   status: "ready",
   files: data.files,
 };
+const shadowInspector = createInspector(() => shadowInspector.update(ready));
+shadowInspector.update(ready);
 
 function verifyDom(split: boolean) {
   const table = document.createElement("table");
@@ -110,6 +113,9 @@ function Fixture() {
         <h1 style={{ fontSize: 18 }}>SceneSleuth development fixture</h1>
         <p style={{ margin: "8px 0" }}>Synthetic data · {domResult}</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <Button className="ss-button" onPress={() => shadowInspector.open()}>
+            Open extension panel
+          </Button>
           <Button className="ss-button" onPress={() => setSnapshot(ready)}>
             Ready
           </Button>
@@ -141,4 +147,9 @@ function Fixture() {
     </div>
   );
 }
-createRoot(document.getElementById("root")!).render(<Fixture />);
+const fixtureRoot = createRoot(document.getElementById("root")!);
+fixtureRoot.render(<Fixture />);
+import.meta.hot?.dispose(() => {
+  fixtureRoot.unmount();
+  shadowInspector.dispose();
+});

@@ -19,7 +19,9 @@ async function bounded<T>(promise: Promise<T>): Promise<T> {
         timer = setTimeout(
           () =>
             reject(
-              new Error("The extension did not respond. Reload the GitHub page and try again."),
+              new Error(
+                "SceneSleuth did not respond. Reload the extension, then reload this GitHub tab and try again.",
+              ),
             ),
           5000,
         );
@@ -84,7 +86,7 @@ export default function App() {
         );
         if (!isReviewSnapshot(snapshot))
           throw new Error(
-            "The page returned an unexpected response. Reload it to update the content script.",
+            "SceneSleuth needs to reconnect. Reload the extension, then reload this GitHub tab and try again.",
           );
         if (!cancelled && !receivedUpdate) setState({ kind: "review", snapshot, tabId: tab.id });
       } catch (error) {
@@ -93,7 +95,11 @@ export default function App() {
             kind: "error",
             message:
               error instanceof Error
-                ? error.message
+                ? /Receiving end does not exist|Could not establish connection|message port closed|Extension context invalidated/i.test(
+                    error.message,
+                  )
+                  ? "SceneSleuth is not connected to this page. Reload the extension, then reload this GitHub tab and try again."
+                  : error.message
                 : "Could not connect to this page. Reload it and try again.",
           });
       }

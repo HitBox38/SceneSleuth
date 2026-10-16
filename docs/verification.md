@@ -6,7 +6,7 @@ Development build 0.1.0, checked on 2026-10-16.
 
 - `pnpm install --frozen-lockfile`: passed with pnpm 10.28.1.
 - `pnpm run lint`, `pnpm run fmt:check`, `pnpm run typecheck`: passed.
-- `pnpm test`: 21 tests passed using Node’s built-in runner.
+- `pnpm test`: 23 tests passed using Node’s built-in runner.
 - `pnpm run build`: popup and classic IIFE content script built; manifest asset/syntax checks passed.
 
 Node 22 prints an experimental TypeScript-stripping warning. The content build reports two upstream Lucide `use client` directive warnings; this bundle runs entirely in the client. Neither warning causes a check failure.
@@ -32,15 +32,33 @@ On `/popup/index.html` as a normal Chrome web page, the popup displays extension
 
 These fixture checks are separate from testing an installed extension.
 
-## Remaining verification
+## Installed Chrome checks
 
-The user loaded SceneSleuth in Chrome. Its real toolbar popup was opened on the private PR, and its outdated-response error state was verified. DevTools confirmed that Chrome was still executing the cached prototype content script (`Custom elements not found on initial load`), while the popup had the current build. Reloading the PR alone did not replace that cached script.
+The user loaded and reloaded the unpacked extension. The first attempt exposed Chrome’s cached prototype content script while the popup had the newer build. Reloading the extension, then the PR tab, resolved that mismatch.
 
-Chrome automation blocks opening `chrome://extensions`. The user must reload the installed extension there, then reload the PR tab, before the following installed-extension checks can be completed:
+On the private Godot PR with four scenes:
 
-- Real scene PR: injection, all scene results, delayed file loading, filters, and original-source links.
-- Actual toolbar popup messaging, close/reopen, active-tab scoping, and absent receivers.
-- Navigation between PRs/comparisons and a real PR without scene changes.
-- Page and extension-popup consoles.
+- The installed panel reports 21 node changes, 18 resource changes, and 43 changed sections. Per-file section counts are 9, 11, 6, and 17, matching the engine assertions.
+- The three new scenes are marked complete. The modified scene remains partial, with 48 added lines and one deletion.
+- The modified scene initially appears pending and later updates to 17 sections when GitHub renders its delayed diff.
+- Repeated refreshes retain one root, four files, and 43 sections.
+- Search finds the expected node/property changes. Pointer and keyboard filters select 21 nodes or 18 resources.
+- Launcher, close, refresh, and popup-to-panel actions work.
+- Source links reach the correct original diff file. GitHub normalized the tested line fragment to its file anchor; exact line highlighting is not established.
+- The checked page consoles have no errors or warnings. The real popup’s console was opened through Chrome’s Inspect action and contained zero messages.
 
-Firefox runtime verification also remains outstanding. The build should not be described as a verified cross-browser release.
+The shadow-root checks found that React Aria’s press handling needed its `enableShadowDOM()` opt-in from `@react-stately/flags`. This is enabled before mounting the inspector. The development fixture now mounts the actual shadow-root panel as well as the standalone inspector, and checks included pointer activation, keyboard activation, filtering, close, and reopen. See the upstream [shadow-DOM press report](https://github.com/adobe/react-spectrum/issues/10051) and [enablement example](https://github.com/adobe/react-spectrum/issues/10330).
+
+The real popup was opened, closed, and reopened on two Godot PR tabs. It showed four scenes for one and only the other PR’s two scenes when switching tabs. Both page snapshots stayed independent. The popup also correctly displayed unsupported-page guidance on the repository PR list.
+
+A public [TypeScript PR](https://github.com/microsoft/TypeScript/pull/64845) provided the no-scene case. Its files were checked through the GitHub API; none were `.tscn`. Both the installed panel and real toolbar popup displayed the empty state without retaining Godot scene results. All PR use was read-only.
+
+## Final navigation checks pending
+
+Testing GitHub’s PR-list → PR navigation exposed a manifest injection gap: a script registered only on PR URLs cannot observe navigation that starts on a non-PR document. The manifest now starts the content script on GitHub, while `reviewContext` gates scene extraction and inspector creation to PRs.
+
+Selecting an individual commit also exposed GitHub’s `pullRequestsChangesWithRangeRoute` payload. The adapter now accepts it, and source URLs preserve the selected range and query parameters. Two focused regressions cover these data contracts.
+
+These changes build and pass all checks. Chrome automation blocks opening `chrome://extensions`; the user must reload the extension to register the updated manifest before final PR-list navigation and selected-commit checks. The source-link limitation noted above remains: exact GitHub line highlighting was not established.
+
+Firefox runtime verification remains outstanding. The build should not be described as a verified cross-browser release.

@@ -17,7 +17,7 @@ The current protocol uses `GET_REVIEW`, `REFRESH_REVIEW`, `OPEN_REVIEW`, and `RE
 
 ## GitHub DOM lifecycle
 
-Use observed markup or a fixture to choose selectors. The modern adapter uses `pullRequestsChangesRoute` embedded data and `table[aria-label^="Diff for: "]` markup observed on GitHub. These are implementation assumptions, not a GitHub API contract. Do not assume a selector still exists because it appears in `test.html`.
+Use observed markup or a fixture to choose selectors. The modern adapter uses `pullRequestsChangesRoute` / `pullRequestsChangesWithRangeRoute` embedded data and `table[aria-label^="Diff for: "]` markup observed on GitHub. These are implementation assumptions, not a GitHub API contract. Do not assume a selector still exists because it appears in `test.html`.
 
 Account for scripts running before or after document load, delayed diff rendering, and navigation without a full page reload. Reset stored results when the review context changes. Define deduplication using file identity and the current review context, not an ever-growing global array.
 

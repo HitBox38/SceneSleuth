@@ -68,7 +68,7 @@ test("review contexts are scoped to a single GitHub PR and ignore URL fragments"
   const a = reviewContext("https://github.com/owner/repo/pull/5/files#diff-abc");
   const b = reviewContext("https://github.com/owner/repo/pull/5");
   assert.equal(a?.key, b?.key);
-  assert.equal(a?.changesUrl, "https://github.com/owner/repo/pull/5/changes");
+  assert.equal(a?.changesUrl, "https://github.com/owner/repo/pull/5/files");
   assert.equal(a?.isChangesPage, true);
   assert.equal(b?.isChangesPage, false);
   assert.notEqual(a?.key, reviewContext("https://github.com/owner/repo/pull/6")?.key);
@@ -86,4 +86,13 @@ test("explicitly identical sections relocated between hunks compare before and a
     file.changes[0].properties.map((p) => [p.name, p.before, p.after]),
     [["x", "1", "2"]],
   );
+});
+
+test("source links preserve selected commit ranges and query parameters", () => {
+  const context = reviewContext(
+    "https://github.com/owner/repo/pull/5/changes/earlier?w=1#diff-file",
+  );
+  assert.equal(context?.key, "/owner/repo/pull/5");
+  assert.equal(context?.changesUrl, "https://github.com/owner/repo/pull/5/changes/earlier?w=1");
+  assert.equal(context?.isChangesPage, true);
 });

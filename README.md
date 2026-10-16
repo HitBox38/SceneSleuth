@@ -18,6 +18,8 @@ Open a pull request’s **Files changed** tab, then click **SceneSleuth** in the
 
 Private repositories work through your existing GitHub sign-in. SceneSleuth reads the current page’s review data and rendered diff tables. There is no backend, API token, analytics, or external scene upload.
 
+The content script starts on GitHub pages so it can detect GitHub’s navigation into a PR without a full reload. It reads scene review data and displays its UI only on PR pages.
+
 ## Important limits
 
 This is an early development build, not a published extension.
@@ -68,7 +70,7 @@ The tests use Node’s built-in test runner and TypeScript stripping; Node 22 ma
 
 The standalone popup displays setup guidance when extension APIs are absent. It does not fabricate review data. Actual injection, permissions, messaging, navigation, and popup reopening require a loaded extension.
 
-For repeatable UI checks, open `/tests/browser.html` on the Vite development server. This synthetic fixture checks unified/split DOM extraction and lets you exercise ready, loading, empty, and error states, filtering, and untrusted scene text. It is excluded from the production build and does not establish extension integration.
+For repeatable UI checks, open `/tests/browser.html` on the Vite development server. This synthetic fixture checks unified/split DOM extraction and lets you exercise ready, loading, empty, and error states, filtering, and untrusted scene text. Use **Open extension panel** or the floating launcher to repeat pointer and keyboard checks inside the actual shadow root. It is excluded from the production build and does not establish extension integration.
 
 ### Source map
 

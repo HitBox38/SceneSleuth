@@ -4,7 +4,10 @@ import { Button } from "../popup/src/components/ui/button.tsx";
 import { Inspector } from "./SceneReview.tsx";
 import styles from "./review.css?inline";
 import type { ReviewSnapshot } from "../shared/model.ts";
+import { enableShadowDOM } from "@react-stately/flags";
 export function createInspector(refresh: () => void) {
+  // React Aria must follow composed event paths across the panel's shadow boundary.
+  enableShadowDOM();
   const host = document.createElement("div");
   host.id = "scenesleuth-root";
   host.style.cssText = "position:fixed;bottom:18px;right:18px;z-index:2147483000;";
@@ -45,7 +48,7 @@ export function createInspector(refresh: () => void) {
               {current.status === "loading"
                 ? "…"
                 : current.files.length
-                  ? `${current.files.length} scenes`
+                  ? `${current.files.length} ${current.files.length === 1 ? "scene" : "scenes"}`
                   : "Review"}
             </span>
           </Button>

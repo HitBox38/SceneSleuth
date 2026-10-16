@@ -29,10 +29,13 @@ export function reviewContext(
   const match = parsed.pathname.match(/^\/([^/]+)\/([^/]+)\/pull\/(\d+)(?:\/|$)/);
   if (!match) return;
   const key = `/${match[1]}/${match[2]}/pull/${match[3]}`;
+  const isChangesPage = /^\/(?:files|changes)(?:\/|$)/.test(parsed.pathname.slice(key.length));
   return {
     key,
     title: `${match[1]}/${match[2]} #${match[3]}`,
-    changesUrl: `${parsed.origin}${key}/changes`,
-    isChangesPage: /^\/(?:files|changes)(?:\/|$)/.test(parsed.pathname.slice(key.length)),
+    changesUrl: isChangesPage
+      ? `${parsed.origin}${parsed.pathname}${parsed.search}`
+      : `${parsed.origin}${key}/changes`,
+    isChangesPage,
   };
 }

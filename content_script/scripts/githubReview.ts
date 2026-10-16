@@ -22,7 +22,10 @@ export function header(path: string, previous: string, operation: SceneReview["s
   return `diff --git ${JSON.stringify(`a/${previous}`)} ${JSON.stringify(`b/${path}`)}\n--- ${operation === "added" ? "/dev/null" : JSON.stringify(`a/${previous}`)}\n+++ ${operation === "removed" ? "/dev/null" : JSON.stringify(`b/${path}`)}\n`;
 }
 export function reviewGithubData(value: unknown, changesUrl: string) {
-  const route = record(record(record(value).payload).pullRequestsChangesRoute);
+  const payload = record(record(value).payload);
+  const route = record(
+    payload.pullRequestsChangesRoute ?? payload.pullRequestsChangesWithRangeRoute,
+  );
   if (!Array.isArray(route.diffSummaries)) return undefined;
   const contents = Array.isArray(route.diffContents) ? route.diffContents.map(record) : [];
   const files = route.diffSummaries

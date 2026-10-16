@@ -10,7 +10,7 @@
   "content_scripts": [
     {
       "js": ["assets/content.js"],
-      "matches": ["https://github.com/*/pull/*"]
+      "matches": ["https://github.com/*"]
     }
   ]
 }
