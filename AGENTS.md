@@ -4,17 +4,17 @@
 
 SceneSleuth helps Godot developers understand `.tscn` scene changes in GitHub pull requests. The intended experience is a structured scene review inside the browser. Read [README.md](README.md) for the current state and known limitations before promising behavior.
 
-This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tailwind CSS, and React Aria components. Oxlint and Oxfmt handle linting and formatting. There is no backend or configured automated test runner. Keep changes focused on this architecture unless the task calls for changing it.
+This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tailwind CSS, and React Aria components. Oxlint and Oxfmt handle linting and formatting. There is no backend. Focused regression tests use Node’s built-in test runner and TypeScript stripping. Keep changes focused on this architecture unless the task calls for changing it.
 
 ## Repository map
 
 - `public/manifest.json`: source manifest and permissions.
 - `content_script/content-script.ts`: active GitHub integration and message handling.
-- `content_script/scripts/`: diff extraction, parser experiments, inline rendering, and styles.
-- `content_script/second_try/`: alternative parser, currently disconnected.
+- `content_script/scripts/`: GitHub data/DOM adapters, unified patch parsing, scene parsing, and comparisons.
+- `shared/`, `ui/`: domain/message types and shared shadow-root inspector.
+- `tests/`: synthetic parser, patch, and GitHub-data regression coverage.
 - `popup/src/`: popup components, styles, and browser messaging consumer.
-- `background/background.ts`, `content_script/main.ts`: reserved entry points without runtime behavior.
-- `vite.config.ts`, `vite-content.config.ts`, `vite-background.config.ts`: build entry points.
+- `vite.config.ts`, `vite-content.config.ts`: popup and classic IIFE content-script build entry points. No background process is needed.
 - `scripts/check-build.mjs`: verifies built manifest assets and classic content script syntax; runs at the end of the build.
 - `test.html`: large saved GitHub diff fixture; read relevant sections rather than dumping the whole file.
 - `dist/`: current generated output, ignored by Git. `build/`: older generated output. Edit source files rather than either output directory.
@@ -38,7 +38,7 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 
 Changed lines are not a complete scene. Do not infer that an unchanged property was deleted or invent a resource's contents when the diff omits them. Preserve uncertainty in partial parses and show a raw-text fallback for unsupported constructs.
 
-The active parser currently discards its structured results, and inline diff replacement is disabled. Recheck the actual call path before extending one of the experimental parsers. Avoid adding a third competing parser without a concrete reason.
+The active path is GitHub data/DOM adapters → unified hunks → scene sections → comparisons → inspector/popup. Preserve hunk boundaries and cached results only within the same PR and comparison. GitHub-lazy files must remain explicitly pending until their text loads. Do not replace GitHub’s diff controls or add a competing parser.
 
 ## Verification
 
@@ -48,14 +48,15 @@ Run checks appropriate to the change:
 pnpm run lint
 pnpm run fmt:check
 pnpm run typecheck
+pnpm test
 pnpm run build
 ```
 
-TypeScript 7 checks the popup, content scripts, background, and all Vite configurations. The build runs this check before bundling with Vite 8 and verifying the built manifest assets. Use `build.rolldownOptions` for bundler configuration. Manifest content scripts must remain classic JavaScript without module imports or exports. Use Oxlint's built-in TypeScript, React, and accessibility plugins rather than adding ESLint dependencies or suppression comments. Oxfmt defines formatting; `test.html` remains an unchanged captured fixture.
+TypeScript 7 checks the popup, content scripts, shared UI, tests, and all Vite configurations. The build runs this check before bundling with Vite 8 and verifying the built manifest assets. Use `build.rolldownOptions` for bundler configuration. Manifest content scripts must remain classic JavaScript without module imports or exports. Use Oxlint's built-in TypeScript, React, and accessibility plugins rather than adding ESLint dependencies or suppression comments. Oxfmt defines formatting; `test.html` remains an unchanged captured fixture.
 
-For extension behavior, verify the built extension in a supported browser: a PR with scene changes, a PR without scene changes, delayed diff loading, navigation between PRs, and popup close/reopen. Confirm that data does not duplicate or leak across tabs. Check relevant page, popup, and background consoles. State which browser and paths you actually exercised.
+For extension behavior, verify the built extension in a supported browser: a PR with scene changes, a PR without scene changes, delayed diff loading, navigation between PRs, and popup close/reopen. Confirm that data does not duplicate or leak across tabs. Check relevant page and popup consoles. State which browser and paths you actually exercised.
 
-For parser fixes, add focused fixtures and regression coverage when the task needs it. Include partial hunks and a meaningful before/after assertion. No test runner exists yet; introduce one deliberately rather than citing a nonexistent `pnpm test` command. Documentation-only changes need link and accuracy checks, not browser testing.
+For parser fixes, add focused fixtures and regression coverage when the task needs it. Include partial hunks and a meaningful before/after assertion. Use `pnpm test` for the built-in Node runner. Keep tests independent of extension APIs; never commit private game source as fixtures. Documentation-only changes need link and accuracy checks, not browser testing.
 
 Do not silently fix unrelated baseline failures. Report the commands run, their results, and any remaining verification gaps. If loading or type-checking is blocked, say so rather than calling the build a working release.
 

@@ -1,13 +1,9 @@
 {
   "manifest_version": 3,
   "name": "SceneSleuth",
-  "description": "Table of Contents to help readers on any page!",
-  "version": "1.0",
-  "permissions": ["activeTab", "tabs"],
-  "host_permissions": ["https://github.com/*"],
-  "icons": {
-    "48": "vite.svg"
-  },
+  "description": "Understand Godot scene changes in GitHub pull requests: nodes, resources, properties, and signals.",
+  "version": "0.1.0",
+  "permissions": ["activeTab"],
   "action": {
     "default_popup": "popup/index.html"
   },
@@ -15,16 +11,6 @@
     {
       "js": ["assets/content.js"],
       "matches": ["https://github.com/*/pull/*"]
-    }
-  ],
-  "background": {
-    "scripts": ["assets/background.js"],
-    "type": "module"
-  },
-  "web_accessible_resources": [
-    {
-      "matches": ["https://*/*"],
-      "resources": ["assets/*"]
     }
   ]
 }

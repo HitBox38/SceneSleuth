@@ -9,15 +9,15 @@ Read the root `AGENTS.md` and relevant source before making changes. Resolve pat
 
 ## Follow the actual data path
 
-Start with `public/manifest.json`, the matching `vite*.config.ts`, `content_script/content-script.ts`, and the message consumer in `popup/src/App.tsx`. The background entry point is currently empty. Check these facts again as the project evolves.
+Start with `public/manifest.json`, the matching `vite*.config.ts`, `content_script/content-script.ts`, and the message consumer in `popup/src/App.tsx`. There is currently no background process; the popup talks directly to its tab’s content script. Check these facts again as the project evolves.
 
 Identify the responsible context: page DOM work in the content script, presentation in the popup, and background work only where needed. Keep parsers independent of browser globals. Inspect both sides of a message before changing its shape; prefer a shared discriminated union and runtime checks at message boundaries.
 
-The current protocol uses `GET_DIFFS`, `NEW_DIFF`, and `ALL_DIFFS`. A popup opening after page processing must be able to request the existing snapshot. Push notifications alone do not cover that case. Keep replies and updates scoped to the requested tab and page; ignore unrelated-tab broadcasts and stale responses after navigation.
+The current protocol uses `GET_REVIEW`, `REFRESH_REVIEW`, `OPEN_REVIEW`, and `REVIEW_UPDATED`. A popup opening after page processing must be able to request the existing snapshot. Push notifications alone do not cover that case. Keep replies and updates scoped to the requested tab and page; ignore unrelated-tab broadcasts and stale responses after navigation.
 
 ## GitHub DOM lifecycle
 
-Use observed markup or a fixture to choose selectors. `copilot-diff-entry` and the current `.blob-*` selectors are implementation assumptions, not a GitHub API contract. Do not assume a selector still exists because it appears in `test.html`.
+Use observed markup or a fixture to choose selectors. The modern adapter uses `pullRequestsChangesRoute` embedded data and `table[aria-label^="Diff for: "]` markup observed on GitHub. These are implementation assumptions, not a GitHub API contract. Do not assume a selector still exists because it appears in `test.html`.
 
 Account for scripts running before or after document load, delayed diff rendering, and navigation without a full page reload. Reset stored results when the review context changes. Define deduplication using file identity and the current review context, not an ever-growing global array.
 
@@ -27,7 +27,7 @@ If an observer changes the subtree it watches, ensure that its own updates do no
 
 Build from source with `pnpm run build`; inspect `dist/manifest.json` and every referenced asset. Check the output script format for the declared execution context, not just the existence of a bundle.
 
-Choose browser-specific manifest fields deliberately. The current `background.scripts` declaration is not a Chrome MV3 service-worker declaration. Consult the [Chrome service-worker guidance](https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers) and [Firefox background manifest reference](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background) when modifying manifests or lifecycle code; check official API documentation for changes to messaging semantics. Preserve the task's browser scope and explain any browser left untested.
+Choose browser-specific manifest fields deliberately. The current manifest has no background declaration. If adding background work, Chrome MV3 uses `background.service_worker`; Firefox has separate requirements. Consult the [Chrome service-worker guidance](https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers) and [Firefox background manifest reference](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background) when modifying manifests or lifecycle code; check official API documentation for changes to messaging semantics. Preserve the task's browser scope and explain any browser left untested.
 
 Keep permissions and web-accessible resources tied to the implemented feature. Scene text belongs in escaped/text rendering, not executable markup. Do not add a page-to-extension bridge or network relay unless the feature needs one.
 

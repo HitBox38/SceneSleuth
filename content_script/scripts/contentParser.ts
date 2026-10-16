@@ -1,224 +1,259 @@
-import type { DiffLine } from "./diffParser";
+import type {
+  SourceLine,
+  SceneValue,
+  SceneSection,
+  SectionKind,
+  SectionChange,
+  PropertyChange,
+} from "../../shared/model.ts";
 
-export interface TscnResource {
-  type: string;
-  id?: string;
-  path?: string;
-  uid?: string;
-  properties: Record<string, unknown>;
-}
-
-export interface TscnNode {
-  name: string;
-  type: string;
-  groups?: string[];
-  properties: Record<string, unknown>;
-  children?: TscnNode[];
-}
-
-export const parseTscnContent = (lines: DiffLine[]) => {
-  const result: (DiffLine | TscnResource | TscnNode)[] = [];
-  let currentIndex = 0;
-
-  while (currentIndex < lines.length) {
-    const line = lines[currentIndex];
-    const content = line.content.trim();
-
-    // Check if this is a resource definition line
-    if (
-      content.startsWith("[") &&
-      (content.includes("sub_resource") ||
-        content.includes("ext_resource") ||
-        content.includes("node name="))
-    ) {
-      // Extract the resource/node and its properties
-      const resourceObj = parseResourceOrNode(lines, currentIndex);
-
-      if (resourceObj) {
-        result.push({
-          ...resourceObj.resource,
-          type: line.type,
-        });
-        currentIndex = resourceObj.endIndex + 1;
-        continue;
-      }
+// A lexical pass is enough to preserve values without evaluating Godot expressions.
+export function canonicalValue(text: string): string {
+  let result = "",
+    quoted = false,
+    escaped = false,
+    comment = false;
+  for (const character of text) {
+    if (comment) {
+      if (character === "\n") comment = false;
+      continue;
     }
-
-    // If not processed as a resource, add as individual line
-    result.push(line);
-    currentIndex++;
+    if (quoted) {
+      result += character;
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === '"') quoted = false;
+    } else if (character === '"') {
+      quoted = true;
+      result += character;
+    } else if (character === ";") comment = true;
+    else if (!/\s/.test(character)) result += character;
   }
-
   return result;
-};
-
-/**
- * Parses a resource or node definition and its properties
- */
-const parseResourceOrNode = (lines: DiffLine[], startIndex: number) => {
-  const firstLine = lines[startIndex].content.trim();
-
-  // Check what type of definition we're dealing with
-  if (firstLine.startsWith("[sub_resource")) {
-    return parseSubResource(lines, startIndex);
-  } else if (firstLine.startsWith("[ext_resource")) {
-    return parseExtResource(lines, startIndex);
-  } else if (firstLine.startsWith("[node")) {
-    return parseNode(lines, startIndex);
-  }
-
-  return null;
-};
-
-/**
- * Parses a sub_resource definition and its properties
- */
-const parseSubResource = (lines: DiffLine[], startIndex: number) => {
-  const headerLine = lines[startIndex].content.trim();
-
-  // Extract type and id using regex
-  const typeMatch = headerLine.match(/type="([^"]+)"/);
-  const idMatch = headerLine.match(/id="([^"]+)"/);
-
-  if (!typeMatch) return null;
-
-  const resource: TscnResource = {
-    type: "sub_resource",
-    properties: {},
-  };
-
-  if (typeMatch && typeMatch[1]) resource.properties.resourceType = typeMatch[1];
-  if (idMatch && idMatch[1]) resource.id = idMatch[1];
-
-  // Find all properties until we hit another resource definition or node
-  let endIndex = startIndex;
-  for (let i = startIndex + 1; i < lines.length; i++) {
-    const line = lines[i].content.trim();
-
-    // If we hit another resource definition or node, stop
-    if (line.startsWith("[")) break;
-
-    // Parse property line (format: property = value)
-    const propertyMatch = line.match(/^([^ =]+)\s*=\s*(.+)$/);
-    if (propertyMatch) {
-      const [, propName, propValue] = propertyMatch;
-      resource.properties[propName] = parsePropertyValue(propValue);
-    }
-
-    endIndex = i;
-  }
-
-  return { resource, endIndex };
-};
-
-/**
- * Parses an ext_resource definition
- */
-const parseExtResource = (lines: DiffLine[], startIndex: number) => {
-  const headerLine = lines[startIndex].content.trim();
-
-  // Extract properties using regex
-  const typeMatch = headerLine.match(/type="([^"]+)"/);
-  const pathMatch = headerLine.match(/path="([^"]+)"/);
-  const uidMatch = headerLine.match(/uid="([^"]+)"/);
-
-  if (!typeMatch) return null;
-
-  const resource: TscnResource = {
-    type: "ext_resource",
-    properties: {},
-  };
-
-  if (typeMatch && typeMatch[1]) resource.properties.resourceType = typeMatch[1];
-  if (pathMatch && pathMatch[1]) resource.path = pathMatch[1];
-  if (uidMatch && uidMatch[1]) resource.uid = uidMatch[1];
-
-  return { resource, endIndex: startIndex };
-};
-
-/**
- * Parses a node definition and its properties
- */
-function parseNode(
-  lines: DiffLine[],
-  startIndex: number,
-): { resource: TscnNode; endIndex: number } | null {
-  const headerLine = lines[startIndex].content.trim();
-
-  // Extract name using regex
-  const nameMatch = headerLine.match(/name="([^"]+)"/);
-  const typeMatch = headerLine.match(/^[^\s]+\s+([^\s]+)/); // The node type is after [node
-  const groupsMatch = headerLine.match(/groups=\["([^"]+)"/);
-
-  if (!nameMatch) return null;
-
-  const node: TscnNode = {
-    name: nameMatch[1],
-    type: typeMatch ? typeMatch[1].replace('"', "") : "Node",
-    properties: {},
-    children: [],
-  };
-
-  if (groupsMatch && groupsMatch[1]) {
-    node.groups = groupsMatch[1].split(",").map((g) => g.trim());
-  }
-
-  // Find all properties until we hit another resource definition or node
-  let endIndex = startIndex;
-  for (let i = startIndex + 1; i < lines.length; i++) {
-    const line = lines[i].content.trim();
-
-    // If we hit another node or resource definition, stop
-    if (line.startsWith("[")) break;
-
-    // Parse property line (format: property = value)
-    const propertyMatch = line.match(/^([^ =]+)\s*=\s*(.+)$/);
-    if (propertyMatch) {
-      const [, propName, propValue] = propertyMatch;
-      node.properties[propName] = parsePropertyValue(propValue);
-    }
-
-    endIndex = i;
-  }
-
-  return { resource: node, endIndex };
 }
 
-/**
- * Parses a property value based on its format
- */
-function parsePropertyValue(value: string) {
-  value = value.trim();
-
-  // Handle Vector2
-  if (value.startsWith("Vector2(")) {
-    const coordsStr = value.substring(8, value.length - 1);
-    const coords = coordsStr.split(",").map((c) => parseFloat(c.trim()));
-    return { type: "Vector2", x: coords[0], y: coords[1] };
+function balanced(text: string): boolean {
+  let quoted = false,
+    escaped = false,
+    comment = false;
+  const stack: string[] = [];
+  const pairs: Record<string, string> = { "]": "[", "}": "{", ")": "(" };
+  for (const character of text) {
+    if (comment) {
+      if (character === "\n") comment = false;
+      continue;
+    }
+    if (quoted) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === '"') quoted = false;
+    } else if (character === '"') quoted = true;
+    else if (character === ";") comment = true;
+    else if ("[{(".includes(character)) stack.push(character);
+    else if ("]})".includes(character) && stack.pop() !== pairs[character]) return false;
   }
+  return !quoted && stack.length === 0;
+}
 
-  // Handle ExtResource references
-  if (value.startsWith("ExtResource(")) {
-    const id = value.substring(12, value.length - 1);
-    return { type: "ExtResource", id };
+function decode(raw = ""): string {
+  if (raw.startsWith('"')) {
+    try {
+      return JSON.parse(raw) as string;
+    } catch {
+      /* Keep unfamiliar escapes intact. */
+    }
   }
+  return raw;
+}
 
-  // Handle booleans
-  if (value === "true") return true;
-  if (value === "false") return false;
-
-  // Handle numbers
-  if (/^-?\d+(\.\d+)?$/.test(value)) {
-    return value.includes(".") ? parseFloat(value) : parseInt(value, 10);
+function attributes(text: string, line: SourceLine): Map<string, SceneValue> {
+  const result = new Map<string, SceneValue>();
+  const pattern = /(\w+)\s*=\s*/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text))) {
+    const start = pattern.lastIndex;
+    let end = start;
+    for (; end < text.length; end++) {
+      if (/\s/.test(text[end]) && balanced(text.slice(start, end))) break;
+    }
+    const raw = text.slice(start, end);
+    result.set(match[1], {
+      raw,
+      canonical: canonicalValue(raw),
+      line: line.line,
+      changed: line.changed,
+    });
+    pattern.lastIndex = end;
   }
+  return result;
+}
 
-  // Handle strings - remove quotes if present
-  if (
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"))
-  ) {
-    return value.substring(1, value.length - 1);
+export function parseScene(
+  lines: SourceLine[],
+  scope = "scene",
+): { sections: SceneSection[]; diagnostics: string[] } {
+  const sections: SceneSection[] = [];
+  const diagnostics: string[] = [];
+  let current: SceneSection | undefined;
+  for (let index = 0; index < lines.length; index++) {
+    const first = lines[index];
+    if (!first.text.trim() || first.text.trimStart().startsWith(";")) continue;
+    let raw = first.text;
+    let changed = first.changed;
+    while (!balanced(raw) && index + 1 < lines.length) {
+      const next = lines[index + 1];
+      // A new section cannot finish a truncated value from another hunk.
+      if (/^\[(?:node|ext_resource|sub_resource|connection|gd_scene)\b/.test(next.text.trim()))
+        break;
+      index++;
+      raw += `\n${next.text}`;
+      changed ||= next.changed;
+    }
+    if (!balanced(raw))
+      diagnostics.push(`Incomplete value near line ${first.line}; inspect the original diff.`);
+    const header = raw
+      .trim()
+      .match(
+        /^\[(gd_scene|node|ext_resource|sub_resource|connection)\b([\s\S]*)\](?:\s*;[^\n]*)?$/,
+      );
+    if (header) {
+      const kind: SectionKind = header[1] === "gd_scene" ? "scene" : (header[1] as SectionKind);
+      const attrs = attributes(header[2], { ...first, changed });
+      const get = (name: string) => decode(attrs.get(name)?.raw);
+      const parent = get("parent");
+      const name = get("name");
+      const path =
+        kind === "node"
+          ? parent === "."
+            ? name
+            : parent
+              ? `${parent}/${name}`
+              : "."
+          : get("path");
+      const identity =
+        kind === "node"
+          ? JSON.stringify([parent, name])
+          : kind === "connection"
+            ? JSON.stringify([get("signal"), get("from"), get("to"), get("method")])
+            : kind === "scene"
+              ? "header"
+              : get("id");
+      current = {
+        id: `${kind}:${identity || scope + ":" + first.line}`,
+        kind,
+        label:
+          kind === "node"
+            ? name || "Unnamed node"
+            : kind === "connection"
+              ? `${get("signal")} → ${get("method")}`
+              : kind === "scene"
+                ? "Scene settings"
+                : get("path")?.split("/").pop() || get("id") || "Unnamed resource",
+        className: get("type") || (get("instance") ? "Scene instance" : ""),
+        path: kind === "connection" ? `${get("from")} → ${get("to")}` : path,
+        line: first.line,
+        headerChanged: changed,
+        attributes: attrs,
+        properties: new Map(),
+      };
+      sections.push(current);
+      continue;
+    }
+    if (raw.trimStart().startsWith("[")) {
+      current = undefined;
+      diagnostics.push(`Unsupported section near line ${first.line}; inspect the original diff.`);
+      continue;
+    }
+    const assignment = raw.match(/^\s*([^=\n]+?)\s*=\s*([\s\S]*)$/);
+    if (!assignment) {
+      if (changed)
+        diagnostics.push(
+          `Unrecognized scene text near line ${first.line}; preserved in the original diff.`,
+        );
+      continue;
+    }
+    if (!current) {
+      current = {
+        id: `unknown:${scope}`,
+        kind: "unknown",
+        label: "Unresolved scene context",
+        className: "",
+        path: "Owning section is outside this hunk",
+        line: first.line,
+        headerChanged: false,
+        attributes: new Map(),
+        properties: new Map(),
+      };
+      sections.push(current);
+    }
+    const value = assignment[2].trim();
+    current.properties.set(assignment[1].trim(), {
+      raw: value,
+      canonical: canonicalValue(value),
+      line: first.line,
+      changed,
+    });
   }
+  return { sections, diagnostics };
+}
 
-  return value;
+export function sourceLines(text: string): SourceLine[] {
+  return text.split(/\r?\n/).map((text, index) => ({ text, line: index + 1, changed: true }));
+}
+
+export function compareSections(
+  before: SceneSection[],
+  after: SceneSection[],
+  partial: boolean,
+): SectionChange[] {
+  const oldMap = new Map(before.map((section) => [section.id, section]));
+  const newMap = new Map(after.map((section) => [section.id, section]));
+  const changes: SectionChange[] = [];
+  for (const id of new Set([...oldMap.keys(), ...newMap.keys()])) {
+    const oldSection = oldMap.get(id),
+      newSection = newMap.get(id);
+    const section = newSection ?? oldSection!;
+    const properties: PropertyChange[] = [];
+    const compare = (
+      oldValues: Map<string, SceneValue>,
+      newValues: Map<string, SceneValue>,
+      prefix = "",
+    ) => {
+      for (const key of new Set([...oldValues.keys(), ...newValues.keys()])) {
+        const oldValue = oldValues.get(key),
+          newValue = newValues.get(key);
+        if (oldValue?.canonical === newValue?.canonical) continue;
+        if (partial && !oldValue?.changed && !newValue?.changed) continue;
+        properties.push({
+          name: prefix + key,
+          operation: !oldValue ? "added" : !newValue ? "removed" : "modified",
+          before: oldValue?.raw,
+          after: newValue?.raw,
+          oldLine: oldValue?.line,
+          newLine: newValue?.line,
+        });
+      }
+    };
+    compare(oldSection?.attributes ?? new Map(), newSection?.attributes ?? new Map(), "@");
+    compare(oldSection?.properties ?? new Map(), newSection?.properties ?? new Map());
+    const operation =
+      !oldSection && (!partial || newSection?.headerChanged)
+        ? "added"
+        : !newSection && (!partial || oldSection?.headerChanged)
+          ? "removed"
+          : "modified";
+    if (!properties.length && operation === "modified") continue;
+    changes.push({
+      id,
+      kind: section.kind,
+      operation,
+      label: section.label,
+      className: section.className,
+      path: section.path,
+      oldLine: oldSection?.line,
+      newLine: newSection?.line,
+      properties,
+    });
+  }
+  return changes;
 }

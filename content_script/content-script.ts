@@ -1,148 +1,151 @@
-import { addGodotInspectorStyles } from "./scripts/addGodotInspectorStyles";
-import { type FileDiff, parsePRDiff } from "./scripts/diffParser";
-// import { replaceDiffWithGodotInspector } from "./scripts/replaceDiffWithGodotInspector";
+import { readGithubReview } from "./scripts/githubDom.ts";
+import { createInspector } from "../ui/contentRoot.tsx";
+import { isReviewRequest, reviewContext } from "../shared/protocol.ts";
+import type { ReviewSnapshot, SceneReview } from "../shared/model.ts";
 
-// Store our parsed diffs
-const parsedDiffs: FileDiff[] = [];
-let isInitialLoadComplete = false;
-
-const processAllDiffElements = () => {
-  const customElements = document.querySelectorAll(
-    "copilot-diff-entry:not([data-godot-processed='true'])",
-  );
-
-  if (customElements && customElements.length > 0) {
-    console.log(`Found ${customElements.length} unprocessed elements`);
-
-    // Add Godot inspector styles once
-    addGodotInspectorStyles();
-
-    customElements.forEach((element) => {
-      const dataFilePath = element.getAttribute("data-file-path")?.split(".");
-
-      if (dataFilePath && dataFilePath[dataFilePath.length - 1] === "tscn") {
-        const diff = parsePRDiff(element.outerHTML) as FileDiff;
-        parsedDiffs.push(diff);
-
-        // Send the data to the popup
-        sendToPopup({
-          action: "NEW_DIFF",
-          payload: diff,
-        });
-
-        // Replace just the diff content with our custom element
-        // replaceDiffWithGodotInspector(element, diff);
-      } else {
-        // Mark non-tscn files as processed too
-        element.setAttribute("data-godot-processed", "true");
-      }
-    });
-
-    // Send a complete collection of diffs
-    sendToPopup({
-      action: "ALL_DIFFS",
-      payload: parsedDiffs,
-    });
-
-    return customElements;
-  } else {
-    if (isInitialLoadComplete) {
-      console.log("No new custom elements found");
-    } else {
-      console.log("Custom elements not found on initial load");
-    }
-    return null;
-  }
-};
-
-/**
- * Send data to the popup using browser APIs
- */
-function sendToPopup(message: unknown) {
-  // Chrome and Firefox compatible way to send messages
-  if (typeof browser !== "undefined") {
-    // Firefox
-    browser.runtime.sendMessage(message).catch((err) => {
-      // Suppress errors when popup isn't open
-      if (!err.message.includes("Receiving end does not exist")) {
-        console.error("Error sending message to popup:", err);
-      }
-    });
-  } else {
-    // Chrome
-    chrome.runtime.sendMessage(message, () => {
-      if (chrome.runtime.lastError) {
-        // Suppress errors when popup isn't open
-        if (!chrome.runtime.lastError.message?.includes("Receiving end does not exist")) {
-          console.error("Error sending message to popup:", chrome.runtime.lastError);
-        }
-      }
-    });
-  }
-}
-
-// Listen for messages from popup
-function setupMessageListener() {
-  if (typeof browser !== "undefined") {
-    // Firefox
-    browser.runtime.onMessage.addListener((message) => {
-      if (message.action === "GET_DIFFS") {
-        return Promise.resolve({ diffs: parsedDiffs });
-      }
-    });
-  } else {
-    // Chrome
-    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-      if (message.action === "GET_DIFFS") {
-        sendResponse({ diffs: parsedDiffs });
-      }
-      return true; // Required to use sendResponse asynchronously
-    });
-  }
-}
-
-// Wait for page to finish loading before processing
-window.addEventListener("load", () => {
-  // Setup message listener right away
-  setupMessageListener();
-
-  // Process after a short delay to ensure GitHub has finished loading its content
-  setTimeout(() => {
-    processAllDiffElements();
-    isInitialLoadComplete = true;
-
-    // Setup observer for dynamically loaded content
-    const observer = new MutationObserver((mutations) => {
-      // Check if any mutation added new diff elements
-      let newDiffsAdded = false;
-
-      mutations.forEach((mutation) => {
-        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-          // Check if any added node is a diff or contains a diff
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              const element = node as Element;
-              if (
-                element.querySelector("copilot-diff-entry") ||
-                element.tagName.toLowerCase() === "copilot-diff-entry"
-              ) {
-                newDiffsAdded = true;
-              }
-            }
-          });
-        }
+function start() {
+  if (document.getElementById("scenesleuth-root")) return;
+  let snapshot: ReviewSnapshot = {
+    reviewKey: "",
+    title: "SceneSleuth",
+    status: "loading",
+    files: [],
+  };
+  let inspector: ReturnType<typeof createInspector> | undefined;
+  let contextKey: string | undefined;
+  let comparisonKey: string | undefined;
+  let signature = "";
+  let deadline = Date.now() + 10000;
+  const cached = new Map<string, SceneReview>();
+  const runtime =
+    typeof browser !== "undefined"
+      ? browser.runtime
+      : typeof chrome !== "undefined"
+        ? chrome.runtime
+        : undefined;
+  function publish() {
+    const next = JSON.stringify(snapshot);
+    if (next === signature) return;
+    signature = next;
+    inspector?.update(snapshot);
+    if (runtime)
+      void runtime.sendMessage({ action: "REVIEW_UPDATED", snapshot }).catch(() => {
+        /* The popup is normally closed. */
       });
-
-      // Only process if new diffs were added
-      if (newDiffsAdded) {
-        processAllDiffElements();
+  }
+  function refresh() {
+    cached.clear();
+    signature = "";
+    deadline = Date.now() + 10000;
+    checkPage();
+  }
+  function checkPage() {
+    const context = reviewContext(location.href);
+    const pageKey = context ? `${context.key}:${location.pathname}:${location.search}` : undefined;
+    if (pageKey !== contextKey) {
+      contextKey = pageKey;
+      comparisonKey = undefined;
+      cached.clear();
+      signature = "";
+      deadline = Date.now() + 10000;
+      inspector?.dispose();
+      inspector = undefined;
+    }
+    if (!context) {
+      snapshot = {
+        reviewKey: "",
+        title: "SceneSleuth",
+        status: "error",
+        files: [],
+        error: "Open a GitHub pull request to review its scenes.",
+      };
+      return;
+    }
+    if (!inspector || !document.getElementById("scenesleuth-root")) {
+      inspector?.dispose();
+      inspector = createInspector(refresh);
+      signature = "";
+    }
+    if (!context.isChangesPage) {
+      snapshot = {
+        reviewKey: context.key,
+        title: context.title,
+        status: "error",
+        files: [],
+        error: "Open this pull request's Files changed tab to read its scene diffs.",
+        changesUrl: context.changesUrl,
+      };
+      publish();
+      return;
+    }
+    try {
+      const data = readGithubReview(document, context.changesUrl);
+      if (!data) {
+        snapshot = {
+          reviewKey: context.key,
+          title: context.title,
+          status: Date.now() < deadline ? "loading" : "error",
+          files: [],
+          error:
+            "GitHub's diff data is unavailable or this layout is unsupported. Wait for Files changed to load, then refresh SceneSleuth.",
+        };
+      } else {
+        if (comparisonKey !== data.comparisonKey) {
+          cached.clear();
+          comparisonKey = data.comparisonKey;
+        }
+        for (const file of data.files) {
+          const previous = cached.get(file.filePath);
+          if (
+            !previous ||
+            previous.pending ||
+            (!file.pending && file.rawDiff.length >= previous.rawDiff.length)
+          )
+            cached.set(file.filePath, file);
+        }
+        snapshot = {
+          reviewKey: `${context.key}:${comparisonKey}`,
+          title: context.title,
+          status: "ready",
+          files: data.files.map((file) => cached.get(file.filePath) ?? file),
+        };
       }
-    });
-
-    // Start observing
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-  }, 1000); // Wait 1 second after load to allow GitHub to finish rendering
-});
+    } catch (error) {
+      snapshot = {
+        reviewKey: context.key,
+        title: context.title,
+        status: "error",
+        files: [],
+        error: error instanceof Error ? error.message : "Could not read this review.",
+      };
+    }
+    publish();
+  }
+  runtime?.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+    if (!isReviewRequest(message)) return;
+    if (message.action === "REFRESH_REVIEW") refresh();
+    else checkPage();
+    if (message.action === "OPEN_REVIEW") inspector?.open();
+    sendResponse(snapshot);
+  });
+  let pending: number | undefined;
+  const observer = new MutationObserver(() => {
+    if (pending !== undefined) return;
+    pending = window.setTimeout(() => {
+      pending = undefined;
+      checkPage();
+    }, 150);
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+  window.addEventListener("popstate", checkPage);
+  document.addEventListener("turbo:load", checkPage);
+  document.addEventListener("pjax:end", checkPage);
+  // Bound loading even when GitHub stops mutating the document.
+  window.setInterval(() => {
+    if (snapshot.status === "loading") checkPage();
+  }, 1000);
+  checkPage();
+}
+if (document.readyState === "loading")
+  document.addEventListener("DOMContentLoaded", start, { once: true });
+else start();

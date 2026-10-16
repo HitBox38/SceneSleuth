@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "target": "ES2020",
+    "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
     "types": ["chrome", "firefox-webext-browser", "vite/client"],
@@ -27,5 +27,5 @@
       "@/*": ["./popup/src/*"]
     }
   },
-  "include": ["popup/src", "content_script", "background"]
+  "include": ["popup/src", "content_script", "shared", "ui", "tests/browser.tsx"]
 }

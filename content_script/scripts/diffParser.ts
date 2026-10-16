@@ -1,103 +1,152 @@
-import type { TscnNode, TscnResource } from "./contentParser";
-import { type CodeBlock, groupLinesByBrackets } from "./groupLinesByBrackets";
+import type { SceneReview, SourceLine, SceneSection } from "../../shared/model.ts";
+import { compareSections, parseScene } from "./contentParser.ts";
 
-export interface DiffLine {
-  lineNumber: number | null;
-  content: string;
-  type: "addition" | "deletion";
-  isPartOfBlock?: boolean;
+interface Hunk {
+  oldStart: number;
+  newStart: number;
+  before: SourceLine[];
+  after: SourceLine[];
+  oldCount: number;
+  newCount: number;
 }
-
-export interface FileDiff {
-  fileName: string;
+export interface PatchFile {
   filePath: string;
-  changes: (DiffLine | CodeBlock | TscnResource | TscnNode)[];
-  stats: {
-    additions: number;
-    deletions: number;
+  previousPath?: string;
+  status: SceneReview["status"];
+  hunks: Hunk[];
+  rawDiff: string;
+}
+
+function patchPath(raw: string): string {
+  let value = raw.split("\t")[0];
+  if (value.startsWith('"')) {
+    try {
+      value = JSON.parse(value) as string;
+    } catch {
+      /* Keep a malformed path visible. */
+    }
+  }
+  return value.replace(/^[ab]\//, "");
+}
+
+export function parseUnifiedDiff(text: string): PatchFile[] {
+  const files: PatchFile[] = [];
+  let file: PatchFile | undefined, hunk: Hunk | undefined;
+  let oldLine = 0,
+    newLine = 0;
+  for (const line of text.replace(/\r\n/g, "\n").split("\n")) {
+    if (line.startsWith("diff --git ")) {
+      file = { filePath: "", status: "modified", hunks: [], rawDiff: line + "\n" };
+      files.push(file);
+      hunk = undefined;
+      continue;
+    }
+    if (!file) continue;
+    file.rawDiff += line + "\n";
+    if (!hunk && line.startsWith("--- ")) {
+      const path = patchPath(line.slice(4));
+      if (path === "/dev/null") file.status = "added";
+      else file.previousPath = path;
+    } else if (!hunk && line.startsWith("+++ ")) {
+      const path = patchPath(line.slice(4));
+      if (path === "/dev/null") {
+        file.status = "removed";
+        file.filePath = file.previousPath ?? "";
+      } else file.filePath = path;
+      if (file.status === "modified" && file.previousPath !== file.filePath)
+        file.status = "renamed";
+    } else if (line.startsWith("rename from ")) file.previousPath = patchPath(line.slice(12));
+    else if (line.startsWith("rename to ")) {
+      file.filePath = patchPath(line.slice(10));
+      file.status = "renamed";
+    } else if (line.startsWith("@@ ")) {
+      const match = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
+      if (!match) continue;
+      oldLine = Number(match[1]);
+      newLine = Number(match[3]);
+      hunk = {
+        oldStart: oldLine,
+        newStart: newLine,
+        before: [],
+        after: [],
+        oldCount: Number(match[2] ?? 1),
+        newCount: Number(match[4] ?? 1),
+      };
+      file.hunks.push(hunk);
+    } else if (hunk) {
+      if (line.startsWith("-"))
+        hunk.before.push({ text: line.slice(1), line: oldLine++, changed: true });
+      else if (line.startsWith("+"))
+        hunk.after.push({ text: line.slice(1), line: newLine++, changed: true });
+      else if (line.startsWith(" ")) {
+        hunk.before.push({ text: line.slice(1), line: oldLine++, changed: false });
+        hunk.after.push({ text: line.slice(1), line: newLine++, changed: false });
+      }
+    }
+  }
+  return files.filter(
+    (file) => file.filePath.endsWith(".tscn") || file.previousPath?.endsWith(".tscn"),
+  );
+}
+
+export function reviewPatch(file: PatchFile): SceneReview {
+  const before = new Map<string, SceneSection>();
+  const after = new Map<string, SceneSection>();
+  function collect(target: Map<string, SceneSection>, sections: SceneSection[]) {
+    for (const section of sections) {
+      const previous = target.get(section.id);
+      if (!previous) target.set(section.id, section);
+      else {
+        previous.headerChanged ||= section.headerChanged;
+        for (const [key, value] of section.attributes) previous.attributes.set(key, value);
+        for (const [key, value] of section.properties) previous.properties.set(key, value);
+      }
+    }
+  }
+  const diagnostics = new Set<string>();
+  let additions = 0,
+    deletions = 0;
+  let complete =
+    file.hunks.length === 1 &&
+    ((file.status === "added" && file.hunks[0].newStart === 1 && file.hunks[0].oldCount === 0) ||
+      (file.status === "removed" && file.hunks[0].oldStart === 1 && file.hunks[0].newCount === 0));
+  for (const [index, hunk] of file.hunks.entries()) {
+    const oldScene = parseScene(hunk.before, `hunk-${index}`);
+    const newScene = parseScene(hunk.after, `hunk-${index}`);
+    for (const note of [...oldScene.diagnostics, ...newScene.diagnostics]) diagnostics.add(note);
+    if (hunk.before.length !== hunk.oldCount || hunk.after.length !== hunk.newCount) {
+      complete = false;
+      diagnostics.add("This patch is truncated. Some changes may be missing.");
+    }
+    additions += hunk.after.filter((line) => line.changed).length;
+    deletions += hunk.before.filter((line) => line.changed).length;
+    // Match only explicit section identities across hunks. Each hunk's unknown
+    // context has its own identity, so missing headers never inherit an owner.
+    collect(before, oldScene.sections);
+    collect(after, newScene.sections);
+  }
+  if (!file.hunks.length) {
+    complete = false;
+    diagnostics.add("No textual hunks were available for this file.");
+  }
+  const changes = compareSections([...before.values()], [...after.values()], !complete);
+  if (changes.some((change) => change.kind === "unknown"))
+    diagnostics.add(
+      "Some owning sections are outside the diff. Their changes are listed without guessing a node or resource.",
+    );
+  return {
+    filePath: file.filePath,
+    previousPath: file.previousPath !== file.filePath ? file.previousPath : undefined,
+    status: file.status,
+    coverage: complete ? "complete" : "partial",
+    additions,
+    deletions,
+    changes,
+    diagnostics: [...diagnostics],
+    rawDiff: file.rawDiff,
   };
 }
 
-/**
- * Parses a GitHub PR diff element and extracts file information and diff details
- * with bracket matching for code blocks
- * @param htmlElement - The HTML element containing the PR diff
- * @returns Object with file name and changes (deletions and additions)
- */
-export const parsePRDiff = (htmlElement: string): FileDiff => {
-  // Create a DOM parser to work with the HTML
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlElement, "text/html");
-
-  // Extract the file name and path
-  const filePathElement = doc.querySelector("a.Link--primary.Truncate-text");
-  const filePath =
-    filePathElement?.getAttribute("title") ||
-    filePathElement?.textContent?.trim() ||
-    "unknown-file";
-  const fileName = filePath.split("/").pop() || filePath;
-
-  // Extract the diff information
-  const diffRows = doc.querySelectorAll("table.diff-table tr:not(.sr-only)");
-
-  // First pass: collect all lines without any grouping
-  const rawChanges: DiffLine[] = [];
-  let deletionCount = 0;
-  let additionCount = 0;
-
-  // Parse each row of the diff table
-  diffRows.forEach((row) => {
-    // Skip hunk headers (rows with blob-num-hunk class)
-    if (row.querySelector(".blob-num-hunk")) {
-      return;
-    }
-
-    const oldLineNumElement = row.querySelector(".blob-num-deletion");
-    const newLineNumElement = row.querySelector(".blob-num-addition");
-
-    // Process code content
-    const codeElement = row.querySelector(".blob-code");
-    if (!codeElement) return;
-
-    const codeContent = codeElement.textContent?.trim() || "";
-
-    // Determine if this is a deletion, addition
-    if (oldLineNumElement && codeElement.classList.contains("blob-code-deletion")) {
-      const lineNumber = parseInt(oldLineNumElement.getAttribute("data-line-number") || "", 10);
-      deletionCount++;
-
-      if (codeContent.trim() !== "") {
-        rawChanges.push({
-          lineNumber: !isNaN(lineNumber) ? lineNumber : null,
-          content: codeContent,
-          type: "deletion",
-        });
-      }
-    } else if (newLineNumElement && codeElement.classList.contains("blob-code-addition")) {
-      const lineNumber = parseInt(newLineNumElement.getAttribute("data-line-number") || "", 10);
-      additionCount++;
-
-      if (codeContent.trim() !== "") {
-        rawChanges.push({
-          lineNumber: !isNaN(lineNumber) ? lineNumber : null,
-          content: codeContent,
-          type: "addition",
-        });
-      }
-    }
-  });
-
-  // Second pass: group lines with matching brackets
-  // const processedChanges =
-  groupLinesByBrackets(rawChanges);
-
-  return {
-    fileName,
-    filePath,
-    changes: [],
-    stats: {
-      additions: additionCount,
-      deletions: deletionCount,
-    },
-  };
-};
+export function reviewDiff(text: string): SceneReview[] {
+  return parseUnifiedDiff(text).map(reviewPatch);
+}

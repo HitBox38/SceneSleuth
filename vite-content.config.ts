@@ -1,17 +1,15 @@
 import { defineConfig } from "vite";
-
-// https://vitejs.dev/config/
 export default defineConfig({
+  define: { "process.env.NODE_ENV": JSON.stringify("production") },
+  oxc: { jsx: { runtime: "automatic" } },
   build: {
-    emptyOutDir: false, // So that popup build files don't get deleted
-    rolldownOptions: {
-      input: {
-        content: "./content_script/content-script.ts", // Entry Point
-        "content-main": "./content_script/main.ts",
-      },
-      output: {
-        entryFileNames: "assets/[name].js",
-      },
+    emptyOutDir: false,
+    target: "es2022",
+    lib: {
+      entry: "./content_script/content-script.ts",
+      name: "SceneSleuthContent",
+      formats: ["iife"],
+      fileName: () => "assets/content.js",
     },
   },
 });

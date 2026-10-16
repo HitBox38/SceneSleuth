@@ -1,104 +1,93 @@
 # SceneSleuth
 
-Understand Godot scene changes while reviewing a GitHub pull request.
+**See the scene behind the diff.**
 
-Godot stores scenes in `.tscn` text files. A regular diff shows which lines changed, but working out what those lines mean for a scene can take some digging. SceneSleuth is a browser extension intended to turn those changes into a structured view of nodes, resources, and properties, directly in the review workflow.
+SceneSleuth helps Godot developers review `.tscn` changes in GitHub pull requests. Instead of reconstructing a scene from serialized lines, you can inspect changed nodes, resources, properties, and signal connections in a structured panel beside the original review.
 
-The goal is to help Godot developers answer **“What changed in this scene?”** without having to reconstruct the scene from its serialized text or open the project in Godot.
+The goal is to answer **“What changed in this scene?”** without opening the project in Godot.
 
-## Where the project stands
+## What you can do
 
-SceneSleuth is an early prototype. The current implementation:
+Open a pull request’s **Files changed** tab, then click **SceneSleuth** in the bottom-right corner. The toolbar popup also summarizes the current tab and opens the review panel.
 
-- Runs a content script on GitHub pull request pages.
-- Looks for `.tscn` file diffs and extracts added and deleted lines from the page.
-- Sends per-file addition and deletion counts to a React extension popup.
-- Watches for additional diff elements being added to the page.
+- Browse scene files and their changed sections, with node paths and Godot classes.
+- Compare property values before and after, including source line numbers.
+- Filter nodes, resources, or signals, and search names, properties, and values.
+- Expand resources and inspect the original patch text when you need more detail.
+- Keep reviewing with GitHub’s original controls; SceneSleuth does not replace its diff or submit reviews.
 
-There is experimental code for parsing scene data and rendering an Inspector-style table. **That richer view is not connected yet:** the call that replaces GitHub's diff is commented out, and the active diff parser returns an empty `changes` array. The popup currently shows filenames and line counts, rather than meaningful scene comparisons.
+Private repositories work through your existing GitHub sign-in. SceneSleuth reads the current page’s review data and rendered diff tables. There is no backend, API token, analytics, or external scene upload.
 
-For example, a future structured view could describe a node's position changing, a resource being added, or a signal connection being removed. These are intended outcomes, not features available today.
+## Important limits
 
-## Getting started
+This is an early development build, not a published extension.
 
-You need Node.js 22 (22.12 or later) or Node.js 24+, and pnpm 10.28.1. The pnpm version is pinned in `package.json`; `pnpm-lock.yaml` records dependency versions. Node.js 22.16 is used to check these instructions. If pnpm is not installed, follow the [pnpm installation guide](https://pnpm.io/installation). With Corepack available, `corepack enable` activates the pinned package manager.
+**A diff is not a complete scene.** Modified scenes are marked **Diff context only**. A missing value means that value is absent from the available hunk, not necessarily absent from the scene. If a section header is outside the hunk, changes appear under **Unresolved scene context** rather than being assigned to a guessed node. Only complete added/deleted file patches receive a complete-context label.
+
+GitHub loads some file diffs lazily. Those scenes appear as waiting for text; use **Load original scene diff** to open them. SceneSleuth updates when GitHub renders their lines and retains loaded results within the current review. Summary counts for nodes/resources/signals cover parsed text only.
+
+The adapter targets GitHub’s modern **Files changed** layout. GitHub’s markup and embedded data are not a stable public API; unsupported layouts produce a recoverable message. Very large or GitHub-limited diffs may remain partial. There is no full scene preview, inherited-scene expansion, Godot execution, or speculative matching of renamed nodes/resource identifiers. Values such as constructors and references remain readable source text rather than evaluated objects.
+
+## Install locally
+
+You need Node.js 22.12+ or 24+, and **pnpm 10.28.1**, pinned in `package.json`. With Corepack available, `corepack enable` activates the pinned package manager. See [pnpm installation](https://pnpm.io/installation) if needed.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm run build
 ```
 
-The build writes the popup, content scripts, background script, and manifest to `dist/`. The older `build/` directory contains generated artifacts and is not the output of the current build configuration.
+The build writes the complete extension to `dist/`. The older `build/` directory is not used.
 
-### Load the extension for development
+In Chrome:
 
-The manifest currently uses `background.scripts`, a [Firefox-supported background configuration](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background). [Chrome Manifest V3 uses `background.service_worker`](https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers) instead. Browser compatibility and packaging still need validation; do not treat the current build as a cross-browser release.
+1. Open `chrome://extensions` and enable **Developer mode**.
+2. Choose **Load unpacked** and select this project’s `dist/` folder.
+3. Open a GitHub PR, visit **Files changed**, and reload the page if it was already open.
+4. Click the floating SceneSleuth button or open the extension’s toolbar popup.
 
-For a [Firefox development session](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/):
+After editing code, rebuild, reload the extension in `chrome://extensions`, and reload the GitHub page.
 
-1. Build the project.
-2. Open `about:debugging#/runtime/this-firefox` in Firefox.
-3. Choose **Load Temporary Add-on** and select `dist/manifest.json`.
-4. Open a GitHub pull request with `.tscn` changes and visit **Files changed**. If the page was already open, reload it after loading the extension.
-5. Open the SceneSleuth toolbar popup to inspect the detected scene files and their change counts.
+The manifest uses Manifest V3 without a background process. Firefox can load `dist/manifest.json` through [temporary add-on debugging](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/), but Firefox runtime compatibility still needs separate verification.
 
-After changing extension code, rebuild, reload the temporary add-on, and reload the GitHub page. GitHub's markup may have changed since this prototype was written; see the limitations below if no files are detected. This browser flow still needs end-to-end verification.
-
-### Work on the popup
+## Development
 
 ```sh
-pnpm run dev
+pnpm run dev         # Local popup development at /popup/index.html
+pnpm test            # Focused parser, patch, and GitHub-data regression tests
+pnpm run typecheck   # TypeScript 7 checks for source, tests, and Vite configs
+pnpm run lint        # Oxlint, including React and accessibility checks
+pnpm run fmt         # Format with Oxfmt
+pnpm run fmt:check   # Check formatting
+pnpm run build       # Type-check, bundle, and verify manifest assets
+pnpm run preview     # Serve built pages; does not install the extension
+pnpm run ui info     # Inspect the pinned shadcn React Aria configuration
 ```
 
-Open `/popup/index.html` on the local URL Vite prints. This is useful for developing the popup's HTML and styles. Its data flow depends on extension APIs and a GitHub tab, so a normal browser page does not exercise the full extension and may show API errors or remain loading.
+The tests use Node’s built-in test runner and TypeScript stripping; Node 22 may print an experimental warning. No separate test framework is installed. `test.html` is an older captured GitHub fixture, not the live markup contract. Committed regression fixtures are synthetic; do not add private game source to this repository.
 
-## Development commands
+The standalone popup displays setup guidance when extension APIs are absent. It does not fabricate review data. Actual injection, permissions, messaging, navigation, and popup reopening require a loaded extension.
 
-```sh
-pnpm run dev       # Start Vite for local UI development
-pnpm run typecheck # Check all popup, content, background, and Vite TypeScript
-pnpm run build     # Build all extension entry points into dist/
-pnpm run build:check # Verify manifest assets and classic content script syntax
-pnpm run lint      # Run Oxlint, including React hooks and accessibility rules
-pnpm run fmt       # Format supported source and documentation files with Oxfmt
-pnpm run fmt:check # Check formatting without changing files
-pnpm run preview   # Serve built files; does not install the extension
-pnpm run ui info # Inspect the shadcn React Aria configuration
-```
+For repeatable UI checks, open `/tests/browser.html` on the Vite development server. This synthetic fixture checks unified/split DOM extraction and lets you exercise ready, loading, empty, and error states, filtering, and untrusted scene text. It is excluded from the production build and does not establish extension integration.
 
-There is no automated test runner configured yet. `test.html` is a saved GitHub diff page used as sample input, not an automated test suite.
+### Source map
 
-The build runs TypeScript 7 project checks before bundling with Vite 8's Rolldown/Oxc toolchain, then checks the manifest's built assets and content script syntax. The app project covers `popup/src/`, `content_script/`, and `background/`; the Node project covers all Vite configurations. Oxlint and Oxfmt replace the previous ESLint setup. The saved `test.html` fixture and generated output are excluded from formatting.
+- `content_script/content-script.ts`: page lifecycle, review cache, and popup messaging.
+- `content_script/scripts/githubReview.ts`: normalize GitHub’s embedded review data.
+- `content_script/scripts/githubDom.ts`: collect additionally rendered diff tables.
+- `content_script/scripts/diffParser.ts`: unified patches, hunk boundaries, and source lines.
+- `content_script/scripts/contentParser.ts`: scene sections, lexical values, identities, and comparisons.
+- `shared/`: review models and the `GET_REVIEW` / `REFRESH_REVIEW` / `OPEN_REVIEW` protocol.
+- `ui/`: shared review presentation and the shadow-root panel.
+- `popup/src/`: React toolbar popup and React Aria primitives.
+- `tests/`: focused regression coverage with Node’s built-in runner.
+- `public/manifest.json`: permissions and entry points.
+- `vite*.config.ts`, `scripts/check-build.mjs`: popup and classic content-script packaging.
 
-### UI components
+The stack is TypeScript 7, React, Vite 8, Tailwind CSS, and React Aria Components. Oxlint/Oxfmt handle linting/formatting. `components.json` selects shadcn’s `aria-vega` style. Use `pnpm run ui add <component>` for new Aria primitives. Actions use `Button` with `onPress`/`isDisabled`; navigation uses `LinkButton` with `href`.
 
-Popup primitives use [React Aria Components](https://react-aria.adobe.com/) with shadcn's `aria-vega` configuration and the existing stone color tokens. `pnpm run ui add <component>` runs the pinned shadcn CLI on demand; it downloads CLI tooling with `pnpm dlx` rather than adding it to the extension's runtime dependencies.
+See the [verification record](docs/verification.md) for completed checks and remaining installed-extension/browser coverage.
 
-Use `Button` with `onPress` for actions and `isDisabled` for its disabled state. Use `LinkButton` with `href` for navigation. Both support refs and React Aria render props. The previous Radix `Slot` and `asChild` API have been removed; use a link component when composing a navigation control. Focus, hover, and disabled styling follows React Aria's state attributes.
+## Working with an agent
 
-## How it fits together
-
-- `content_script/content-script.ts` finds GitHub diff elements, filters scene files, stores parsed results, and exchanges messages with the popup.
-- `content_script/scripts/diffParser.ts` extracts filenames, line numbers, and change counts from diff HTML.
-- `content_script/scripts/contentParser.ts` and `groupLinesByBrackets.ts` contain the initial scene parsing experiments.
-- `content_script/second_try/` contains an alternative parser; it is not wired into the active flow.
-- `content_script/scripts/createGodotInspectorTable.ts`, `generateTableRows.ts`, and `replaceDiffWithGodotInspector.ts` contain the unfinished inline view.
-- `popup/src/` contains the React UI, styled with Tailwind CSS and React Aria primitives configured through shadcn.
-- `public/manifest.json` defines extension permissions and entry points.
-- `vite*.config.ts` define separate popup, content script, and background builds.
-- `background/background.ts` and `content_script/main.ts` are reserved entry points without runtime behavior.
-
-There is no backend in this repository. The implemented flow reads the GitHub page's DOM and passes data through browser extension messages; it does not fetch complete scene files from a GitHub API.
-
-## Current limitations and useful next work
-
-- **Scene understanding:** consolidate the parser experiments and connect structured results to a review UI. Keep diff additions/deletions separate from Godot object types.
-- **Incomplete input:** the parser reads changed lines, not complete before-and-after scenes. Unchanged nodes, property ownership, and referenced resources may be missing. A trustworthy semantic comparison needs that context or an explicit indication that the result is partial.
-- **GitHub integration:** selectors depend on GitHub's DOM. Navigation within GitHub, delayed rendering, and repeated processing need testing; scene elements are not currently marked processed while the inline renderer is disabled.
-- **Popup feedback:** unsupported pages, missing content scripts, and messaging failures need clear empty or error states instead of indefinite loading.
-- **Development foundations:** validate each browser's manifest and add small fixtures and regression tests for the parser and messaging flow.
-- **Release polish:** replace the template manifest description, Vite branding, and popup page title before distribution.
-
-## Contributing with an AI agent
-
-Start with [AGENTS.md](AGENTS.md) for repository conventions and verification expectations. Project-local skills live in [`.agents/skills/`](.agents/skills/) and cover extension development, Godot scene diffs, and popup UI work. Their scope and invocation examples are listed in `AGENTS.md`.
+Read [AGENTS.md](AGENTS.md) for conventions and verification expectations. Project-local skills in [`.agents/skills/`](.agents/skills/) cover extension development, Godot scene diffs, and popup presentation.

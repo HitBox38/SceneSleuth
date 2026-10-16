@@ -5,7 +5,7 @@ description: Implement or review Godot .tscn parsing and semantic scene comparis
 
 # Godot scene diffs
 
-Read the root `AGENTS.md` and trace which parser the caller actually uses. The repository has experiments in `content_script/scripts/` and `content_script/second_try/`; a new model should replace or integrate a chosen path rather than create another disconnected parser.
+Read the root `AGENTS.md` and trace which parser the caller actually uses. The active parser is `content_script/scripts/contentParser.ts`, called by the unified patch adapter in `diffParser.ts`. Extend this path rather than creating a disconnected parser.
 
 ## Establish what the input proves
 
@@ -24,7 +24,7 @@ Keep separate fields for:
 - Diff operation: added, removed, or modified.
 - Identity, properties, references, and source locations.
 
-The existing code overloads `type` in places; preserve these meanings when redesigning it. Attach properties to their owning section. Retain exact source and diagnostics for unsupported values instead of losing information during coercion.
+The shared model separates `kind`, `className`, and `operation`; preserve those meanings. Attach properties to their owning section. Retain exact source and diagnostics for unsupported values instead of losing information during coercion.
 
 Verify the relevant Godot version and serialized syntax against fixtures and the [official TSCN format documentation](https://docs.godotengine.org/en/stable/engine_details/file_formats/tscn.html) when extending syntax support. Select the documentation version matching the input; stable documentation alone is not proof that every older scene uses the same syntax. Treat the following as design checks, not a complete grammar:
 
@@ -46,4 +46,4 @@ Ignore only formatting that the parser can establish is insignificant. Preserve 
 
 Choose focused examples for the changed behavior: property changes under unchanged headers, duplicate node names under different parents, referenced resources, multiline values, quoted delimiters, or disconnected hunks. Include both an observable expected change and an unchanged case that should not be reported.
 
-Use minimal excerpts derived from `test.html` for DOM extraction tests; keep pure scene parsing tests independent of the DOM and extension APIs. No test runner is configured yet, so choose one only when implementation work warrants it. Report supported constructs and partial-input limits precisely.
+Use minimal excerpts derived from `test.html` for DOM extraction tests; keep pure scene parsing tests independent of the DOM and extension APIs. Run `pnpm test` for the built-in Node runner and add synthetic regression fixtures when needed. Do not commit private game source. Report supported constructs and partial-input limits precisely.

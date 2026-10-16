@@ -1,18 +1,19 @@
 {
   "name": "scene-sleuth",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "pnpm run typecheck && vite build --config vite.config.ts && vite build --config vite-content.config.ts && vite build --config vite-background.config.ts && pnpm run build:check",
+    "build": "pnpm run typecheck && vite build --config vite.config.ts && vite build --config vite-content.config.ts && pnpm run build:check",
     "lint": "oxlint --deny-warnings",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "build:check": "node scripts/check-build.mjs",
-    "ui": "pnpm dlx shadcn@4.21.5"
+    "ui": "pnpm dlx shadcn@4.21.5",
+    "test": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
