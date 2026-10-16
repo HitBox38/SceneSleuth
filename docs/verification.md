@@ -53,12 +53,16 @@ The real popup was opened, closed, and reopened on two Godot PR tabs. It showed 
 
 A public [TypeScript PR](https://github.com/microsoft/TypeScript/pull/64845) provided the no-scene case. Its files were checked through the GitHub API; none were `.tscn`. Both the installed panel and real toolbar popup displayed the empty state without retaining Godot scene results. All PR use was read-only.
 
-## Final navigation checks pending
+## Navigation and selected-commit checks
 
 Testing GitHub’s PR-list → PR navigation exposed a manifest injection gap: a script registered only on PR URLs cannot observe navigation that starts on a non-PR document. The manifest now starts the content script on GitHub, while `reviewContext` gates scene extraction and inspector creation to PRs.
 
 Selecting an individual commit also exposed GitHub’s `pullRequestsChangesWithRangeRoute` payload. The adapter now accepts it, and source URLs preserve the selected range and query parameters. Two focused regressions cover these data contracts.
 
-These changes build and pass all checks. Chrome automation blocks opening `chrome://extensions`; the user must reload the extension to register the updated manifest before final PR-list navigation and selected-commit checks. The source-link limitation noted above remains: exact GitHub line highlighting was not established.
+After the user reloaded the extension to register the updated manifest, a fresh Chrome tab opened on the repository PR list with no inspector root. Clicking the four-scene PR created the launcher on its conversation page. Opening Files changed then displayed all four scenes, 21 node changes, 18 resource changes, and 43 sections, with one inspector root.
+
+GitHub’s commit selector was used to review the first commit. The inspector updated to two scenes (`Scenes/base_enemy.tscn` and `main.tscn`), four node changes, and four resource changes. Source links retained the selected commit in their URLs. Returning to All commits restored four scenes and the original counts without duplicate roots or stale results. The checked page console contained no errors or warnings.
+
+These changes build and pass all checks. The source-link limitation noted above remains: exact GitHub line highlighting was not established.
 
 Firefox runtime verification remains outstanding. The build should not be described as a verified cross-browser release.
