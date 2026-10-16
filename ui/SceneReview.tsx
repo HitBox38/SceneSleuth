@@ -3,6 +3,7 @@ import { Search, GitBranch, Layers, ArrowUpRight, RefreshCw, X, ChevronDown } fr
 import { Button } from "../popup/src/components/ui/button.tsx";
 import { LinkButton } from "../popup/src/components/ui/button.tsx";
 import type { ReviewSnapshot, SceneReview, SectionChange, SectionKind } from "../shared/model.ts";
+import { inlineFileContents } from "./fileContents.ts";
 
 const labels: Record<SectionKind, string> = {
   node: "Node",
@@ -188,7 +189,8 @@ export function InlineSceneReview({
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
-  const stats = sceneStats([file]);
+  const contents = inlineFileContents(file);
+  const stats = sceneStats([contents]);
   return (
     <section className="ss ss-inline" aria-label={`SceneSleuth review for ${file.filePath}`}>
       <header className="ss-inline-header">
@@ -223,7 +225,7 @@ export function InlineSceneReview({
               <strong>{stats.nodes}</strong> nodes
             </span>
             <span>
-              <strong>{stats.resources}</strong> resources
+              <strong>{stats.resources}</strong> embedded resources
             </span>
             <span>
               <strong>{stats.signals}</strong> signals
@@ -239,7 +241,7 @@ export function InlineSceneReview({
                   aria-pressed={filter === key}
                   onPress={() => setFilter(key as Filter)}
                 >
-                  {label}
+                  {key === "resource" ? "Embedded resources" : label}
                 </Button>
               ))}
             </div>
@@ -254,7 +256,14 @@ export function InlineSceneReview({
             </label>
           </div>
           <div className="ss-files">
-            <FileReview file={file} filter={filter} search={search} embedded />
+            {!contents.changes.length && file.changes.length ? (
+              <p className="ss-empty">
+                No scene-local changes in this file. Select Original diff to inspect its file
+                references.
+              </p>
+            ) : (
+              <FileReview file={contents} filter={filter} search={search} embedded />
+            )}
           </div>
         </>
       )}

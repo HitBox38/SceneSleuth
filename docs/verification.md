@@ -6,7 +6,7 @@ Development build 0.1.0, checked on 2026-10-16.
 
 - `pnpm install --frozen-lockfile`: passed with pnpm 10.28.1.
 - `pnpm run lint`, `pnpm run fmt:check`, `pnpm run typecheck`: passed.
-- `pnpm test`: 26 tests passed using Node’s built-in runner.
+- `pnpm test`: 27 tests passed using Node’s built-in runner.
 - `pnpm run build`: popup and classic IIFE content script built; manifest asset/syntax checks passed.
 
 Node 22 prints an experimental TypeScript-stripping warning. The content build reports two upstream Lucide `use client` directive warnings; this bundle runs entirely in the client. Neither warning causes a check failure.
@@ -120,3 +120,11 @@ After the user reloaded commit `499268a`, real installed Chrome checks passed:
 - Selecting the delayed main scene completes all four inline reviews with section counts 9, 11, 6, and 17 (43 total). No duplicate mounts appear, and the checked page console has no errors or warnings.
 
 The same-element reuse case is covered by the synthetic regression; the real PR checks establish file switching and navigation with the installed extension. Firefox runtime behavior and precise GitHub source-line highlighting remain outstanding.
+
+## Scene-local inline presentation
+
+The inline view now excludes external-resource declaration cards (referenced scripts, textures, and other scene files). Its counts and filters cover only settings, nodes, embedded resources, and signals in that scene. Node property values such as `ExtResource("1")` remain intact; Original diff retains the full source, including external declarations. A file with only external-reference changes displays a local empty state with access to the original diff.
+
+A synthetic scene fixture checks that the script/image cards disappear while the local node’s position and script-reference values, embedded material property, and signal connection remain. The browser view contains four local sections with one node, one embedded resource, and one signal; its Embedded resources filter displays only the local material. The Node regression verifies that presentation filtering does not mutate the original review or its raw source.
+
+A read-only parse of the real Raven patch confirms that its inline presentation now contains exactly Scene settings, Raven, Sprite2D, and NavigationAgent2D, with zero external-file cards. Lint, formatting, 27 Node tests, type checking, and the production build pass. This presentation change requires an installed-extension reload before live Chrome verification; earlier installed results above describe the preceding presentation.

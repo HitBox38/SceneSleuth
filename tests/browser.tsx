@@ -10,6 +10,11 @@ import {
 import type { ReviewSnapshot } from "../shared/model.ts";
 import { Button } from "../popup/src/components/ui/button.tsx";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
+import {
+  referencedScenePath,
+  referencedSceneSource,
+  referencedSceneReview,
+} from "./fixtures/file-contents.ts";
 import "../ui/review.css";
 
 // Synthetic source only. This page is a development fixture, never a runtime fallback.
@@ -254,6 +259,28 @@ function Fixture() {
             }}
           >
             Remount GitHub table
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
+              diffBody.querySelector("table")?.remove();
+              diffBody.append(
+                makeTable(
+                  false,
+                  [
+                    `@@ -0,0 +1,${referencedSceneSource.length} @@`,
+                    ...referencedSceneSource.map((line) => `+${line}`),
+                  ],
+                  referencedScenePath,
+                  "diff-references",
+                ),
+              );
+              name.textContent = referencedScenePath;
+              inlineSnapshot = { ...ready, files: [referencedSceneReview] };
+              inlineReviews.update(inlineSnapshot);
+            }}
+          >
+            Scene with file references
           </Button>
           <Button
             className="ss-button"
