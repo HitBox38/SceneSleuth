@@ -46,7 +46,7 @@ In Chrome:
 3. Open a GitHub PR, visit **Files changed**, and reload the page if it was already open.
 4. Click the floating SceneSleuth button or open the extension’s toolbar popup.
 
-After editing code, rebuild, reload the extension in `chrome://extensions`, and reload the GitHub page.
+After editing code, rebuild, reload the extension in `chrome://extensions`, and reload the GitHub page. Chrome can keep an older registered content script even while the popup reads newer files from `dist/`. If the popup reports an unexpected response, reload **the extension first**, then reload the PR tab; refreshing the page alone may keep running the old script.
 
 The manifest uses Manifest V3 without a background process. Firefox can load `dist/manifest.json` through [temporary add-on debugging](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/), but Firefox runtime compatibility still needs separate verification.
 

@@ -34,7 +34,9 @@ These fixture checks are separate from testing an installed extension.
 
 ## Remaining verification
 
-Chrome automation blocks opening `chrome://extensions`. Manual **Load unpacked** of `dist/` is required before the following installed-extension checks can be completed:
+The user loaded SceneSleuth in Chrome. Its real toolbar popup was opened on the private PR, and its outdated-response error state was verified. DevTools confirmed that Chrome was still executing the cached prototype content script (`Custom elements not found on initial load`), while the popup had the current build. Reloading the PR alone did not replace that cached script.
+
+Chrome automation blocks opening `chrome://extensions`. The user must reload the installed extension there, then reload the PR tab, before the following installed-extension checks can be completed:
 
 - Real scene PR: injection, all scene results, delayed file loading, filters, and original-source links.
 - Actual toolbar popup messaging, close/reopen, active-tab scoping, and absent receivers.
