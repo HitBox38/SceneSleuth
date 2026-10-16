@@ -2,7 +2,13 @@ import { useState } from "react";
 import { Search, GitBranch, Layers, ArrowUpRight, RefreshCw, X, ChevronDown } from "lucide-react";
 import { Button } from "../popup/src/components/ui/button.tsx";
 import { LinkButton } from "../popup/src/components/ui/button.tsx";
-import type { ReviewSnapshot, SceneReview, SectionChange, SectionKind } from "../shared/model.ts";
+import type {
+  ReviewSnapshot,
+  SceneReview,
+  SectionChange,
+  SectionKind,
+  ValueReference,
+} from "../shared/model.ts";
 import { inlineFileContents } from "./fileContents.ts";
 
 const labels: Record<SectionKind, string> = {
@@ -36,6 +42,26 @@ export function sceneStats(files: SceneReview[]) {
     signals: changes.filter((item) => item.kind === "connection").length,
     properties: changes.reduce((sum, item) => sum + item.properties.length, 0),
   };
+}
+function ReferenceValue({ raw, references }: { raw?: string; references?: ValueReference[] }) {
+  if (raw === undefined) return "—";
+  if (!references?.length) return raw;
+  return (
+    <>
+      {references.map((reference, index) => (
+        <span key={reference.start}>
+          {raw.slice(index ? references[index - 1].end : 0, reference.start)}
+          <span
+            className="ss-reference"
+            title={`${reference.className ? reference.className + " · " : ""}${reference.target}\n${raw.slice(reference.start, reference.end)}`}
+          >
+            {reference.label}
+          </span>
+        </span>
+      ))}
+      {raw.slice(references[references.length - 1].end)}
+    </>
+  );
 }
 function ChangedSection({
   change,
@@ -107,8 +133,12 @@ function ChangedSection({
                       : ""}
                 </small>
               </span>
-              <code className="ss-before">{property.before ?? "—"}</code>
-              <code className="ss-after">{property.after ?? "—"}</code>
+              <code className="ss-before">
+                <ReferenceValue raw={property.before} references={property.beforeReferences} />
+              </code>
+              <code className="ss-after">
+                <ReferenceValue raw={property.after} references={property.afterReferences} />
+              </code>
             </div>
           ))}
         </div>
@@ -134,7 +164,7 @@ export function FileReview({
   const changes = file.changes.filter(
     (change) =>
       matchesKind(change, filter) &&
-      `${change.label} ${change.path} ${change.className} ${change.properties.map((p) => `${p.name} ${p.before ?? ""} ${p.after ?? ""}`).join(" ")}`
+      `${change.label} ${change.path} ${change.className} ${change.properties.map((p) => `${p.name} ${p.before ?? ""} ${p.after ?? ""} ${[...(p.beforeReferences ?? []), ...(p.afterReferences ?? [])].map((reference) => `${reference.label} ${reference.target}`).join(" ")}`).join(" ")}`
         .toLowerCase()
         .includes(search.toLowerCase()),
   );

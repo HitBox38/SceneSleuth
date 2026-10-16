@@ -8,7 +8,7 @@ test("inline review shows the scene's contents without cards for referenced file
   const contents = inlineFileContents(file);
   assert.deepEqual(
     contents.changes.map((change) => change.kind),
-    ["scene", "sub_resource", "node", "connection"],
+    ["scene", "sub_resource", "node", "node", "connection"],
   );
   assert.equal(contents.filePath, "Scenes/lamp.tscn");
   assert.deepEqual(
@@ -28,7 +28,13 @@ test("inline review shows the scene's contents without cards for referenced file
     "0.75",
   );
   assert.equal(contents.changes.find((change) => change.kind === "connection")?.operation, "added");
-  assert.equal(file.changes.filter((change) => change.kind === "ext_resource").length, 2);
+  assert.equal(file.changes.filter((change) => change.kind === "ext_resource").length, 3);
+  assert.equal(
+    contents.changes
+      .find((change) => change.kind === "node")
+      ?.properties.find((p) => p.name === "script")?.afterReferences?.[0].label,
+    "light_controller.gd",
+  );
   assert.equal(contents.rawDiff, file.rawDiff);
   assert.ok(contents.rawDiff.includes("light_controller.gd"));
 });

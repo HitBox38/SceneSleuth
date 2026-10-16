@@ -6,6 +6,7 @@ import type {
   SectionChange,
   PropertyChange,
 } from "../../shared/model.ts";
+import { sceneReferenceResolver } from "./sceneReferences.ts";
 
 // A lexical pass is enough to preserve values without evaluating Godot expressions.
 export function canonicalValue(text: string): string {
@@ -209,6 +210,8 @@ export function compareSections(
   const oldMap = new Map(before.map((section) => [section.id, section]));
   const newMap = new Map(after.map((section) => [section.id, section]));
   const changes: SectionChange[] = [];
+  const resolveBefore = sceneReferenceResolver(before);
+  const resolveAfter = sceneReferenceResolver(after);
   for (const id of new Set([...oldMap.keys(), ...newMap.keys()])) {
     const oldSection = oldMap.get(id),
       newSection = newMap.get(id);
@@ -224,11 +227,15 @@ export function compareSections(
           newValue = newValues.get(key);
         if (oldValue?.canonical === newValue?.canonical) continue;
         if (partial && !oldValue?.changed && !newValue?.changed) continue;
+        const beforeReferences = resolveBefore(oldValue?.raw, oldSection);
+        const afterReferences = resolveAfter(newValue?.raw, newSection);
         properties.push({
           name: prefix + key,
           operation: !oldValue ? "added" : !newValue ? "removed" : "modified",
           before: oldValue?.raw,
           after: newValue?.raw,
+          ...(beforeReferences.length ? { beforeReferences } : {}),
+          ...(afterReferences.length ? { afterReferences } : {}),
           oldLine: oldValue?.line,
           newLine: newValue?.line,
         });

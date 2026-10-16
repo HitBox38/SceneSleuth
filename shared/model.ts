@@ -33,8 +33,18 @@ export interface PropertyChange {
   operation: Operation;
   before?: string;
   after?: string;
+  beforeReferences?: ValueReference[];
+  afterReferences?: ValueReference[];
   oldLine?: number;
   newLine?: number;
+}
+// Ranges refer to the unchanged raw value; only presentation replaces them.
+export interface ValueReference {
+  start: number;
+  end: number;
+  label: string;
+  target: string;
+  className: string;
 }
 export interface SectionChange {
   id: string;

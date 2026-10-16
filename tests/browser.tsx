@@ -14,6 +14,8 @@ import {
   referencedScenePath,
   referencedSceneSource,
   referencedSceneReview,
+  changedReferenceLines,
+  changedReferenceReview,
 } from "./fixtures/file-contents.ts";
 import "../ui/review.css";
 
@@ -313,6 +315,20 @@ function Fixture() {
             }}
           >
             Scene with file references
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
+              diffBody.querySelector("table")?.remove();
+              diffBody.append(
+                makeTable(false, changedReferenceLines, referencedScenePath, "diff-references"),
+              );
+              name.textContent = referencedScenePath;
+              inlineSnapshot = { ...ready, files: [changedReferenceReview] };
+              inlineReviews.update(inlineSnapshot);
+            }}
+          >
+            Changed file references
           </Button>
           <Button
             className="ss-button"

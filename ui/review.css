@@ -618,3 +618,7 @@
 .ss-inline .ss-padding {
   padding: 7px 8px;
 }
+.ss-reference {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
