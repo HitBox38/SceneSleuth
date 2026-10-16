@@ -14,7 +14,7 @@ Open a pull request’s **Files changed** tab. SceneSleuth automatically replace
 - Compare property values before and after, including source line numbers.
 - Filter nodes, resources, or signals, and search names, properties, and values.
 - Expand resources and inspect the original patch text when you need more detail.
-- Switch between **Scene** and **Original diff** independently for each file using the control in GitHub’s file header, between Copilot and Viewed. The scene body starts directly with its filters and search, without an extra brand or counts row. Use the original view for GitHub line comments; source-line links reveal that view automatically.
+- Switch between **Scene** and **Original diff** independently for each file using the control in GitHub’s file header, between Copilot and Viewed. The scene body starts with filters and search on one compact row, wrapping on narrow screens. It has no extra brand, counts, or context-explanation row. Use the original view for GitHub line comments; source-line links reveal that view automatically.
 - Each inline view shows the scene’s own settings, nodes, properties, embedded resources, and signals. Referenced script, image, and scene files are not displayed as separate cards. References remain readable as property values, and their declarations remain in **Original diff**. When GitHub reuses a diff table for another file, SceneSleuth replaces the old view rather than carrying its values over.
 - Keep GitHub’s file navigation, Viewed checkboxes, and review controls. Non-scene files keep their original diffs, and SceneSleuth never submits reviews.
 
@@ -26,7 +26,7 @@ The content script starts on GitHub pages so it can detect GitHub’s navigation
 
 This is an early development build, not a published extension.
 
-**A diff is not a complete scene.** Modified scenes are marked **Diff context only**. A missing value means that value is absent from the available hunk, not necessarily absent from the scene. If a section header is outside the hunk, changes appear under **Unresolved scene context** rather than being assigned to a guessed node. Only complete added/deleted file patches receive a complete-context label.
+**A diff is not a complete scene.** Modified scene reviews contain diff context only; unchanged sections may be missing. A missing value means that value is absent from the available hunk, not necessarily absent from the scene. If a section header is outside the hunk, changes appear under **Unresolved scene context** rather than being assigned to a guessed node. Complete coverage is established only for complete added/deleted file patches.
 
 GitHub loads some file diffs lazily. Those scenes appear as waiting for text in the toolbar popup. Select the file in GitHub and use its load control if needed. SceneSleuth replaces the diff body once its table and scene text are available, and retains loaded results within the current review. Summary counts for nodes/resources/signals cover parsed text only. If parsing is unavailable, GitHub’s original diff stays visible.
 

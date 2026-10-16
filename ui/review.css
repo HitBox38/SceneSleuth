@@ -543,7 +543,19 @@
 }
 .ss-inline .ss-toolbar {
   position: static;
-  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 16px;
+}
+.ss-inline .ss-filters {
+  margin-bottom: 0;
+}
+.ss-inline .ss-search {
+  flex: 1 1 120px;
+  min-width: 110px;
+  padding: 5px 8px;
 }
 .ss-inline .ss-files {
   padding: 0 16px 12px;

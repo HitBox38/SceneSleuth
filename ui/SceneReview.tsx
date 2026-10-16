@@ -126,7 +126,14 @@ export function FileReview({
         .includes(search.toLowerCase()),
   );
   return (
-    <article className="ss-file">
+    <article
+      className="ss-file"
+      aria-label={
+        embedded
+          ? `${file.coverage === "partial" ? "Partial scene diff" : "Scene diff"} for ${file.filePath}`
+          : undefined
+      }
+    >
       {!embedded && (
         <header className="ss-file-header">
           <div>
@@ -138,11 +145,13 @@ export function FileReview({
           </span>
         </header>
       )}
-      <p className="ss-context">
-        {file.coverage === "partial"
-          ? "Diff context only. Unchanged sections are omitted; — means no value is present in this hunk."
-          : `Complete ${file.status === "removed" ? "removed" : "new"} scene from the patch.`}
-      </p>
+      {!embedded && (
+        <p className="ss-context">
+          {file.coverage === "partial"
+            ? "Diff context only. Unchanged sections are omitted; — means no value is present in this hunk."
+            : `Complete ${file.status === "removed" ? "removed" : "new"} scene from the patch.`}
+        </p>
+      )}
       {file.diagnostics.length > 0 && (
         <div className="ss-notes">
           {file.diagnostics.map((note) => (
@@ -235,7 +244,7 @@ export function InlineSceneReview({ file, original }: { file: SceneReview; origi
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Find a node, property, or resource…"
+            placeholder="Search scene…"
           />
         </label>
       </div>
