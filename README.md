@@ -14,7 +14,7 @@ Open a pull request’s **Files changed** tab. SceneSleuth automatically replace
 - Compare property values before and after, including source line numbers.
 - Filter nodes, resources, or signals, and search names, properties, and values.
 - Expand resources and inspect the original patch text when you need more detail.
-- Switch between **Scene** and **Original diff** independently for each file. Use the original view for GitHub line comments; source-line links reveal that view automatically.
+- Switch between **Scene** and **Original diff** independently for each file using the control in GitHub’s file header, between Copilot and Viewed. The scene body starts directly with its filters and search, without an extra brand or counts row. Use the original view for GitHub line comments; source-line links reveal that view automatically.
 - Each inline view shows the scene’s own settings, nodes, properties, embedded resources, and signals. Referenced script, image, and scene files are not displayed as separate cards. References remain readable as property values, and their declarations remain in **Original diff**. When GitHub reuses a diff table for another file, SceneSleuth replaces the old view rather than carrying its values over.
 - Keep GitHub’s file navigation, Viewed checkboxes, and review controls. Non-scene files keep their original diffs, and SceneSleuth never submits reviews.
 

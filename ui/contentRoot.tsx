@@ -1,7 +1,7 @@
 import { Component, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { enableShadowDOM } from "@react-stately/flags";
-import { InlineSceneReview } from "./SceneReview.tsx";
+import { InlineSceneReview, InlineViewSwitch } from "./SceneReview.tsx";
 import styles from "./review.css?inline";
 import type { ReviewSnapshot, SceneReview } from "../shared/model.ts";
 
@@ -28,12 +28,19 @@ class ReviewBoundary extends Component<
 }
 
 // Keep GitHub's table in place so extraction, line comments, and React updates
-// continue to work. Only its display is switched; the file header stays untouched.
+// continue to work. Add the view switch beside GitHub's existing Viewed control.
 export function createInlineReviews(doc: Document = document) {
   enableShadowDOM();
   const entries = new Map<HTMLTableElement, ReturnType<typeof mount>>();
   const originalFiles = new Map<string, boolean>();
   let reviewKey = "";
+  function switchAnchor(table: HTMLTableElement) {
+    const header = table.closest('[role="region"]')?.querySelector("[data-diff-header-wrapper]");
+    const viewed = header?.querySelector(
+      'button[aria-label="Not Viewed"], button[aria-label="Viewed"], input[type="checkbox"]',
+    );
+    return viewed?.closest("label") ?? viewed;
+  }
   function isLineHash(table: HTMLTableElement, hash: string) {
     const anchor = table.getAttribute("data-diff-anchor");
     return (
@@ -43,7 +50,7 @@ export function createInlineReviews(doc: Document = document) {
     );
   }
 
-  function mount(table: HTMLTableElement, initial: SceneReview) {
+  function mount(table: HTMLTableElement, initial: SceneReview, anchor: Element) {
     const host = doc.createElement("div");
     host.setAttribute("data-scenesleuth-inline", initial.filePath);
     host.tabIndex = -1;
@@ -55,6 +62,16 @@ export function createInlineReviews(doc: Document = document) {
     shadow.append(style, target);
     table.before(host);
     const root = createRoot(target);
+    const switchHost = doc.createElement("span");
+    switchHost.setAttribute("data-scenesleuth-switch", initial.filePath);
+    switchHost.style.cssText = "display:inline-flex;flex-shrink:0;vertical-align:middle;";
+    const switchShadow = switchHost.attachShadow({ mode: "open" });
+    const switchStyle = doc.createElement("style");
+    switchStyle.textContent = `:host{all:initial;display:inline-flex;flex-shrink:0}${styles}`;
+    const switchTarget = doc.createElement("div");
+    switchShadow.append(switchStyle, switchTarget);
+    anchor.before(switchHost);
+    const switchRoot = createRoot(switchTarget);
     const display = table.style.getPropertyValue("display");
     const priority = table.style.getPropertyPriority("display");
     let file = initial;
@@ -86,18 +103,17 @@ export function createInlineReviews(doc: Document = document) {
             showTable(true);
           }}
         >
-          <InlineSceneReview
-            key={file.filePath}
-            file={file}
-            original={original}
-            onOriginal={setOriginal}
-          />
+          <InlineSceneReview key={file.filePath} file={file} original={original} />
         </ReviewBoundary>,
+      );
+      switchRoot.render(
+        <InlineViewSwitch filePath={file.filePath} original={original} onOriginal={setOriginal} />,
       );
     }
     render();
     return {
       host,
+      switchHost,
       get file() {
         return file;
       },
@@ -109,7 +125,9 @@ export function createInlineReviews(doc: Document = document) {
       dispose() {
         showTable(true);
         root.unmount();
+        switchRoot.unmount();
         host.remove();
+        switchHost.remove();
       },
     };
   }
@@ -158,6 +176,8 @@ export function createInlineReviews(doc: Document = document) {
           !entry.host.isConnected ||
           entry.host.parentElement !== table.parentElement ||
           entry.host.nextElementSibling !== table ||
+          !entry.switchHost.isConnected ||
+          entry.switchHost.nextElementSibling !== switchAnchor(table) ||
           !files.has(entry.file.filePath)
         ) {
           entry.dispose();
@@ -171,7 +191,10 @@ export function createInlineReviews(doc: Document = document) {
         if (!file) continue;
         const entry = entries.get(table);
         if (entry) entry.update(file);
-        else entries.set(table, mount(table, file));
+        else {
+          const anchor = switchAnchor(table);
+          if (anchor) entries.set(table, mount(table, file, anchor));
+        }
       }
     },
     open() {

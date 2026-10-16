@@ -178,95 +178,77 @@ export function FileReview({
     </article>
   );
 }
-export function InlineSceneReview({
-  file,
+export function InlineViewSwitch({
+  filePath,
   original,
   onOriginal,
 }: {
-  file: SceneReview;
+  filePath: string;
   original: boolean;
   onOriginal: (original: boolean) => void;
 }) {
+  return (
+    <fieldset className="ss ss-view-switch" aria-label={`Diff view for ${filePath}`}>
+      <Button
+        className="ss-filter"
+        variant="ghost"
+        aria-pressed={!original}
+        onPress={() => onOriginal(false)}
+      >
+        Scene
+      </Button>
+      <Button
+        className="ss-filter"
+        variant="ghost"
+        aria-pressed={original}
+        onPress={() => onOriginal(true)}
+      >
+        Original diff
+      </Button>
+    </fieldset>
+  );
+}
+export function InlineSceneReview({ file, original }: { file: SceneReview; original: boolean }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const contents = inlineFileContents(file);
-  const stats = sceneStats([contents]);
+  if (original) return null;
   return (
     <section className="ss ss-inline" aria-label={`SceneSleuth review for ${file.filePath}`}>
-      <header className="ss-inline-header">
-        <span className="ss-inline-brand">
-          <GitBranch size={15} /> SceneSleuth
-        </span>
-        <div className="ss-view-switch" aria-label="Diff view">
-          <Button
-            className="ss-filter"
-            variant="ghost"
-            aria-pressed={!original}
-            onPress={() => onOriginal(false)}
-          >
-            Scene
-          </Button>
-          <Button
-            className="ss-filter"
-            variant="ghost"
-            aria-pressed={original}
-            onPress={() => onOriginal(true)}
-          >
-            Original diff
-          </Button>
+      <div className="ss-toolbar">
+        <div className="ss-filters" aria-label="Filter scene changes">
+          {Object.entries(kindGroups).map(([key, label]) => (
+            <Button
+              key={key}
+              className="ss-filter"
+              variant="ghost"
+              aria-pressed={filter === key}
+              onPress={() => setFilter(key as Filter)}
+            >
+              {key === "resource" ? "Embedded resources" : label}
+            </Button>
+          ))}
         </div>
-      </header>
-      {original ? (
-        <p className="ss-original-hint">GitHub’s original diff · Select lines below to comment.</p>
-      ) : (
-        <>
-          <div className="ss-stats ss-inline-stats">
-            <span>
-              <strong>{stats.nodes}</strong> nodes
-            </span>
-            <span>
-              <strong>{stats.resources}</strong> embedded resources
-            </span>
-            <span>
-              <strong>{stats.signals}</strong> signals
-            </span>
-          </div>
-          <div className="ss-toolbar">
-            <div className="ss-filters" aria-label="Filter scene changes">
-              {Object.entries(kindGroups).map(([key, label]) => (
-                <Button
-                  key={key}
-                  className="ss-filter"
-                  variant="ghost"
-                  aria-pressed={filter === key}
-                  onPress={() => setFilter(key as Filter)}
-                >
-                  {key === "resource" ? "Embedded resources" : label}
-                </Button>
-              ))}
-            </div>
-            <label className="ss-search">
-              <Search size={14} />
-              <span className="ss-sr-only">Search nodes and properties</span>
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Find a node, property, or resource…"
-              />
-            </label>
-          </div>
-          <div className="ss-files">
-            {!contents.changes.length && file.changes.length ? (
-              <p className="ss-empty">
-                No scene-local changes in this file. Select Original diff to inspect its file
-                references.
-              </p>
-            ) : (
-              <FileReview file={contents} filter={filter} search={search} embedded />
-            )}
-          </div>
-        </>
-      )}
+        <label className="ss-search">
+          <Search size={14} />
+          <span className="ss-sr-only">Search nodes and properties</span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Find a node, property, or resource…"
+          />
+        </label>
+      </div>
+      <div className="ss-files">
+        {!contents.changes.length && file.changes.length ? (
+          <p className="ss-empty">
+            No scene-local changes in this file. Select Original diff to inspect its file
+            references.
+          </p>
+        ) : (
+          <FileReview file={contents} filter={filter} search={search} embedded />
+        )}
+      </div>
     </section>
   );
 }

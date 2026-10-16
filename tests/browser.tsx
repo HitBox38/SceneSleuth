@@ -185,20 +185,41 @@ const inlineContainer = document.createElement("div");
 inlineContainer.id = "inline-fixture";
 inlineContainer.style.cssText =
   "max-width:740px;margin:32px auto;color:#d1d7e0;border:1px solid #3d444d;border-radius:6px;";
-const githubHeader = document.createElement("header");
-githubHeader.style.cssText =
-  "padding:14px;background:#252b34;display:flex;justify-content:space-between;gap:8px;";
-const name = document.createElement("strong");
-name.textContent = path;
-const viewedLabel = document.createElement("label");
-const viewed = document.createElement("input");
-viewed.type = "checkbox";
-viewedLabel.append(viewed, " Viewed");
-githubHeader.append(name, viewedLabel);
+function makeHeader(filePath: string) {
+  const header = document.createElement("header");
+  header.setAttribute("data-diff-header-wrapper", "");
+  header.style.cssText =
+    "padding:10px;background:#252b34;display:flex;align-items:center;justify-content:space-between;gap:8px;font:12px system-ui;";
+  const title = document.createElement("strong");
+  title.textContent = filePath;
+  title.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;";
+  const actions = document.createElement("div");
+  actions.style.cssText = "display:flex;align-items:center;gap:6px;flex-shrink:0;";
+  const copilot = document.createElement("button");
+  copilot.textContent = "◉";
+  copilot.setAttribute("aria-label", "Ask about this diff");
+  copilot.setAttribute("data-testid", "copilot-diff-explain-button");
+  copilot.style.cssText =
+    "background:transparent;color:#d1d7e0;border:1px solid #3d444d;border-radius:5px;padding:5px;";
+  const label = document.createElement("label");
+  label.style.cssText = "display:flex;align-items:center;white-space:nowrap;gap:3px;";
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  label.append(checkbox, "Viewed");
+  actions.append(copilot, label);
+  header.append(title, actions);
+  return header;
+}
+let githubHeader = makeHeader(path);
+let name = githubHeader.querySelector("strong")!;
 const diffBody = document.createElement("div");
 diffBody.dataset.testid = "diff-body";
 diffBody.append(makeTable(false));
-inlineContainer.append(githubHeader, diffBody);
+const primaryRegion = document.createElement("section");
+primaryRegion.setAttribute("role", "region");
+primaryRegion.setAttribute("aria-label", "GitHub file fixture");
+primaryRegion.append(githubHeader, diffBody);
+inlineContainer.append(primaryRegion);
 const otherTable = document.createElement("table");
 otherTable.setAttribute("aria-label", "Diff for: Scripts/player.gd");
 otherTable.textContent = "Non-scene diff remains unchanged";
@@ -249,6 +270,17 @@ function Fixture() {
             }}
           >
             Repeat inline processing
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
+              const nextHeader = makeHeader(name.textContent ?? path);
+              githubHeader.replaceWith(nextHeader);
+              githubHeader = nextHeader;
+              name = githubHeader.querySelector("strong")!;
+            }}
+          >
+            Remount GitHub header
           </Button>
           <Button
             className="ss-button"
@@ -310,7 +342,11 @@ function Fixture() {
             className="ss-button"
             onPress={() => {
               if (!inlineContainer.querySelector('[aria-label="Diff for: Scenes/delayed.tscn"]')) {
-                inlineContainer.append(makeDelayedTable());
+                const region = document.createElement("section");
+                region.setAttribute("role", "region");
+                region.setAttribute("aria-label", "Delayed GitHub file fixture");
+                region.append(makeHeader(delayedFile.filePath), makeDelayedTable());
+                inlineContainer.append(region);
               }
               inlineSnapshot = { ...ready, files: [...ready.files, delayedFile] };
               inlineReviews.update(inlineSnapshot);
