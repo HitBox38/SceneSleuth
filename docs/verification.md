@@ -34,6 +34,8 @@ These fixture checks are separate from testing an installed extension.
 
 ## Installed Chrome checks
 
+The installed-extension checks below cover the earlier floating-panel build. The subsequent inline replacement has separate coverage recorded at the end of this file.
+
 The user loaded and reloaded the unpacked extension. The first attempt exposed Chrome’s cached prototype content script while the popup had the newer build. Reloading the extension, then the PR tab, resolved that mismatch.
 
 On the private Godot PR with four scenes:
@@ -66,3 +68,22 @@ GitHub’s commit selector was used to review the first commit. The inspector up
 These changes build and pass all checks. The source-link limitation noted above remains: exact GitHub line highlighting was not established.
 
 Firefox runtime verification remains outstanding. The build should not be described as a verified cross-browser release.
+
+## Inline file-diff replacement
+
+The floating inspector was replaced with a structured review inside each loaded scene file’s diff body. The live private PR’s DOM was inspected in the shared browser: the annotated body wraps a `table[aria-label="Diff for: …"]`, separately from the file header. The implementation inserts a shadow-root view before that table and switches the table’s display without removing GitHub-owned content.
+
+On the synthetic `/tests/browser.html` fixture in the shared Chromium browser:
+
+- Scene view hides the original table and displays the expected property before/after values.
+- Pointer activation of Original diff restores the table; Shift+Tab and Enter return to Scene view.
+- Filters and search operate inside the shadow root; HTML-like values remain text.
+- A source-line link reveals the original table before navigating to its fragment.
+- Twenty repeated processing calls and a replacement split-view table retain one inline mount and the chosen view, including after a source-line fragment was visited.
+- A delayed second scene receives its own mount. Changing its view does not change the first scene’s view.
+- Leaving the review removes all inline mounts and restores both source tables. The non-scene table stays visible throughout.
+- The preserved file-header Viewed checkbox remains interactive.
+- At 507 px and 360 px viewport widths, the document has no horizontal overflow.
+- A fresh fixture load has no captured console errors or warnings.
+
+These checks exercise the production mounting/UI code with synthetic data, not extension injection or live GitHub React updates. The updated installed Chrome build still needs an extension reload and real-PR verification, including file collapse/expand, selected commits, navigation, and popup-to-inline scrolling. Chrome automation cannot open `chrome://extensions`; the user handles that reload. Firefox and precise GitHub line highlighting remain unverified.

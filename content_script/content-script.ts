@@ -1,17 +1,18 @@
 import { readGithubReview } from "./scripts/githubDom.ts";
-import { createInspector } from "../ui/contentRoot.tsx";
+import { createInlineReviews } from "../ui/contentRoot.tsx";
 import { isReviewRequest, reviewContext } from "../shared/protocol.ts";
 import type { ReviewSnapshot, SceneReview } from "../shared/model.ts";
 
 function start() {
-  if (document.getElementById("scenesleuth-root")) return;
+  if (document.documentElement.hasAttribute("data-scenesleuth-active")) return;
+  document.documentElement.setAttribute("data-scenesleuth-active", "");
   let snapshot: ReviewSnapshot = {
     reviewKey: "",
     title: "SceneSleuth",
     status: "loading",
     files: [],
   };
-  let inspector: ReturnType<typeof createInspector> | undefined;
+  const inlineReviews = createInlineReviews();
   let contextKey: string | undefined;
   let comparisonKey: string | undefined;
   let signature = "";
@@ -24,10 +25,11 @@ function start() {
         ? chrome.runtime
         : undefined;
   function publish() {
+    // GitHub may replace a table without changing its scene data.
+    inlineReviews.update(snapshot);
     const next = JSON.stringify(snapshot);
     if (next === signature) return;
     signature = next;
-    inspector?.update(snapshot);
     if (runtime)
       void runtime.sendMessage({ action: "REVIEW_UPDATED", snapshot }).catch(() => {
         /* The popup is normally closed. */
@@ -48,8 +50,6 @@ function start() {
       cached.clear();
       signature = "";
       deadline = Date.now() + 10000;
-      inspector?.dispose();
-      inspector = undefined;
     }
     if (!context) {
       snapshot = {
@@ -59,12 +59,8 @@ function start() {
         files: [],
         error: "Open a GitHub pull request to review its scenes.",
       };
+      inlineReviews.update(snapshot);
       return;
-    }
-    if (!inspector || !document.getElementById("scenesleuth-root")) {
-      inspector?.dispose();
-      inspector = createInspector(refresh);
-      signature = "";
     }
     if (!context.isChangesPage) {
       snapshot = {
@@ -125,7 +121,7 @@ function start() {
     if (!isReviewRequest(message)) return;
     if (message.action === "REFRESH_REVIEW") refresh();
     else checkPage();
-    if (message.action === "OPEN_REVIEW") inspector?.open();
+    if (message.action === "OPEN_REVIEW") inlineReviews.open();
     sendResponse(snapshot);
   });
   let pending: number | undefined;

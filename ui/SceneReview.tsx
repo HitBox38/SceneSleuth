@@ -110,10 +110,12 @@ export function FileReview({
   file,
   filter,
   search,
+  embedded = false,
 }: {
   file: SceneReview;
   filter: Filter;
   search: string;
+  embedded?: boolean;
 }) {
   const changes = file.changes.filter(
     (change) =>
@@ -124,15 +126,17 @@ export function FileReview({
   );
   return (
     <article className="ss-file">
-      <header className="ss-file-header">
-        <div>
-          <h2>{file.filePath}</h2>
-          {file.previousPath && <p className="ss-muted">Previously {file.previousPath}</p>}
-        </div>
-        <span className="ss-line-count">
-          <span>+{file.additions}</span> <span>−{file.deletions}</span>
-        </span>
-      </header>
+      {!embedded && (
+        <header className="ss-file-header">
+          <div>
+            <h2>{file.filePath}</h2>
+            {file.previousPath && <p className="ss-muted">Previously {file.previousPath}</p>}
+          </div>
+          <span className="ss-line-count">
+            <span>+{file.additions}</span> <span>−{file.deletions}</span>
+          </span>
+        </header>
+      )}
       <p className="ss-context">
         {file.coverage === "partial"
           ? "Diff context only. Unchanged sections are omitted; — means no value is present in this hunk."
@@ -157,10 +161,12 @@ export function FileReview({
         <p className="ss-empty">
           {file.changes.length
             ? "No changes match these filters."
-            : "No structured changes found. Inspect the original diff below."}
+            : embedded
+              ? "No structured changes found. Select Original diff to inspect this file."
+              : "No structured changes found. Inspect the original diff below."}
         </p>
       )}
-      {!file.pending && (
+      {!file.pending && !embedded && (
         <details className="ss-raw">
           <summary>
             Original diff <span>{file.additions + file.deletions} changed lines</span>
@@ -169,6 +175,90 @@ export function FileReview({
         </details>
       )}
     </article>
+  );
+}
+export function InlineSceneReview({
+  file,
+  original,
+  onOriginal,
+}: {
+  file: SceneReview;
+  original: boolean;
+  onOriginal: (original: boolean) => void;
+}) {
+  const [filter, setFilter] = useState<Filter>("all");
+  const [search, setSearch] = useState("");
+  const stats = sceneStats([file]);
+  return (
+    <section className="ss ss-inline" aria-label={`SceneSleuth review for ${file.filePath}`}>
+      <header className="ss-inline-header">
+        <span className="ss-inline-brand">
+          <GitBranch size={15} /> SceneSleuth
+        </span>
+        <div className="ss-view-switch" aria-label="Diff view">
+          <Button
+            className="ss-filter"
+            variant="ghost"
+            aria-pressed={!original}
+            onPress={() => onOriginal(false)}
+          >
+            Scene
+          </Button>
+          <Button
+            className="ss-filter"
+            variant="ghost"
+            aria-pressed={original}
+            onPress={() => onOriginal(true)}
+          >
+            Original diff
+          </Button>
+        </div>
+      </header>
+      {original ? (
+        <p className="ss-original-hint">GitHub’s original diff · Select lines below to comment.</p>
+      ) : (
+        <>
+          <div className="ss-stats ss-inline-stats">
+            <span>
+              <strong>{stats.nodes}</strong> nodes
+            </span>
+            <span>
+              <strong>{stats.resources}</strong> resources
+            </span>
+            <span>
+              <strong>{stats.signals}</strong> signals
+            </span>
+          </div>
+          <div className="ss-toolbar">
+            <div className="ss-filters" aria-label="Filter scene changes">
+              {Object.entries(kindGroups).map(([key, label]) => (
+                <Button
+                  key={key}
+                  className="ss-filter"
+                  variant="ghost"
+                  aria-pressed={filter === key}
+                  onPress={() => setFilter(key as Filter)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            <label className="ss-search">
+              <Search size={14} />
+              <span className="ss-sr-only">Search nodes and properties</span>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Find a node, property, or resource…"
+              />
+            </label>
+          </div>
+          <div className="ss-files">
+            <FileReview file={file} filter={filter} search={search} embedded />
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 export function Inspector({

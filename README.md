@@ -2,19 +2,20 @@
 
 **See the scene behind the diff.**
 
-SceneSleuth helps Godot developers review `.tscn` changes in GitHub pull requests. Instead of reconstructing a scene from serialized lines, you can inspect changed nodes, resources, properties, and signal connections in a structured panel beside the original review.
+SceneSleuth helps Godot developers review `.tscn` changes in GitHub pull requests. Instead of reconstructing a scene from serialized lines, you can inspect changed nodes, resources, properties, and signal connections directly in each scene file’s diff area.
 
 The goal is to answer **“What changed in this scene?”** without opening the project in Godot.
 
 ## What you can do
 
-Open a pull request’s **Files changed** tab, then click **SceneSleuth** in the bottom-right corner. The toolbar popup also summarizes the current tab and opens the review panel.
+Open a pull request’s **Files changed** tab. SceneSleuth automatically replaces each loaded `.tscn` diff body with a structured scene review. GitHub’s file header and review controls stay in place. The toolbar popup summarizes the current tab; **Go to scene changes** scrolls to an inline review.
 
 - Browse scene files and their changed sections, with node paths and Godot classes.
 - Compare property values before and after, including source line numbers.
 - Filter nodes, resources, or signals, and search names, properties, and values.
 - Expand resources and inspect the original patch text when you need more detail.
-- Keep reviewing with GitHub’s original controls; SceneSleuth does not replace its diff or submit reviews.
+- Switch between **Scene** and **Original diff** independently for each file. Use the original view for GitHub line comments; source-line links reveal that view automatically.
+- Keep GitHub’s file navigation, Viewed checkboxes, and review controls. Non-scene files keep their original diffs, and SceneSleuth never submits reviews.
 
 Private repositories work through your existing GitHub sign-in. SceneSleuth reads the current page’s review data and rendered diff tables. There is no backend, API token, analytics, or external scene upload.
 
@@ -26,7 +27,7 @@ This is an early development build, not a published extension.
 
 **A diff is not a complete scene.** Modified scenes are marked **Diff context only**. A missing value means that value is absent from the available hunk, not necessarily absent from the scene. If a section header is outside the hunk, changes appear under **Unresolved scene context** rather than being assigned to a guessed node. Only complete added/deleted file patches receive a complete-context label.
 
-GitHub loads some file diffs lazily. Those scenes appear as waiting for text; use **Load original scene diff** to open them. SceneSleuth updates when GitHub renders their lines and retains loaded results within the current review. Summary counts for nodes/resources/signals cover parsed text only.
+GitHub loads some file diffs lazily. Those scenes appear as waiting for text in the toolbar popup. Select the file in GitHub and use its load control if needed. SceneSleuth replaces the diff body once its table and scene text are available, and retains loaded results within the current review. Summary counts for nodes/resources/signals cover parsed text only. If parsing is unavailable, GitHub’s original diff stays visible.
 
 The adapter targets GitHub’s modern **Files changed** layout. GitHub’s markup and embedded data are not a stable public API; unsupported layouts produce a recoverable message. Very large or GitHub-limited diffs may remain partial. There is no full scene preview, inherited-scene expansion, Godot execution, or speculative matching of renamed nodes/resource identifiers. Values such as constructors and references remain readable source text rather than evaluated objects.
 
@@ -46,7 +47,7 @@ In Chrome:
 1. Open `chrome://extensions` and enable **Developer mode**.
 2. Choose **Load unpacked** and select this project’s `dist/` folder.
 3. Open a GitHub PR, visit **Files changed**, and reload the page if it was already open.
-4. Click the floating SceneSleuth button or open the extension’s toolbar popup.
+4. Select a `.tscn` file in GitHub’s file list. Its diff body shows the scene review; **Original diff** restores GitHub’s text view.
 
 After editing code, rebuild, reload the extension in `chrome://extensions`, and reload the GitHub page. Chrome can keep an older registered content script even while the popup reads newer files from `dist/`. If the popup reports an unexpected response, reload **the extension first**, then reload the PR tab; refreshing the page alone may keep running the old script.
 
@@ -70,7 +71,7 @@ The tests use Node’s built-in test runner and TypeScript stripping; Node 22 ma
 
 The standalone popup displays setup guidance when extension APIs are absent. It does not fabricate review data. Actual injection, permissions, messaging, navigation, and popup reopening require a loaded extension.
 
-For repeatable UI checks, open `/tests/browser.html` on the Vite development server. This synthetic fixture checks unified/split DOM extraction and lets you exercise ready, loading, empty, and error states, filtering, and untrusted scene text. Use **Open extension panel** or the floating launcher to repeat pointer and keyboard checks inside the actual shadow root. It is excluded from the production build and does not establish extension integration.
+For repeatable UI checks, open `/tests/browser.html` on the Vite development server. The synthetic inline fixture mounts the actual shadow-root review beside a preserved source table and file header. Exercise the view toggle, keyboard controls, filters, search, repeated processing, table remounts, delayed files, and cleanup with its controls. A standalone inspector below it covers loading, empty, and error states. The fixture is excluded from the production build and does not establish installed-extension integration.
 
 ### Source map
 
@@ -80,7 +81,7 @@ For repeatable UI checks, open `/tests/browser.html` on the Vite development ser
 - `content_script/scripts/diffParser.ts`: unified patches, hunk boundaries, and source lines.
 - `content_script/scripts/contentParser.ts`: scene sections, lexical values, identities, and comparisons.
 - `shared/`: review models and the `GET_REVIEW` / `REFRESH_REVIEW` / `OPEN_REVIEW` protocol.
-- `ui/`: shared review presentation and the shadow-root panel.
+- `ui/`: shared review presentation and per-file shadow-root mounting, original-diff toggles, and cleanup.
 - `popup/src/`: React toolbar popup and React Aria primitives.
 - `tests/`: focused regression coverage with Node’s built-in runner.
 - `public/manifest.json`: permissions and entry points.

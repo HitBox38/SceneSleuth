@@ -11,7 +11,7 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 - `public/manifest.json`: source manifest and permissions.
 - `content_script/content-script.ts`: active GitHub integration and message handling.
 - `content_script/scripts/`: GitHub data/DOM adapters, unified patch parsing, scene parsing, and comparisons.
-- `shared/`, `ui/`: domain/message types and shared shadow-root inspector.
+- `shared/`, `ui/`: domain/message types, shared scene presentation, and per-file shadow-root reviews.
 - `tests/`: synthetic parser, patch, and GitHub-data regression coverage.
 - `popup/src/`: popup components, styles, and browser messaging consumer.
 - `vite.config.ts`, `vite-content.config.ts`: popup and classic IIFE content-script build entry points. No background process is needed.
@@ -28,6 +28,7 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 - Preserve file paths and old/new source line references where available so structured changes can lead back to the original review.
 - Treat scene text and GitHub HTML as untrusted input. Use React text rendering or DOM text APIs; escape values when generating HTML strings.
 - Make DOM processing repeatable without duplicate results or observer loops. Account for GitHub navigation and delayed rendering.
+- Mount inline scene reviews in the scene file’s diff body. Keep the original table in place for extraction and GitHub line comments, preserve its display style when restoring it, and leave file headers and non-scene diffs untouched. Reconcile mounts even when parsed data has not changed.
 - Keep the GitHub startup match broad enough to detect navigation from non-PR pages into a PR. Gate scene extraction and inspector creation behind `reviewContext`; do not read scene payloads or render a panel on other pages.
 - Enable React Aria's shadow-DOM support through `@react-stately/flags` before mounting the in-page inspector. Verify press, focus, and keyboard interactions in the actual shadow root, not only a standalone React page.
 - Keep popup data scoped to the active tab. The popup can close and reopen while the content script continues running.

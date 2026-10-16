@@ -199,7 +199,7 @@ export default function App() {
                     void openReview();
                   }}
                 >
-                  Open scene review <ArrowUpRight size={14} />
+                  Go to scene changes <ArrowUpRight size={14} />
                 </Button>
               </>
             ) : (
