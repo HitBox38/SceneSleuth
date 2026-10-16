@@ -5,7 +5,7 @@ description: Build or improve SceneSleuth's React extension popup and scene-revi
 
 # SceneSleuth popup UI
 
-Read the root `AGENTS.md`, `popup/src/App.tsx`, and the message producer in `content_script/content-script.ts`. Use the existing React, Tailwind, Lucide, and React Aria setup. `components.json` selects shadcn's `aria-vega` base; the pinned CLI is available through `npm run ui`. This is an extension popup, not a Next.js application.
+Read the root `AGENTS.md`, `popup/src/App.tsx`, and the message producer in `content_script/content-script.ts`. Use the existing React, Tailwind, Lucide, and React Aria setup. `components.json` selects shadcn's `aria-vega` base; the pinned CLI is available through `pnpm run ui`. This is an extension popup, not a Next.js application.
 
 ## Design around the review task
 

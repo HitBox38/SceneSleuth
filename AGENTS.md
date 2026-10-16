@@ -21,7 +21,7 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 
 ## Implementation conventions
 
-- Use npm and preserve `package-lock.json`; install reproducibly with `npm ci`.
+- Use the pnpm version pinned in `package.json` and preserve `pnpm-lock.yaml`; install reproducibly with `pnpm install --frozen-lockfile`. Use `pnpm add`/`pnpm remove` for dependency changes and `pnpm dlx` for temporary CLIs.
 - Follow the surrounding TypeScript and React style. Prefer explicit domain and message types over new `any` values.
 - Distinguish a diff operation (`addition`, `deletion`, or a future modification) from a scene object's kind and Godot class. These are different concepts.
 - Keep HTML extraction, scene parsing, comparison, and rendering separable. Pure parsing code should not require extension APIs.
@@ -30,7 +30,7 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 - Make DOM processing repeatable without duplicate results or observer loops. Account for GitHub navigation and delayed rendering.
 - Keep popup data scoped to the active tab. The popup can close and reopen while the content script continues running.
 - Use the existing styling and component approach. Include visible loading, empty, unsupported-page, and error states when changing popup data flows.
-- `components.json` uses shadcn's `aria-vega` style. Use `npm run ui -- info` or `npm run ui -- add <component>` with the pinned CLI. Keep new components on the React Aria base.
+- `components.json` uses shadcn's `aria-vega` style. Use `pnpm run ui info` or `pnpm run ui add <component>` with the pinned CLI. Keep new components on the React Aria base.
 - Use `Button` with `onPress`/`isDisabled` for actions and `LinkButton` with `href` for navigation. Preserve React Aria render props, forwarded refs, and state attributes when extending these wrappers; Radix's `asChild` composition is no longer part of the API.
 - Keep permissions tied to actual functionality. Validate Chrome and Firefox behavior separately instead of assuming that `chrome`/`browser` branches establish compatibility.
 
@@ -45,17 +45,17 @@ The active parser currently discards its structured results, and inline diff rep
 Run checks appropriate to the change:
 
 ```sh
-npm run lint
-npm run fmt:check
-npm run typecheck
-npm run build
+pnpm run lint
+pnpm run fmt:check
+pnpm run typecheck
+pnpm run build
 ```
 
 TypeScript 7 checks the popup, content scripts, background, and all Vite configurations. The build runs this check before bundling with Vite 8 and verifying the built manifest assets. Use `build.rolldownOptions` for bundler configuration. Manifest content scripts must remain classic JavaScript without module imports or exports. Use Oxlint's built-in TypeScript, React, and accessibility plugins rather than adding ESLint dependencies or suppression comments. Oxfmt defines formatting; `test.html` remains an unchanged captured fixture.
 
 For extension behavior, verify the built extension in a supported browser: a PR with scene changes, a PR without scene changes, delayed diff loading, navigation between PRs, and popup close/reopen. Confirm that data does not duplicate or leak across tabs. Check relevant page, popup, and background consoles. State which browser and paths you actually exercised.
 
-For parser fixes, add focused fixtures and regression coverage when the task needs it. Include partial hunks and a meaningful before/after assertion. No test runner exists yet; introduce one deliberately rather than citing a nonexistent `npm test` command. Documentation-only changes need link and accuracy checks, not browser testing.
+For parser fixes, add focused fixtures and regression coverage when the task needs it. Include partial hunks and a meaningful before/after assertion. No test runner exists yet; introduce one deliberately rather than citing a nonexistent `pnpm test` command. Documentation-only changes need link and accuracy checks, not browser testing.
 
 Do not silently fix unrelated baseline failures. Report the commands run, their results, and any remaining verification gaps. If loading or type-checking is blocked, say so rather than calling the build a working release.
 

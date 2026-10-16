@@ -5,14 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run typecheck && vite build --config vite.config.ts && vite build --config vite-content.config.ts && vite build --config vite-background.config.ts && npm run build:check",
+    "build": "pnpm run typecheck && vite build --config vite.config.ts && vite build --config vite-content.config.ts && vite build --config vite-background.config.ts && pnpm run build:check",
     "lint": "oxlint --deny-warnings",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "build:check": "node scripts/check-build.mjs",
-    "ui": "npx --yes shadcn@4.21.5"
+    "ui": "pnpm dlx shadcn@4.21.5"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
@@ -40,5 +40,6 @@
   },
   "engines": {
     "node": "^22.12.0 || >=24.0.0"
-  }
+  },
+  "packageManager": "pnpm@10.28.1"
 }

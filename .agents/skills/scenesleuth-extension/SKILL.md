@@ -25,7 +25,7 @@ If an observer changes the subtree it watches, ensure that its own updates do no
 
 ## Packaging and browser compatibility
 
-Build from source with `npm run build`; inspect `dist/manifest.json` and every referenced asset. Check the output script format for the declared execution context, not just the existence of a bundle.
+Build from source with `pnpm run build`; inspect `dist/manifest.json` and every referenced asset. Check the output script format for the declared execution context, not just the existence of a bundle.
 
 Choose browser-specific manifest fields deliberately. The current `background.scripts` declaration is not a Chrome MV3 service-worker declaration. Consult the [Chrome service-worker guidance](https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers) and [Firefox background manifest reference](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background) when modifying manifests or lifecycle code; check official API documentation for changes to messaging semantics. Preserve the task's browser scope and explain any browser left untested.
 

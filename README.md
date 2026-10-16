@@ -21,11 +21,11 @@ For example, a future structured view could describe a node's position changing,
 
 ## Getting started
 
-You need Node.js 22 (22.12 or later) or Node.js 24+, and npm. Node.js 22.16 is used to check these instructions. The npm lockfile is included.
+You need Node.js 22 (22.12 or later) or Node.js 24+, and pnpm 10.28.1. The pnpm version is pinned in `package.json`; `pnpm-lock.yaml` records dependency versions. Node.js 22.16 is used to check these instructions. If pnpm is not installed, follow the [pnpm installation guide](https://pnpm.io/installation). With Corepack available, `corepack enable` activates the pinned package manager.
 
 ```sh
-npm ci
-npm run build
+pnpm install --frozen-lockfile
+pnpm run build
 ```
 
 The build writes the popup, content scripts, background script, and manifest to `dist/`. The older `build/` directory contains generated artifacts and is not the output of the current build configuration.
@@ -47,7 +47,7 @@ After changing extension code, rebuild, reload the temporary add-on, and reload 
 ### Work on the popup
 
 ```sh
-npm run dev
+pnpm run dev
 ```
 
 Open `/popup/index.html` on the local URL Vite prints. This is useful for developing the popup's HTML and styles. Its data flow depends on extension APIs and a GitHub tab, so a normal browser page does not exercise the full extension and may show API errors or remain loading.
@@ -55,15 +55,15 @@ Open `/popup/index.html` on the local URL Vite prints. This is useful for develo
 ## Development commands
 
 ```sh
-npm run dev       # Start Vite for local UI development
-npm run typecheck # Check all popup, content, background, and Vite TypeScript
-npm run build     # Build all extension entry points into dist/
-npm run build:check # Verify manifest assets and classic content script syntax
-npm run lint      # Run Oxlint, including React hooks and accessibility rules
-npm run fmt       # Format supported source and documentation files with Oxfmt
-npm run fmt:check # Check formatting without changing files
-npm run preview   # Serve built files; does not install the extension
-npm run ui -- info # Inspect the shadcn React Aria configuration
+pnpm run dev       # Start Vite for local UI development
+pnpm run typecheck # Check all popup, content, background, and Vite TypeScript
+pnpm run build     # Build all extension entry points into dist/
+pnpm run build:check # Verify manifest assets and classic content script syntax
+pnpm run lint      # Run Oxlint, including React hooks and accessibility rules
+pnpm run fmt       # Format supported source and documentation files with Oxfmt
+pnpm run fmt:check # Check formatting without changing files
+pnpm run preview   # Serve built files; does not install the extension
+pnpm run ui info # Inspect the shadcn React Aria configuration
 ```
 
 There is no automated test runner configured yet. `test.html` is a saved GitHub diff page used as sample input, not an automated test suite.
@@ -72,7 +72,7 @@ The build runs TypeScript 7 project checks before bundling with Vite 8's Rolldow
 
 ### UI components
 
-Popup primitives use [React Aria Components](https://react-aria.adobe.com/) with shadcn's `aria-vega` configuration and the existing stone color tokens. `npm run ui -- add <component>` runs the pinned shadcn CLI on demand; it downloads CLI tooling through npm rather than adding it to the extension's runtime dependencies.
+Popup primitives use [React Aria Components](https://react-aria.adobe.com/) with shadcn's `aria-vega` configuration and the existing stone color tokens. `pnpm run ui add <component>` runs the pinned shadcn CLI on demand; it downloads CLI tooling with `pnpm dlx` rather than adding it to the extension's runtime dependencies.
 
 Use `Button` with `onPress` for actions and `isDisabled` for its disabled state. Use `LinkButton` with `href` for navigation. Both support refs and React Aria render props. The previous Radix `Slot` and `asChild` API have been removed; use a link component when composing a navigation control. Focus, hover, and disabled styling follows React Aria's state attributes.
 
