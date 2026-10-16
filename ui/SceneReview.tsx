@@ -37,7 +37,20 @@ export function sceneStats(files: SceneReview[]) {
     properties: changes.reduce((sum, item) => sum + item.properties.length, 0),
   };
 }
-function ChangedSection({ change, reviewUrl }: { change: SectionChange; reviewUrl?: string }) {
+function ChangedSection({
+  change,
+  reviewUrl,
+  compact = false,
+}: {
+  change: SectionChange;
+  reviewUrl?: string;
+  compact?: boolean;
+}) {
+  const path = compact
+    ? change.path && change.path !== "." && change.path !== change.label
+      ? change.path
+      : undefined
+    : change.path || labels[change.kind];
   return (
     <details className="ss-section" open={change.kind === "node" || change.kind === "unknown"}>
       <summary>
@@ -46,7 +59,7 @@ function ChangedSection({ change, reviewUrl }: { change: SectionChange; reviewUr
         </span>
         <span className="ss-section-name">
           {change.label}
-          <span className="ss-section-path">{change.path || labels[change.kind]}</span>
+          {path && <span className="ss-section-path">{path}</span>}
         </span>
         <span className="ss-type">{change.className || labels[change.kind]}</span>
         <ChevronDown size={13} />
@@ -165,7 +178,12 @@ export function FileReview({
         </LinkButton>
       )}
       {changes.map((change) => (
-        <ChangedSection key={change.id} change={change} reviewUrl={file.reviewUrl} />
+        <ChangedSection
+          key={change.id}
+          change={change}
+          reviewUrl={file.reviewUrl}
+          compact={embedded}
+        />
       ))}
       {!changes.length && !file.pending && (
         <p className="ss-empty">
