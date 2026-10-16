@@ -15,6 +15,7 @@ Open a pull request’s **Files changed** tab. SceneSleuth automatically replace
 - Filter nodes, resources, or signals, and search names, properties, and values.
 - Expand resources and inspect the original patch text when you need more detail.
 - Switch between **Scene** and **Original diff** independently for each file. Use the original view for GitHub line comments; source-line links reveal that view automatically.
+- Each inline view uses only its own file’s values. When GitHub reuses a diff table for another file, SceneSleuth replaces the old view rather than carrying its values over.
 - Keep GitHub’s file navigation, Viewed checkboxes, and review controls. Non-scene files keep their original diffs, and SceneSleuth never submits reviews.
 
 Private repositories work through your existing GitHub sign-in. SceneSleuth reads the current page’s review data and rendered diff tables. There is no backend, API token, analytics, or external scene upload.

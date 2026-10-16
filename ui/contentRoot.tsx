@@ -154,8 +154,10 @@ export function createInlineReviews(doc: Document = document) {
       for (const [table, entry] of entries) {
         if (
           !table.isConnected ||
+          table.getAttribute("aria-label") !== `Diff for: ${entry.file.filePath}` ||
           !entry.host.isConnected ||
           entry.host.parentElement !== table.parentElement ||
+          entry.host.nextElementSibling !== table ||
           !files.has(entry.file.filePath)
         ) {
           entry.dispose();

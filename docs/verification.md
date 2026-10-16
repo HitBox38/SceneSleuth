@@ -6,7 +6,7 @@ Development build 0.1.0, checked on 2026-10-16.
 
 - `pnpm install --frozen-lockfile`: passed with pnpm 10.28.1.
 - `pnpm run lint`, `pnpm run fmt:check`, `pnpm run typecheck`: passed.
-- `pnpm test`: 25 tests passed using Node’s built-in runner.
+- `pnpm test`: 26 tests passed using Node’s built-in runner.
 - `pnpm run build`: popup and classic IIFE content script built; manifest asset/syntax checks passed.
 
 Node 22 prints an experimental TypeScript-stripping warning. The content build reports two upstream Lucide `use client` directive warnings; this bundle runs entirely in the client. Neither warning causes a check failure.
@@ -100,3 +100,13 @@ After the user reloaded the inline build, installed Chrome checks on the real pr
 Navigation through the repository PR list exposed a further issue: GitHub retained the list page’s embedded script while rendering the PR’s diff tables. The loader now checks `react-app[initial-path]`, rejects another route’s data, and falls back to rendered tables with an explicitly incomplete file listing. Two Node regressions cover route matching; the browser fixture additionally checks that a valid stale PR payload cannot leak into the current table-derived review, and that an empty rendered listing stays incomplete.
 
 This follow-up fix passes lint, formatting, 25 Node tests, type checking, build checks, and the browser fixture. Its installed PR-list navigation check awaits another manual extension reload because Chrome automation cannot open `chrome://extensions`. Firefox and precise GitHub line highlighting remain unverified.
+
+## Inline file identity and value isolation
+
+A browser regression reproduced a stale mount when the same table element changed from a scene to a non-scene file: the old scene’s values stayed attached because its table was still connected and the scene remained in the review cache. Mount reconciliation now validates the current table label and adjacency, and the GitHub observer watches file identity attributes and source text changes as well as child changes.
+
+The fixture’s second scene now has distinct Lantern/energy values instead of cloning the first scene’s Player/Vision values. In Chrome, changing only the table label and header text to a script removed the old scene view and restored the source table. Reusing that table for the second scene produced exactly one mount with `energy: 0.5 → 0.75`, without Player, Vision, or Vector2 values. Twenty repeated processing calls retained one mount and did not trigger further observer updates. A Node regression separately checks that two scene paths with the same basename and node identity retain their distinct before/after values even when GitHub returns file contents in reverse order.
+
+These file-reuse checks use the production observer and mounting code with synthetic input. The updated installed extension still needs a manual reload before this fix can be checked on the real PR. The shared preview timed out during this fixture check; Chrome was used to complete it.
+
+The previously reloaded navigation build was also checked from a fresh PR-list tab. It reached the rendered-table fallback, exposing another adapter gap: GitHub uses `l:null` or `r:null` source-line identities for added/deleted files. Those rows were being skipped. The adapter now accepts these identities, and the browser fixture checks the added and removed scene’s exact energy value and operation. This adjustment is included in the pending installed build. Current checks pass: lint, formatting, 26 Node tests, type checking, build asset/syntax checks, and the clean Chrome fixture. The fixture console has no errors or warnings.

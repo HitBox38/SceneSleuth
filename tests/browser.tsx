@@ -2,7 +2,11 @@ import { createRoot } from "react-dom/client";
 import { useState } from "react";
 import { Inspector } from "../ui/SceneReview.tsx";
 import { reviewGithubData } from "../content_script/scripts/githubReview.ts";
-import { readGithubReview, reviewGithubTable } from "../content_script/scripts/githubDom.ts";
+import {
+  observeGithubDiffs,
+  readGithubReview,
+  reviewGithubTable,
+} from "../content_script/scripts/githubDom.ts";
 import type { ReviewSnapshot } from "../shared/model.ts";
 import { Button } from "../popup/src/components/ui/button.tsx";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
@@ -56,13 +60,13 @@ const ready: ReviewSnapshot = {
   status: "ready",
   files: data.files,
 };
-function makeTable(split: boolean) {
+function makeTable(split: boolean, sourceLines = lines, filePath = path, anchor = "diff-fixture") {
   const table = document.createElement("table");
-  table.setAttribute("aria-label", `Diff for: ${path}`);
-  table.setAttribute("data-diff-anchor", "diff-fixture");
+  table.setAttribute("aria-label", `Diff for: ${filePath}`);
+  table.setAttribute("data-diff-anchor", anchor);
   let oldLine = 1,
     newLine = 1;
-  for (const text of lines) {
+  for (const text of sourceLines) {
     const row = document.createElement("tr");
     table.append(row);
     if (text.startsWith("@@")) {
@@ -78,7 +82,7 @@ function makeTable(split: boolean) {
       cell.className = "diff-text-cell";
       cell.setAttribute("data-line-number", String(side === "left" ? oldLine : newLine));
       cell.setAttribute("data-diff-line-key", `b:1-l:${oldLine}-r:${newLine}`);
-      cell.id = `diff-fixture${side === "left" ? "L" : "R"}${side === "left" ? oldLine : newLine}`;
+      cell.id = `${anchor}${side === "left" ? "L" : "R"}${side === "left" ? oldLine : newLine}`;
       cell.textContent = operation === " " ? text.slice(1) : text;
       row.append(cell);
     };
@@ -133,12 +137,42 @@ function verifyRouteFallback() {
   if (!empty?.partialListing || empty.files.length)
     throw new Error("DOM-only listing must remain incomplete");
 }
+function verifyNullableLineKeys() {
+  for (const removed of [false, true]) {
+    const operation = removed ? "-" : "+";
+    const table = makeTable(false, [
+      removed ? "@@ -1,2 +0,0 @@" : "@@ -0,0 +1,2 @@",
+      `${operation}[node name="Lamp" type="PointLight2D"]`,
+      `${operation}energy = 1`,
+    ]);
+    for (const cell of table.querySelectorAll("[data-diff-line-key]"))
+      cell.setAttribute(
+        "data-diff-line-key",
+        cell
+          .getAttribute("data-diff-line-key")!
+          .replace(removed ? /r:\d+/ : /l:\d+/, removed ? "r:null" : "l:null"),
+      );
+    const file = reviewGithubTable(table);
+    const energy = file?.changes[0]?.properties.find((property) => property.name === "energy");
+    if (
+      file?.changes.length !== 1 ||
+      file.changes[0]?.label !== "Lamp" ||
+      file.changes[0]?.operation !== (removed ? "removed" : "added") ||
+      energy?.before !== (removed ? "1" : undefined) ||
+      energy?.after !== (removed ? undefined : "1") ||
+      file.additions !== (removed ? 0 : 2) ||
+      file.deletions !== (removed ? 2 : 0)
+    )
+      throw new Error("Nullable GitHub source-line identities lost scene values");
+  }
+}
 let domResult =
   "DOM checks passed: unified and split rows produce identical changes and source lines.";
 try {
   verifyDom(false);
   verifyDom(true);
   verifyRouteFallback();
+  verifyNullableLineKeys();
 } catch (error) {
   domResult = String(error);
 }
@@ -169,12 +203,28 @@ document.body.prepend(inlineContainer);
 const inlineReviews = createInlineReviews();
 inlineReviews.update(ready);
 // A second scene arrives later; private project source is never used here.
-const delayedFile = {
-  ...data.files[0]!,
-  filePath: "Scenes/delayed.tscn",
-  reviewUrl: `${location.origin}${location.pathname}#diff-delayed`,
-};
+const delayedLines = [
+  "@@ -1,2 +1,2 @@",
+  ' [node name="Lantern" type="PointLight2D"]',
+  "-energy = 0.5",
+  "+energy = 0.75",
+];
+function makeDelayedTable() {
+  return makeTable(false, delayedLines, "Scenes/delayed.tscn", "diff-delayed");
+}
+const delayedFile = reviewGithubTable(makeDelayedTable())!;
+delayedFile.reviewUrl = `${location.origin}${location.pathname}#diff-delayed`;
 let inlineSnapshot = ready;
+let pendingInlineUpdate: ReturnType<typeof setTimeout> | undefined;
+let inlineUpdateCount = 0;
+const inlineObserver = observeGithubDiffs(inlineContainer, () => {
+  if (pendingInlineUpdate !== undefined) return;
+  pendingInlineUpdate = setTimeout(() => {
+    pendingInlineUpdate = undefined;
+    inlineContainer.dataset.observerUpdates = String(++inlineUpdateCount);
+    inlineReviews.update(inlineSnapshot);
+  }, 10);
+});
 
 function Fixture() {
   const [snapshot, setSnapshot] = useState(ready);
@@ -208,11 +258,32 @@ function Fixture() {
           <Button
             className="ss-button"
             onPress={() => {
+              const table = diffBody.querySelector("table")!;
+              table.setAttribute("aria-label", "Diff for: Scripts/player.gd");
+              name.firstChild!.nodeValue = "Scripts/player.gd";
+            }}
+          >
+            Reuse table for script
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
+              const table = diffBody.querySelector("table")!;
+              const next = makeDelayedTable();
+              table.replaceChildren(...next.childNodes);
+              table.setAttribute("aria-label", next.getAttribute("aria-label")!);
+              table.setAttribute("data-diff-anchor", "diff-delayed");
+              name.firstChild!.nodeValue = delayedFile.filePath;
+              inlineSnapshot = { ...ready, files: [...ready.files, delayedFile] };
+            }}
+          >
+            Reuse table for another scene
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
               if (!inlineContainer.querySelector('[aria-label="Diff for: Scenes/delayed.tscn"]')) {
-                const table = makeTable(false);
-                table.setAttribute("aria-label", "Diff for: Scenes/delayed.tscn");
-                table.setAttribute("data-diff-anchor", "diff-delayed");
-                inlineContainer.append(table);
+                inlineContainer.append(makeDelayedTable());
               }
               inlineSnapshot = { ...ready, files: [...ready.files, delayedFile] };
               inlineReviews.update(inlineSnapshot);
@@ -222,7 +293,10 @@ function Fixture() {
           </Button>
           <Button
             className="ss-button"
-            onPress={() => inlineReviews.update({ ...ready, reviewKey: "other-page", files: [] })}
+            onPress={() => {
+              inlineSnapshot = { ...ready, reviewKey: "other-page", files: [] };
+              inlineReviews.update(inlineSnapshot);
+            }}
           >
             Leave review
           </Button>
@@ -269,6 +343,8 @@ function Fixture() {
 const fixtureRoot = createRoot(document.getElementById("root")!);
 fixtureRoot.render(<Fixture />);
 import.meta.hot?.dispose(() => {
+  inlineObserver.disconnect();
+  clearTimeout(pendingInlineUpdate);
   fixtureRoot.unmount();
   inlineReviews.dispose();
   inlineContainer.remove();

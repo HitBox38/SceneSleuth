@@ -2,6 +2,29 @@ import type { SceneReview } from "../../shared/model.ts";
 import { reviewDiff } from "./diffParser.ts";
 import { embeddedRouteMatches, header, reviewGithubData } from "./githubReview.ts";
 
+export function observeGithubDiffs(root: Node, onChange: () => void) {
+  const observer = new MutationObserver((records) => {
+    if (
+      records.some(
+        (record) =>
+          record.type !== "attributes" ||
+          (record.target instanceof Element && record.target.matches("table")),
+      )
+    )
+      onChange();
+  });
+  // GitHub can reuse a table, changing only its file identity or text nodes.
+  // Do not watch style: SceneSleuth switches the original table's display.
+  observer.observe(root, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ["aria-label", "data-diff-anchor"],
+  });
+  return observer;
+}
+
 // Modern GitHub renders additional files on demand. Read those tables without
 // clicking controls, changing review preferences, or requesting private API tokens.
 export function reviewGithubTable(table: Element, previous?: SceneReview): SceneReview | undefined {
@@ -18,8 +41,7 @@ export function reviewGithubTable(table: Element, previous?: SceneReview): Scene
     const seen = new Set<string>();
     for (const cell of cells) {
       const key = cell.getAttribute("data-diff-line-key") ?? "";
-      const match = key.match(/^b:\d+-l:(\d+)-r:(\d+)$/);
-      if (!match) continue;
+      if (!/^b:\d+-l:(?:\d+|null)-r:(?:\d+|null)$/.test(key)) continue;
       const text = cell.textContent ?? "";
       const operation = text.startsWith("+") ? "+" : text.startsWith("-") ? "-" : " ";
       const id = `${operation}:${key}`;

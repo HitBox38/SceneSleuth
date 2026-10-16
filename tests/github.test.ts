@@ -111,6 +111,41 @@ test("comparison identity changes when the selected commit range changes", () =>
   initial.payload.pullRequestsChangesRoute.comparison.fullDiff.headOid = "new-head";
   assert.notEqual(reviewGithubData(initial, url)?.comparisonKey, first);
 });
+test("files with the same basename and node identity retain only their own values", () => {
+  const first = "forest/player.tscn",
+    second = "dungeon/player.tscn";
+  const content = (path: string, before: string, after: string) => ({
+    path,
+    diffLines: [
+      { type: "HUNK", text: "@@ -1,2 +1,2 @@" },
+      { type: "CONTEXT", text: ' [node name="Root" type="Node2D"]' },
+      { type: "DELETION", text: `-position = ${before}` },
+      { type: "ADDITION", text: `+position = ${after}` },
+    ],
+  });
+  const review = reviewGithubData(
+    payload(
+      [first, second].map((path) => ({ path, changeType: "MODIFIED" })),
+      [
+        content(second, "Vector2(100, 200)", "Vector2(300, 400)"),
+        content(first, "Vector2(1, 2)", "Vector2(3, 4)"),
+      ],
+    ),
+    url,
+  )!;
+  assert.deepEqual(
+    review.files.map((file) => ({
+      path: file.filePath,
+      changes: file.changes.map((change) =>
+        change.properties.map((p) => [p.name, p.before, p.after]),
+      ),
+    })),
+    [
+      { path: first, changes: [[["position", "Vector2(1, 2)", "Vector2(3, 4)"]]] },
+      { path: second, changes: [[["position", "Vector2(100, 200)", "Vector2(300, 400)"]]] },
+    ],
+  );
+});
 test("rename-only scenes preserve their old path without claiming unloaded text", () => {
   const [file] = reviewGithubData(
     payload(

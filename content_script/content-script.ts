@@ -1,4 +1,4 @@
-import { readGithubReview } from "./scripts/githubDom.ts";
+import { observeGithubDiffs, readGithubReview } from "./scripts/githubDom.ts";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
 import { isReviewRequest, reviewContext } from "../shared/protocol.ts";
 import type { ReviewSnapshot, SceneReview } from "../shared/model.ts";
@@ -128,14 +128,13 @@ function start() {
     sendResponse(snapshot);
   });
   let pending: number | undefined;
-  const observer = new MutationObserver(() => {
+  observeGithubDiffs(document.documentElement, () => {
     if (pending !== undefined) return;
     pending = window.setTimeout(() => {
       pending = undefined;
       checkPage();
     }, 150);
   });
-  observer.observe(document.body, { childList: true, subtree: true });
   window.addEventListener("popstate", checkPage);
   document.addEventListener("turbo:load", checkPage);
   document.addEventListener("pjax:end", checkPage);
