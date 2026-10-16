@@ -89,7 +89,8 @@ function verifyDom(split: boolean) {
   if (
     JSON.stringify(result?.changes) !== JSON.stringify(data.files[0].changes) ||
     result?.additions !== 4 ||
-    result?.deletions !== 1
+    result?.deletions !== 1 ||
+    JSON.stringify(result?.diagnostics) !== JSON.stringify(data.files[0].diagnostics)
   )
     throw new Error(`${split ? "Split" : "Unified"} DOM comparison failed`);
 }

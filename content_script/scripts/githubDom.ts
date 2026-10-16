@@ -22,7 +22,7 @@ export function reviewGithubTable(table: Element, previous?: SceneReview): Scene
       if (!match) continue;
       const text = cell.textContent ?? "";
       const operation = text.startsWith("+") ? "+" : text.startsWith("-") ? "-" : " ";
-      const id = `${operation}:${cell.getAttribute("data-line-number")}`;
+      const id = `${operation}:${key}`;
       if (seen.has(id)) continue; // Split view repeats context on both sides.
       seen.add(id);
       lines.push(
