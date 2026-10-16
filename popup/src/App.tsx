@@ -169,9 +169,14 @@ export default function App() {
             {snapshot.files.length ? (
               <>
                 <p className="ss-muted" style={{ marginBottom: 16 }}>
-                  {snapshot.files.length} scene {snapshot.files.length === 1 ? "file" : "files"}{" "}
-                  changed
+                  {snapshot.files.length} {snapshot.partialListing ? "loaded scene" : "scene"}{" "}
+                  {snapshot.files.length === 1 ? "file" : "files"} changed
                 </p>
+                {snapshot.partialListing && (
+                  <p className="ss-muted" style={{ marginBottom: 16 }}>
+                    Showing scenes loaded by GitHub. More files may appear as you browse.
+                  </p>
+                )}
                 <div className="ss-stats">
                   <span>
                     <strong>{stats?.nodes}</strong> nodes
@@ -203,7 +208,11 @@ export default function App() {
                 </Button>
               </>
             ) : (
-              <p className="ss-muted">No .tscn files changed in this pull request.</p>
+              <p className="ss-muted">
+                {snapshot.partialListing
+                  ? "No loaded .tscn diffs found. GitHub may load more files as you browse."
+                  : "No .tscn files changed in this pull request."}
+              </p>
             )}
           </>
         )}

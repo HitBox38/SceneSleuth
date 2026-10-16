@@ -1,6 +1,6 @@
 import type { SceneReview } from "../../shared/model.ts";
 import { reviewDiff } from "./diffParser.ts";
-import { header, reviewGithubData } from "./githubReview.ts";
+import { embeddedRouteMatches, header, reviewGithubData } from "./githubReview.ts";
 
 // Modern GitHub renders additional files on demand. Read those tables without
 // clicking controls, changing review preferences, or requesting private API tokens.
@@ -43,31 +43,44 @@ export function reviewGithubTable(table: Element, previous?: SceneReview): Scene
 
 export function readGithubReview(document: Document, changesUrl: string) {
   let data: ReturnType<typeof reviewGithubData>;
-  const script = document.querySelector('script[data-target="react-app.embeddedData"]');
-  if (script?.textContent) {
+  for (const script of document.querySelectorAll('script[data-target="react-app.embeddedData"]')) {
+    if (
+      !script.textContent ||
+      !embeddedRouteMatches(script.closest("react-app")?.getAttribute("initial-path"), changesUrl)
+    )
+      continue;
     if (script.textContent.length > 8_000_000)
       throw new Error(
         "This GitHub review exceeds the current 8 MB page-data limit. Use GitHub's file filters to narrow the review, then refresh SceneSleuth.",
       );
     try {
       data = reviewGithubData(JSON.parse(script.textContent), changesUrl);
+      if (data) break;
     } catch {
       /* A loading page may not yet have a complete data payload. */
     }
   }
-  if (!data) return;
-  const files = new Map(data.files.map((file) => [file.filePath, file]));
-  for (const table of document.querySelectorAll('table[aria-label^="Diff for: "]')) {
+  const tables = document.querySelectorAll('table[aria-label^="Diff for: "]');
+  if (!data && !tables.length) return;
+  const files = new Map(data?.files.map((file) => [file.filePath, file]));
+  for (const table of tables) {
     const path = table.getAttribute("aria-label")?.slice(10) ?? "";
     const previous = files.get(path);
     // Page tables can be virtualized. Prefer the embedded patch unless the table
     // contains more source lines (for example after expanding context).
     const review = reviewGithubTable(table, previous);
+    const anchor = table.getAttribute("data-diff-anchor");
+    if (review && !review.reviewUrl && anchor)
+      review.reviewUrl = `${changesUrl}#${encodeURIComponent(anchor)}`;
     if (
       review &&
       (previous?.pending || !previous || review.rawDiff.length > previous.rawDiff.length)
     )
       files.set(review.filePath, review);
   }
-  return { comparisonKey: data.comparisonKey, files: [...files.values()] };
+  return {
+    comparisonKey: data?.comparisonKey ?? `rendered:${changesUrl}`,
+    files: [...files.values()],
+    partialListing: !data,
+  };
 }

@@ -103,7 +103,10 @@ function start() {
           reviewKey: `${context.key}:${comparisonKey}`,
           title: context.title,
           status: "ready",
-          files: data.files.map((file) => cached.get(file.filePath) ?? file),
+          files: data.partialListing
+            ? [...cached.values()]
+            : data.files.map((file) => cached.get(file.filePath) ?? file),
+          partialListing: data.partialListing,
         };
       }
     } catch (error) {

@@ -29,6 +29,8 @@ This is an early development build, not a published extension.
 
 GitHub loads some file diffs lazily. Those scenes appear as waiting for text in the toolbar popup. Select the file in GitHub and use its load control if needed. SceneSleuth replaces the diff body once its table and scene text are available, and retains loaded results within the current review. Summary counts for nodes/resources/signals cover parsed text only. If parsing is unavailable, GitHub’s original diff stays visible.
 
+During navigation without a page reload, GitHub can retain the initial page’s embedded data. SceneSleuth rejects data from a different route and reads the current rendered tables instead. In that case the popup labels its results as **loaded scenes**, since more files may appear as you browse. Those tables provide diff context only; they do not establish complete scene contents or file creation/rename metadata.
+
 The adapter targets GitHub’s modern **Files changed** layout. GitHub’s markup and embedded data are not a stable public API; unsupported layouts produce a recoverable message. Very large or GitHub-limited diffs may remain partial. There is no full scene preview, inherited-scene expansion, Godot execution, or speculative matching of renamed nodes/resource identifiers. Values such as constructors and references remain readable source text rather than evaluated objects.
 
 ## Install locally

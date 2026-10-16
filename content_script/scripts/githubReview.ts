@@ -2,6 +2,22 @@ import type { SceneReview } from "../../shared/model.ts";
 import { reviewDiff } from "./diffParser.ts";
 
 type RecordValue = Record<string, unknown>;
+// GitHub's repo SPA can retain the initial page's script after navigating to
+// another PR. Its react-app initial-path identifies which URL owns that data.
+export function embeddedRouteMatches(initialPath: string | null | undefined, changesUrl: string) {
+  if (!initialPath) return true;
+  try {
+    const current = new URL(changesUrl);
+    const initial = new URL(initialPath, current);
+    return (
+      initial.origin === current.origin &&
+      initial.pathname === current.pathname &&
+      initial.search === current.search
+    );
+  } catch {
+    return false;
+  }
+}
 function record(value: unknown): RecordValue {
   return value && typeof value === "object" ? (value as RecordValue) : {};
 }

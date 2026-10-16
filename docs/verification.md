@@ -6,7 +6,7 @@ Development build 0.1.0, checked on 2026-10-16.
 
 - `pnpm install --frozen-lockfile`: passed with pnpm 10.28.1.
 - `pnpm run lint`, `pnpm run fmt:check`, `pnpm run typecheck`: passed.
-- `pnpm test`: 23 tests passed using Node’s built-in runner.
+- `pnpm test`: 25 tests passed using Node’s built-in runner.
 - `pnpm run build`: popup and classic IIFE content script built; manifest asset/syntax checks passed.
 
 Node 22 prints an experimental TypeScript-stripping warning. The content build reports two upstream Lucide `use client` directive warnings; this bundle runs entirely in the client. Neither warning causes a check failure.
@@ -86,4 +86,16 @@ On the synthetic `/tests/browser.html` fixture in the shared Chromium browser:
 - At 507 px and 360 px viewport widths, the document has no horizontal overflow.
 - A fresh fixture load has no captured console errors or warnings.
 
-These checks exercise the production mounting/UI code with synthetic data, not extension injection or live GitHub React updates. The updated installed Chrome build still needs an extension reload and real-PR verification, including file collapse/expand, selected commits, navigation, and popup-to-inline scrolling. Chrome automation cannot open `chrome://extensions`; the user handles that reload. Firefox and precise GitHub line highlighting remain unverified.
+These checks exercise the production mounting/UI code with synthetic data, separately from the installed-extension checks below.
+
+After the user reloaded the inline build, installed Chrome checks on the real private PR confirmed:
+
+- Four inline mounts appear inside the annotated diff bodies, with section counts 9, 11, 6, and 17. There is no floating inspector. Non-scene tables retain their original display.
+- The highlighted scene’s Original diff toggle restores GitHub’s table, and keyboard Enter returns to Scene view with 11 sections.
+- GitHub’s Collapse file removes that mount; Expand file restores exactly one mount with 11 sections.
+- Selecting the first commit shows only the two corresponding scenes, with 9 and 12 sections. These match a fresh parse of the local Git commit exactly: 12 node changes and seven resource changes across both files. The earlier floating-panel snapshot recorded only the initially loaded scene counts before the delayed main scene loaded.
+- Returning to All commits restores four mounts and 43 sections. Selected-commit source links retain that comparison’s URL. The checked page console has no warnings or errors.
+
+Navigation through the repository PR list exposed a further issue: GitHub retained the list page’s embedded script while rendering the PR’s diff tables. The loader now checks `react-app[initial-path]`, rejects another route’s data, and falls back to rendered tables with an explicitly incomplete file listing. Two Node regressions cover route matching; the browser fixture additionally checks that a valid stale PR payload cannot leak into the current table-derived review, and that an empty rendered listing stays incomplete.
+
+This follow-up fix passes lint, formatting, 25 Node tests, type checking, build checks, and the browser fixture. Its installed PR-list navigation and popup-to-inline checks await another manual extension reload because Chrome automation cannot open `chrome://extensions`. Firefox and precise GitHub line highlighting remain unverified.

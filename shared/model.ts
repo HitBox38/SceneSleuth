@@ -67,4 +67,5 @@ export interface ReviewSnapshot {
   files: SceneReview[];
   error?: string;
   changesUrl?: string;
+  partialListing?: boolean;
 }

@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import { useState } from "react";
 import { Inspector } from "../ui/SceneReview.tsx";
 import { reviewGithubData } from "../content_script/scripts/githubReview.ts";
-import { reviewGithubTable } from "../content_script/scripts/githubDom.ts";
+import { readGithubReview, reviewGithubTable } from "../content_script/scripts/githubDom.ts";
 import type { ReviewSnapshot } from "../shared/model.ts";
 import { Button } from "../popup/src/components/ui/button.tsx";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
@@ -99,11 +99,46 @@ function verifyDom(split: boolean) {
   )
     throw new Error(`${split ? "Split" : "Unified"} DOM comparison failed`);
 }
+function verifyRouteFallback() {
+  const doc = document.implementation.createHTMLDocument("Route fixture");
+  const app = doc.createElement("react-app");
+  // A previous PR's valid payload must not leak into the new PR's review.
+  app.setAttribute("initial-path", "/example/game/pull/99/changes");
+  const script = doc.createElement("script");
+  script.setAttribute("data-target", "react-app.embeddedData");
+  script.textContent = JSON.stringify({
+    payload: {
+      pullRequestsChangesRoute: {
+        diffSummaries: [{ path: "wrong-pr.tscn", changeType: "ADDED", linesAdded: 20 }],
+      },
+    },
+  });
+  app.append(script);
+  doc.body.append(app, makeTable(false));
+  const review = readGithubReview(doc, "https://github.com/example/game/pull/12/changes");
+  if (
+    !review?.partialListing ||
+    review.files.length !== 1 ||
+    review.files[0]?.filePath !== path ||
+    JSON.stringify(review.files[0]?.changes) !== JSON.stringify(data.files[0]?.changes) ||
+    review.files[0]?.reviewUrl !== "https://github.com/example/game/pull/12/changes#diff-fixture" ||
+    review.files[0]?.coverage !== "partial"
+  )
+    throw new Error("Stale embedded route fallback failed");
+  doc.querySelector("table")!.remove();
+  const other = doc.createElement("table");
+  other.setAttribute("aria-label", "Diff for: game.gd");
+  doc.body.append(other);
+  const empty = readGithubReview(doc, "https://github.com/example/game/pull/12/changes");
+  if (!empty?.partialListing || empty.files.length)
+    throw new Error("DOM-only listing must remain incomplete");
+}
 let domResult =
   "DOM checks passed: unified and split rows produce identical changes and source lines.";
 try {
   verifyDom(false);
   verifyDom(true);
+  verifyRouteFallback();
 } catch (error) {
   domResult = String(error);
 }

@@ -1,7 +1,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { reviewGithubData } from "../content_script/scripts/githubReview.ts";
+import { embeddedRouteMatches, reviewGithubData } from "../content_script/scripts/githubReview.ts";
 const url = "https://github.com/example/game/pull/7/changes";
+test("embedded data belongs to the current route, including PR and selected comparison", () => {
+  assert.equal(embeddedRouteMatches("/example/game/pull/7/changes", url), true);
+  assert.equal(embeddedRouteMatches("/example/game/pulls", url), false);
+  assert.equal(embeddedRouteMatches("/example/game/pull/8/changes", url), false);
+  assert.equal(embeddedRouteMatches("/example/game/pull/7/changes/abc", url), false);
+  assert.equal(
+    embeddedRouteMatches("https://other.example/example/game/pull/7/changes", url),
+    false,
+  );
+});
+test("embedded route matching preserves comparison queries and supports legacy markup", () => {
+  assert.equal(embeddedRouteMatches("/example/game/pull/7/changes?w=1", `${url}?w=1`), true);
+  assert.equal(embeddedRouteMatches("/example/game/pull/7/changes?w=1", url), false);
+  assert.equal(embeddedRouteMatches(undefined, url), true);
+  assert.equal(embeddedRouteMatches("http://[", url), false);
+});
 function payload(diffSummaries: unknown[], diffContents: unknown[]) {
   return {
     payload: {
