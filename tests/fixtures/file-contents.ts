@@ -37,3 +37,15 @@ export const changedReferenceLines = [
 export const changedReferenceReview = reviewDiff(
   `diff --git a/${referencedScenePath} b/${referencedScenePath}\n--- a/${referencedScenePath}\n+++ b/${referencedScenePath}\n${changedReferenceLines.join("\n")}\n`,
 )[0]!;
+
+export const imageReferenceLines = [
+  "@@ -1,4 +1,4 @@",
+  ' [ext_resource type="Texture2D" path="res://Assets/light.png" id="1"]',
+  ' [ext_resource type="Texture2D" path="res://Assets/missing.png" id="2"]',
+  ' [node name="Lamp" type="Sprite2D"]',
+  '-textures = [ExtResource("1")]',
+  '+textures = [ExtResource("1"), ExtResource("2")]',
+];
+export const imageReferenceReview = reviewDiff(
+  `diff --git a/${referencedScenePath} b/${referencedScenePath}\n--- a/${referencedScenePath}\n+++ b/${referencedScenePath}\n${imageReferenceLines.join("\n")}\n`,
+)[0]!;

@@ -11,7 +11,8 @@ import type {
   ReferenceNavigation,
 } from "../shared/model.ts";
 import { inlineFileContents } from "./fileContents.ts";
-import { referenceLink } from "../shared/referenceLinks.ts";
+import { referenceLink, referenceImageSource } from "../shared/referenceLinks.ts";
+import { ReferenceFileLink } from "./ReferenceFileLink.tsx";
 
 const labels: Record<SectionKind, string> = {
   node: "Node",
@@ -64,27 +65,21 @@ function ReferenceValue({
     <>
       {references.map((reference, index) => {
         const link = referenceLink(reference, file, side, navigation);
+        const imageSrc = referenceImageSource(reference, file, side, navigation);
         const title = `${reference.className ? reference.className + " · " : ""}${reference.target}\n${raw.slice(reference.start, reference.end)}`;
         return (
-          <span
-            key={reference.start}
-            title={
-              link
-                ? `${link.inReview ? "Jump to PR diff" : "Open repository file"}\n${title}`
-                : undefined
-            }
-          >
+          <span key={reference.start}>
             {raw.slice(index ? references[index - 1].end : 0, reference.start)}
             {link ? (
-              <LinkButton
-                className="ss-reference ss-reference-link"
-                variant="link"
+              <ReferenceFileLink
                 href={link.href}
-                data-scenesleuth-file-reference={link.inReview ? "diff" : "repository"}
-                aria-label={`${reference.label} — ${side} — ${link.inReview ? "jump to PR diff" : "open repository file"}`}
-              >
-                {reference.label}
-              </LinkButton>
+                inReview={link.inReview}
+                label={reference.label}
+                side={side}
+                title={`${link.inReview ? "Jump to PR diff" : "Open repository file"}\n${title}`}
+                imageSrc={imageSrc}
+                path={reference.target}
+              />
             ) : (
               <span className="ss-reference" title={title}>
                 {reference.label}

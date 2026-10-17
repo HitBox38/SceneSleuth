@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { ReferenceNavigation, ValueReference } from "../shared/model.ts";
-import { navigationContext, referencedFilePath, referenceLink } from "../shared/referenceLinks.ts";
+import {
+  navigationContext,
+  referencedFilePath,
+  referenceLink,
+  referenceImageSource,
+} from "../shared/referenceLinks.ts";
 import { referencedSceneReview } from "./fixtures/file-contents.ts";
 import { reviewGithubData } from "../content_script/scripts/githubReview.ts";
 
@@ -224,5 +229,103 @@ test("unsafe or stale diff destinations fall back to the repository and missing 
       ...navigation,
       afterRevision: undefined,
     })?.href.includes("/blob/HEAD/light.gd"),
+  );
+});
+
+test("image previews use raw bytes at each side's revision even when clicks jump into the PR", () => {
+  const ref = reference("res://Assets/a space/雪.PNG");
+  const nav: ReferenceNavigation = {
+    ...navigation,
+    files: [{ path: "Assets/a space/雪.PNG", status: "modified", reviewUrl: `${url}#diff-image` }],
+  };
+  assert.equal(referenceLink(ref, referencedSceneReview, "after", nav)?.inReview, true);
+  assert.equal(
+    referenceImageSource(ref, referencedSceneReview, "before", nav),
+    `https://github.com/example/game/raw/${base}/Assets/a%20space/%E9%9B%AA.PNG`,
+  );
+  assert.equal(
+    referenceImageSource(ref, referencedSceneReview, "after", nav),
+    `https://github.com/example/game/raw/${head}/Assets/a%20space/%E9%9B%AA.PNG`,
+  );
+});
+
+test("only supported image files get previews; constructors and untrusted URLs never do", () => {
+  for (const extension of [
+    "png",
+    "apng",
+    "jpg",
+    "jpeg",
+    "gif",
+    "webp",
+    "svg",
+    "avif",
+    "bmp",
+    "ico",
+  ]) {
+    assert.ok(
+      referenceImageSource(
+        reference(`res://image.${extension}`),
+        referencedSceneReview,
+        "after",
+        navigation,
+      ),
+    );
+  }
+  for (const path of [
+    "res://scene.tscn",
+    "res://script.gd",
+    "res://image.png.import",
+    "res://image.tga",
+    "https://evil.example/image.png",
+    "javascript:image.png",
+    "res://../image.png",
+  ]) {
+    assert.equal(
+      referenceImageSource(reference(path), referencedSceneReview, "after", navigation),
+      undefined,
+    );
+  }
+  assert.equal(
+    referenceImageSource(
+      { ...reference("res://node.png"), resourcePath: undefined },
+      referencedSceneReview,
+      "after",
+      navigation,
+    ),
+    undefined,
+  );
+  assert.equal(
+    referenceImageSource(reference("res://image.png"), referencedSceneReview, "after"),
+    undefined,
+  );
+});
+
+test("image previews retain renamed scene-relative paths and the documented HEAD fallback", () => {
+  const file = {
+    ...referencedSceneReview,
+    filePath: "New/scene.tscn",
+    previousPath: "Old/scene.tscn",
+  };
+  assert.equal(
+    referenceImageSource(reference("image.svg"), file, "before", navigation),
+    `https://github.com/example/game/raw/${base}/Old/image.svg`,
+  );
+  assert.equal(
+    referenceImageSource(reference("image.svg"), file, "after", navigation),
+    `https://github.com/example/game/raw/${head}/New/image.svg`,
+  );
+  assert.equal(
+    referenceImageSource(reference("image.svg"), file, "after", {
+      ...navigation,
+      afterRevision: undefined,
+    }),
+    "https://github.com/example/game/raw/HEAD/New/image.svg",
+  );
+  assert.equal(
+    referenceImageSource(reference("image.svg"), file, "after", {
+      ...navigation,
+      repositoryUrl: "https://evil.example/repo",
+    }),
+    undefined,
   );
 });

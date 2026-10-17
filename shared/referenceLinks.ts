@@ -74,6 +74,16 @@ export function referenceLink(
     )
       return { href: url.href, inReview: true };
   }
+  const href = repositoryFileUrl(path, side, navigation, "blob");
+  return href ? { href, inReview: false } : undefined;
+}
+
+function repositoryFileUrl(
+  path: string,
+  side: "before" | "after",
+  navigation: ReferenceNavigation,
+  view: "blob" | "raw",
+) {
   const repository = parseUrl(navigation.repositoryUrl);
   if (
     !repository ||
@@ -83,8 +93,22 @@ export function referenceLink(
     return;
   const revision = side === "before" ? navigation.beforeRevision : navigation.afterRevision;
   const ref = revision && /^[a-f\d]{40,64}$/i.test(revision) ? revision : "HEAD";
-  return {
-    href: `${repository.origin}${repository.pathname}/blob/${ref}/${path.split("/").map(encodeURIComponent).join("/")}`,
-    inReview: false,
-  };
+  return `${repository.origin}${repository.pathname}/${view}/${ref}/${path.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+export function referenceImageSource(
+  reference: ValueReference,
+  file: SceneReview,
+  side: "before" | "after",
+  navigation?: ReferenceNavigation,
+): string | undefined {
+  if (!reference.resourcePath || !navigation) return;
+  const path = referencedFilePath(
+    reference.resourcePath,
+    side === "before" ? (file.previousPath ?? file.filePath) : file.filePath,
+  );
+  if (!path || !/\.(?:png|apng|jpe?g|gif|webp|svg|avif|bmp|ico)$/i.test(path)) return;
+  // Start on github.com so private repositories can use the existing sign-in.
+  // Images are rendered as images, including SVG; scene text is never executed.
+  return repositoryFileUrl(path, side, navigation, "raw");
 }

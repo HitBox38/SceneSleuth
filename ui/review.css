@@ -635,7 +635,8 @@
   cursor: pointer;
   text-decoration-style: solid;
 }
-.ss .ss-reference-link[data-hovered] {
+.ss .ss-reference-link[data-hovered],
+.ss .ss-reference-link:hover {
   color: var(--ss-green);
 }
 .ss .ss-reference-link[data-focus-visible] {

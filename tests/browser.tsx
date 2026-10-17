@@ -16,8 +16,25 @@ import {
   referencedSceneReview,
   changedReferenceLines,
   changedReferenceReview,
+  imageReferenceLines,
+  imageReferenceReview,
 } from "./fixtures/file-contents.ts";
 import "../ui/review.css";
+
+// Mock only this fixture's synthetic image URLs, including requests from the
+// shadow-root review. No extension code registers a service worker or mocks data.
+if ("serviceWorker" in navigator) {
+  void navigator.serviceWorker
+    .register("./image-preview-worker.js")
+    .then(() => {
+      const ready = () => (document.documentElement.dataset.imageFixture = "ready");
+      if (navigator.serviceWorker.controller) ready();
+      else navigator.serviceWorker.addEventListener("controllerchange", ready, { once: true });
+    })
+    .catch(() => {
+      document.documentElement.dataset.imageFixture = "unavailable";
+    });
+}
 
 // Synthetic source only. This page is a development fixture, never a runtime fallback.
 const path = "Scenes/forest/player.tscn";
@@ -380,6 +397,20 @@ function Fixture() {
             }}
           >
             Changed file references
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
+              diffBody.querySelector("table")?.remove();
+              diffBody.append(
+                makeTable(false, imageReferenceLines, referencedScenePath, "diff-references"),
+              );
+              name.textContent = referencedScenePath;
+              inlineSnapshot = { ...ready, files: [imageReferenceReview] };
+              inlineReviews.update(inlineSnapshot);
+            }}
+          >
+            Image preview states
           </Button>
           <Button
             className="ss-button"
