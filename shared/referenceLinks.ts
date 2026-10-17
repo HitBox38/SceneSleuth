@@ -8,6 +8,13 @@ function parseUrl(value: string, base?: string) {
   }
 }
 
+function unsafePathCharacters(value: string) {
+  return (
+    value.includes("\\") ||
+    [...value].some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
+  );
+}
+
 export function navigationContext(changesUrl: string): ReferenceNavigation | undefined {
   const url = parseUrl(changesUrl);
   if (!url) return;
@@ -16,28 +23,50 @@ export function navigationContext(changesUrl: string): ReferenceNavigation | und
   return { changesUrl, repositoryUrl: `${url.origin}/${match[1]}/${match[2]}`, files: [] };
 }
 
-// Resolve Godot paths as repository paths, never as navigable URLs. The project
-// root for res:// is the repository root; plain paths are relative to the scene.
-export function referencedFilePath(resourcePath: string, scenePath: string): string | undefined {
-  if (
-    !resourcePath ||
-    resourcePath.includes("\\") ||
-    [...resourcePath].some(
-      (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
-    )
-  )
-    return;
+// Resolve Godot paths as repository paths, never as navigable URLs. Plain paths
+// are scene-relative; res:// stays within the known Godot project directory.
+export function referencedFilePath(
+  resourcePath: string,
+  scenePath: string,
+  projectRoot = "",
+): string | undefined {
+  if (!resourcePath || unsafePathCharacters(resourcePath)) return;
   const projectPath = resourcePath.startsWith("res://");
   if (!projectPath && (/^[\w+.-]+:/.test(resourcePath) || resourcePath.startsWith("/"))) return;
-  const parts = projectPath ? [] : scenePath.split("/").slice(0, -1);
+  const root = projectRoot ? projectRoot.split("/") : [];
+  if (root.some((part) => !part || part === "." || part === ".." || unsafePathCharacters(part)))
+    return;
+  const parts = projectPath ? [...root] : scenePath.split("/").slice(0, -1);
+  const boundary = projectPath ? root.length : 0;
   for (const part of (projectPath ? resourcePath.slice(6) : resourcePath).split("/")) {
     if (!part || part === ".") continue;
     if (part === "..") {
-      if (!parts.length) return;
+      if (parts.length <= boundary) return;
       parts.pop();
     } else parts.push(part);
   }
-  return parts.length ? parts.join("/") : undefined;
+  return parts.length > boundary ? parts.join("/") : undefined;
+}
+
+function referencePath(
+  resourcePath: string,
+  file: SceneReview,
+  side: "before" | "after",
+  navigation: ReferenceNavigation,
+) {
+  const scenePath = side === "before" ? (file.previousPath ?? file.filePath) : file.filePath;
+  let projectRoot = "";
+  // The PR's file listing is evidence of project boundaries. Do not guess a
+  // directory from matching basenames: a repo can contain many independent games.
+  for (const target of navigation.files) {
+    if (side === "before" ? target.status === "added" : target.status === "removed") continue;
+    const path = side === "before" ? (target.previousPath ?? target.path) : target.path;
+    if (!path.endsWith("/project.godot")) continue;
+    const directory = path.slice(0, -"/project.godot".length);
+    if (scenePath.startsWith(`${directory}/`) && directory.length > projectRoot.length)
+      projectRoot = directory;
+  }
+  return referencedFilePath(resourcePath, scenePath, projectRoot);
 }
 
 export function referenceLink(
@@ -47,10 +76,7 @@ export function referenceLink(
   navigation?: ReferenceNavigation,
 ): { href: string; inReview: boolean } | undefined {
   if (!reference.resourcePath || !navigation) return;
-  const path = referencedFilePath(
-    reference.resourcePath,
-    side === "before" ? (file.previousPath ?? file.filePath) : file.filePath,
-  );
+  const path = referencePath(reference.resourcePath, file, side, navigation);
   if (!path) return;
   const target =
     navigation.files.find((candidate) =>
@@ -103,10 +129,7 @@ export function referenceImageSource(
   navigation?: ReferenceNavigation,
 ): string | undefined {
   if (!reference.resourcePath || !navigation) return;
-  const path = referencedFilePath(
-    reference.resourcePath,
-    side === "before" ? (file.previousPath ?? file.filePath) : file.filePath,
-  );
+  const path = referencePath(reference.resourcePath, file, side, navigation);
   if (!path || !/\.(?:png|apng|jpe?g|gif|webp|svg|avif|bmp|ico)$/i.test(path)) return;
   // Start on github.com so private repositories can use the existing sign-in.
   // Images are rendered as images, including SVG; scene text is never executed.

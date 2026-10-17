@@ -443,6 +443,44 @@ function Fixture() {
           <Button
             className="ss-button"
             onPress={() => {
+              const nestedPath = `Demos/coop/${referencedScenePath}`;
+              diffBody.querySelector("table")?.remove();
+              diffBody.append(
+                makeTable(
+                  false,
+                  [
+                    `@@ -0,0 +1,${referencedSceneSource.length} @@`,
+                    ...referencedSceneSource.map((line) => `+${line}`),
+                  ],
+                  nestedPath,
+                  "diff-nested",
+                ),
+              );
+              name.textContent = nestedPath;
+              inlineSnapshot = {
+                ...ready,
+                files: [{ ...referencedSceneReview, filePath: nestedPath }],
+                navigation: {
+                  ...ready.navigation!,
+                  files: [
+                    ...ready.navigation!.files,
+                    { path: "Demos/coop/project.godot", status: "modified" },
+                    {
+                      path: "Demos/coop/Scripts/light_controller.gd",
+                      status: "modified",
+                      reviewUrl: `${location.origin}${location.pathname}#diff-reference-script`,
+                    },
+                  ],
+                },
+              };
+              inlineReviews.update(inlineSnapshot);
+            }}
+          >
+            Nested Godot project
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
               diffBody.querySelector("table")?.remove();
               diffBody.append(
                 makeTable(false, changedReferenceLines, referencedScenePath, "diff-references"),

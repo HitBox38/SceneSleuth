@@ -188,3 +188,15 @@ Browser checks passed for dark/light palettes, keyboard group disclosure, readab
 All 49 Node tests, lint, formatting, type checking, production bundling, and manifest/classic-script checks pass. The two existing Lucide directive warnings remain non-failing.
 
 After the user reloaded `bdd6d96`, installed Chrome verification on public Godot demo PR #1356 passed: 12 node sections retain all 13 property changes, with 25 vector values rendered as labeled components, 11 Transform groups, and one shared column heading. Keyboard Enter closes/reopens a Transform group; searching `Outline` shows only that node. The `After line 64` link reveals the native scene table at its `R64` anchor, and keyboard activation of Scene restores exactly one review. All nine shader tables remain native, and the checked page console has no warnings or errors. This PR has no changed color or resource-reference values, so those retain fixture coverage from above.
+
+## Nested Godot project file links
+
+On 2026-10-17, installed Chrome on [Godot demo PR #1320](https://github.com/godotengine/godot-demo-projects/pull/1320/changes) reproduced a `Bomb.cs` click opening a 404 at the repository root. The file exists under `networking/multiplayer_bomber_cs/`. The page supplies the correct head revision and file targets; the bug was treating every `res://` path as repository-relative.
+
+File links and image sources now resolve inside the nearest ancestor project with a `project.godot` marker in the comparison's file listing. Before/after paths honor renamed, added, and removed markers independently. Sibling projects cannot supply each other's roots, and `res://..` cannot escape the selected project. Missing markers retain the documented repository-root fallback; no extra repository requests or permissions were added.
+
+Two regressions first reproduced the incorrect links and now pass, covering nested script/image PR targets, files outside the PR, renamed project roots, nearest-root selection, relative paths, and project-boundary escapes. A separate parse of the real public patch checks all 90 file-reference occurrences across seven scenes: every one now resolves to a PR diff, and all seven image occurrences retain the nested directory in their raw URLs.
+
+The shared browser's synthetic nested-project fixture verifies that a script click invokes the native file-tree handler and loads its lazy diff. Keyboard focus opens an image preview at the nested raw path and decodes the test-only 160 × 128 image; its link uses the matching nested blob path. The checked fixture console has no entries. The installed fix still needs a manual extension/PR reload before live retesting; Firefox remains untested.
+
+All 51 Node tests, lint, formatting, type checking, production bundling, and manifest/classic-script checks pass. The two existing Lucide directive warnings remain non-failing.

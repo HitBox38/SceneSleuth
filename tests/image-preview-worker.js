@@ -5,7 +5,7 @@ self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim(
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   const match = url.pathname.match(
-    /^\/example\/game\/raw\/([ab]{40})\/Assets\/(light|missing)\.png$/,
+    /^\/example\/game\/raw\/([ab]{40})\/(?:Demos\/coop\/)?Assets\/(light|missing)\.png$/,
   );
   if (url.origin !== "https://github.com" || !match || event.request.destination !== "image")
     return;

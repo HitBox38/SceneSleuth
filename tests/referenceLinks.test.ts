@@ -27,6 +27,89 @@ const reference = (resourcePath: string): ValueReference => ({
   className: "Script",
 });
 
+test("nested Godot projects resolve res paths to their own PR files and repository images", () => {
+  const project = "networking/multiplayer_bomber_cs";
+  const sibling = "networking/multiplayer_bomber";
+  const file = { ...referencedSceneReview, filePath: `${project}/Scenes/bomb.tscn` };
+  const data = reviewGithubData(
+    {
+      payload: {
+        pullRequestsChangesRoute: {
+          comparison: { fullDiff: { baseOid: base, headOid: head } },
+          diffSummaries: [
+            { path: `${sibling}/project.godot`, changeType: "MODIFIED" },
+            { path: `${project}/project.godot`, changeType: "ADDED" },
+            { path: `${sibling}/Bomb.cs`, changeType: "ADDED", pathDigest: "sibling-script" },
+            { path: `${project}/Bomb.cs`, changeType: "ADDED", pathDigest: "script" },
+            { path: `${project}/brickfloor.png`, changeType: "ADDED", pathDigest: "image" },
+          ],
+          diffContents: [],
+        },
+      },
+    },
+    url,
+  )!;
+  assert.deepEqual(referenceLink(reference("res://Bomb.cs"), file, "after", data.navigation), {
+    href: `${url}#diff-script`,
+    inReview: true,
+  });
+  assert.equal(
+    referenceLink(reference("res://brickfloor.png"), file, "after", data.navigation)?.href,
+    `${url}#diff-image`,
+  );
+  assert.equal(
+    referenceLink(reference("res://outside_pr.cs"), file, "after", data.navigation)?.href,
+    `https://github.com/example/game/blob/${head}/${project}/outside_pr.cs`,
+  );
+  assert.equal(
+    referenceImageSource(reference("res://brickfloor.png"), file, "after", data.navigation),
+    `https://github.com/example/game/raw/${head}/${project}/brickfloor.png`,
+  );
+  assert.equal(
+    referenceLink(reference("../Bomb.cs"), file, "after", data.navigation)?.href,
+    `${url}#diff-script`,
+  );
+  assert.equal(
+    referenceLink(reference("res://../Bomb.cs"), file, "after", data.navigation),
+    undefined,
+  );
+});
+
+test("nested project resolution uses the closest versioned project marker", () => {
+  const file = {
+    ...referencedSceneReview,
+    filePath: "New/demo/Scenes/a.tscn",
+    previousPath: "Old/demo/Scenes/a.tscn",
+  };
+  const nav: ReferenceNavigation = {
+    ...navigation,
+    files: [
+      { path: "project.godot", status: "modified" },
+      { path: "New/project.godot", previousPath: "Old/project.godot", status: "renamed" },
+      { path: "New/demo/project.godot", previousPath: "Old/demo/project.godot", status: "renamed" },
+      { path: "Old/demo/Scenes/project.godot", status: "added" },
+      { path: "New/demo/Scenes/project.godot", status: "removed" },
+      { path: "New/demonstration/project.godot", status: "modified" },
+    ],
+  };
+  assert.equal(
+    referenceLink(reference("res://icon.png"), file, "before", nav)?.href,
+    `https://github.com/example/game/blob/${base}/Old/demo/icon.png`,
+  );
+  assert.equal(
+    referenceLink(reference("res://icon.png"), file, "after", nav)?.href,
+    `https://github.com/example/game/blob/${head}/New/demo/icon.png`,
+  );
+  assert.equal(
+    referenceImageSource(reference("res://icon.png"), file, "before", nav),
+    `https://github.com/example/game/raw/${base}/Old/demo/icon.png`,
+  );
+  assert.equal(
+    referenceImageSource(reference("res://icon.png"), file, "after", nav),
+    `https://github.com/example/game/raw/${head}/New/demo/icon.png`,
+  );
+});
+
 test("all PR file types, including lazy scripts and binary assets, are navigation targets", () => {
   const data = reviewGithubData(
     {
