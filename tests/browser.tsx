@@ -10,6 +10,7 @@ import {
 import type { ReviewSnapshot } from "../shared/model.ts";
 import { Button } from "../popup/src/components/ui/button.tsx";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
+import { reviewDiff } from "../content_script/scripts/diffParser.ts";
 import {
   referencedScenePath,
   referencedSceneSource,
@@ -39,6 +40,32 @@ if ("serviceWorker" in navigator) {
 
 // Synthetic source only. This page is a development fixture, never a runtime fallback.
 const path = "Scenes/forest/player.tscn";
+const inspectorLines = [
+  "@@ -1,11 +1,11 @@",
+  ' [node name="Player" type="CharacterBody2D"]',
+  "-position = Vector2(-1.2500, 2e-3)",
+  "+position = Vector2(30, 40)",
+  "-scale = Vector2(1, 1)",
+  "+scale = Vector2(2, 2)",
+  "-visible = true",
+  "+visible = false",
+  "-modulate = Color(1, 0.5, 0.25, 1)",
+  "+modulate = Color(0.25, 0.5, 1, 0.5)",
+  "-collision_layer = 1",
+  "+collision_layer = 8",
+  '-description = "Old text"',
+  '+description = "<img src=x onerror=alert(1)>"',
+  ' [node name="Camera3D" type="Camera3D" parent="."]',
+  "-position = Vector3(0, 1, 3)",
+  "+position = Vector3(0, 2, 4)",
+  ' [node name="Sprite" type="Sprite2D" parent="."]',
+  "-modulate = Color(1, 1, 1, 1)",
+  "+modulate = Color(1, 0.5, 0.25, 1)",
+];
+const inspectorReview = reviewDiff(
+  `diff --git a/${path} b/${path}\n--- a/${path}\n+++ b/${path}\n${inspectorLines.join("\n")}\n`,
+)[0];
+inspectorReview.reviewUrl = `${location.origin}${location.pathname}#diff-fixture`;
 const lines = [
   "@@ -1,5 +1,8 @@",
   " [gd_scene format=3]",
@@ -349,6 +376,18 @@ function Fixture() {
           </Button>
           <Button className="ss-button" onPress={() => inlineReviews.open()}>
             Go to inline review
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
+              diffBody.querySelector("table")?.remove();
+              diffBody.append(makeTable(false, inspectorLines));
+              name.textContent = path;
+              inlineSnapshot = { ...ready, files: [inspectorReview] };
+              inlineReviews.update(inlineSnapshot);
+            }}
+          >
+            Godot inspector values
           </Button>
           <Button
             className="ss-button"

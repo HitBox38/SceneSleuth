@@ -12,6 +12,17 @@ import {
   Zap,
   FileBox,
   CircleHelp,
+  Camera,
+  Image,
+  Lightbulb,
+  PersonStanding,
+  Scan,
+  Shapes,
+  Navigation,
+  Volume2,
+  PanelTop,
+  MousePointer2,
+  Type,
 } from "lucide-react";
 import { Button } from "../popup/src/components/ui/button.tsx";
 import { LinkButton } from "../popup/src/components/ui/button.tsx";
@@ -22,10 +33,12 @@ import type {
   SectionKind,
   ValueReference,
   ReferenceNavigation,
+  PropertyChange,
 } from "../shared/model.ts";
 import { inlineFileContents } from "./fileContents.ts";
 import { referenceLink, referenceImageSource } from "../shared/referenceLinks.ts";
 import { ReferenceFileLink } from "./ReferenceFileLink.tsx";
+import { inspectorValue, propertyGroups, propertyLabel } from "./propertyPresentation.ts";
 
 const labels: Record<SectionKind, string> = {
   node: "Node",
@@ -43,6 +56,38 @@ const kindIcons = {
   scene: FileBox,
   unknown: CircleHelp,
 };
+const nodeIcons = {
+  camera: Camera,
+  sprite: Image,
+  light: Lightbulb,
+  character: PersonStanding,
+  area: Scan,
+  collision: Shapes,
+  navigation: Navigation,
+  audio: Volume2,
+  button: MousePointer2,
+  text: Type,
+  control: PanelTop,
+  node: Box,
+};
+function nodeIconKey(type: string): keyof typeof nodeIcons {
+  if (/^Camera[23]D$/.test(type)) return "camera";
+  if (/^(?:AnimatedSprite|Sprite)[23]D$/.test(type)) return "sprite";
+  if (/Light[23]D$/.test(type)) return "light";
+  if (/^CharacterBody[23]D$/.test(type)) return "character";
+  if (/^Area[23]D$/.test(type)) return "area";
+  if (/^Collision(?:Shape|Polygon)[23]D$/.test(type)) return "collision";
+  if (/^Navigation(?:Agent|Region|Link)[23]D$/.test(type)) return "navigation";
+  if (/^AudioStreamPlayer(?:[23]D)?$/.test(type)) return "audio";
+  if (type.endsWith("Button")) return "button";
+  if (/^(?:Label|RichTextLabel|LineEdit|TextEdit)$/.test(type)) return "text";
+  if (
+    /^(?:Control|Panel|PanelContainer|TextureRect|ColorRect)$/.test(type) ||
+    type.endsWith("Container")
+  )
+    return "control";
+  return "node";
+}
 const kindGroups = {
   all: "All changes",
   node: "Nodes",
@@ -73,15 +118,40 @@ function ReferenceValue({
   file,
   side,
   navigation,
+  compact = false,
 }: {
   raw?: string;
   references?: ValueReference[];
   file: SceneReview;
   side: "before" | "after";
   navigation?: ReferenceNavigation;
+  compact?: boolean;
 }) {
   if (raw === undefined) return "—";
-  if (!references?.length) return raw;
+  if (!references?.length) {
+    const value = compact ? inspectorValue(raw) : undefined;
+    if (!value) return raw;
+    return (
+      <span className={`ss-inspector-value ss-value-${value.kind}`} title={raw}>
+        <span className="ss-sr-only">{raw}</span>
+        {value.swatch && (
+          <span className="ss-color-swatch" aria-hidden="true">
+            <span style={{ backgroundColor: value.swatch }} />
+          </span>
+        )}
+        <span className="ss-components" aria-hidden="true">
+          {value.components.map(({ label, value: component }) => (
+            <span className="ss-component" key={label}>
+              <span className="ss-axis" data-axis={label}>
+                {label}
+              </span>
+              <span>{component}</span>
+            </span>
+          ))}
+        </span>
+      </span>
+    );
+  }
   return (
     <>
       {references.map((reference, index) => {
@@ -113,6 +183,88 @@ function ReferenceValue({
     </>
   );
 }
+function SourceLinks({ change, reviewUrl }: { change: SectionChange; reviewUrl?: string }) {
+  return (
+    <span className="ss-source-links">
+      {change.oldLine &&
+        (reviewUrl ? (
+          <a href={`${reviewUrl}L${change.oldLine}`}>Before L{change.oldLine}</a>
+        ) : (
+          `Before L${change.oldLine}`
+        ))}
+      {change.oldLine && change.newLine ? " · " : ""}
+      {change.newLine &&
+        (reviewUrl ? (
+          <a href={`${reviewUrl}R${change.newLine}`}>After L{change.newLine}</a>
+        ) : (
+          `After L${change.newLine}`
+        ))}
+    </span>
+  );
+}
+function PropertyRows({
+  properties,
+  compact,
+  file,
+  navigation,
+}: {
+  properties: PropertyChange[];
+  compact: boolean;
+  file: SceneReview;
+  navigation?: ReferenceNavigation;
+}) {
+  return properties.map((property, index) => (
+    <div className={`ss-property ss-${property.operation}`} key={`${property.name}:${index}`}>
+      <span className="ss-property-name" title={property.name}>
+        <span>{compact ? propertyLabel(property.name) : property.name.replace(/^@/, "")}</span>
+        <small title={property.operation}>
+          {compact ? (
+            <>
+              <span className="ss-sr-only">{property.operation}</span>
+              <span aria-hidden="true">
+                {property.operation === "added"
+                  ? "+"
+                  : property.operation === "removed"
+                    ? "−"
+                    : "~"}
+              </span>
+            </>
+          ) : (
+            property.operation
+          )}
+          {(property.newLine ?? property.oldLine) &&
+            (compact && file.reviewUrl ? (
+              <a
+                href={
+                  file.reviewUrl
+                    ? `${file.reviewUrl}${property.newLine ? "R" : "L"}${property.newLine ?? property.oldLine}`
+                    : undefined
+                }
+                aria-label={`${property.newLine ? "After" : "Before"} line ${property.newLine ?? property.oldLine}`}
+              >
+                {` L${property.newLine ?? property.oldLine}`}
+              </a>
+            ) : (
+              ` · L${property.newLine ?? property.oldLine}`
+            ))}
+        </small>
+      </span>
+      {(["before", "after"] as const).map((side) => (
+        <code key={side} className={`ss-${side}`} data-empty={property[side] === undefined}>
+          <span className="ss-sr-only">{side === "before" ? "Before: " : "After: "}</span>
+          <ReferenceValue
+            raw={property[side]}
+            references={property[`${side}References`]}
+            file={file}
+            side={side}
+            navigation={navigation}
+            compact={compact}
+          />
+        </code>
+      ))}
+    </div>
+  ));
+}
 function ChangedSection({
   change,
   reviewUrl,
@@ -126,7 +278,9 @@ function ChangedSection({
   file: SceneReview;
   navigation?: ReferenceNavigation;
 }) {
-  const KindIcon = kindIcons[change.kind];
+  const KindIcon =
+    change.kind === "node" ? nodeIcons[nodeIconKey(change.className)] : kindIcons[change.kind];
+  const groups = compact ? propertyGroups(change) : [];
   const nodeFamily =
     change.kind !== "node"
       ? undefined
@@ -156,74 +310,64 @@ function ChangedSection({
           {change.label}
           {path && <span className="ss-section-path">{path}</span>}
         </span>
-        <span className="ss-type">{change.className || labels[change.kind]}</span>
+        <span className="ss-type" title={change.className || labels[change.kind]}>
+          {change.className || labels[change.kind]}
+        </span>
+        {compact && <SourceLinks change={change} reviewUrl={reviewUrl} />}
         <span className={`ss-operation ss-${change.operation}`} aria-label={change.operation}>
           {change.operation === "added" ? "+" : change.operation === "removed" ? "−" : "~"}
         </span>
       </summary>
-      <div className="ss-section-meta">
-        <span>
-          {labels[change.kind]} · {change.operation}
-        </span>
-        <span>
-          {change.oldLine &&
-            (reviewUrl ? (
-              <a href={`${reviewUrl}L${change.oldLine}`}>Before L{change.oldLine}</a>
-            ) : (
-              `Before L${change.oldLine}`
-            ))}
-          {change.oldLine && change.newLine ? " · " : ""}
-          {change.newLine &&
-            (reviewUrl ? (
-              <a href={`${reviewUrl}R${change.newLine}`}>After L{change.newLine}</a>
-            ) : (
-              `After L${change.newLine}`
-            ))}
-        </span>
-      </div>
+      {!compact && (
+        <div className="ss-section-meta">
+          <span>
+            {labels[change.kind]} · {change.operation}
+          </span>
+          <SourceLinks change={change} reviewUrl={reviewUrl} />
+        </div>
+      )}
       {change.properties.length > 0 ? (
         <div className="ss-properties">
-          <div className="ss-property ss-property-head">
-            <span>Property</span>
-            <span>Before</span>
-            <span>After</span>
-          </div>
-          {change.properties.map((property, index) => (
-            <div
-              className={`ss-property ss-${property.operation}`}
-              key={`${property.name}:${index}`}
-            >
-              <span className="ss-property-name">
-                {property.name.startsWith("@") ? property.name.slice(1) : property.name}
-                <small>
-                  {property.operation}
-                  {property.newLine
-                    ? ` · L${property.newLine}`
-                    : property.oldLine
-                      ? ` · L${property.oldLine}`
-                      : ""}
-                </small>
-              </span>
-              <code className="ss-before" data-empty={property.before === undefined}>
-                <ReferenceValue
-                  raw={property.before}
-                  references={property.beforeReferences}
-                  file={file}
-                  side="before"
-                  navigation={navigation}
-                />
-              </code>
-              <code className="ss-after" data-empty={property.after === undefined}>
-                <ReferenceValue
-                  raw={property.after}
-                  references={property.afterReferences}
-                  file={file}
-                  side="after"
-                  navigation={navigation}
-                />
-              </code>
+          {!compact && (
+            <div className="ss-property ss-property-head">
+              <span>Property</span>
+              <span>Before</span>
+              <span>After</span>
             </div>
-          ))}
+          )}
+          {compact ? (
+            groups.map((group) =>
+              group.label === "Properties" && groups.length === 1 ? (
+                <PropertyRows
+                  key={group.label}
+                  properties={group.properties}
+                  compact
+                  file={file}
+                  navigation={navigation}
+                />
+              ) : (
+                <details className="ss-property-group" key={group.label} open>
+                  <summary>
+                    <ChevronDown className="ss-chevron" size={10} aria-hidden="true" />
+                    {group.label}
+                  </summary>
+                  <PropertyRows
+                    properties={group.properties}
+                    compact
+                    file={file}
+                    navigation={navigation}
+                  />
+                </details>
+              ),
+            )
+          ) : (
+            <PropertyRows
+              properties={change.properties}
+              compact={false}
+              file={file}
+              navigation={navigation}
+            />
+          )}
         </div>
       ) : (
         <p className="ss-muted ss-padding">
@@ -249,7 +393,7 @@ export function FileReview({
   const changes = file.changes.filter(
     (change) =>
       matchesKind(change, filter) &&
-      `${change.label} ${change.path} ${change.className} ${change.properties.map((p) => `${p.name} ${p.before ?? ""} ${p.after ?? ""} ${[...(p.beforeReferences ?? []), ...(p.afterReferences ?? [])].map((reference) => `${reference.label} ${reference.target}`).join(" ")}`).join(" ")}`
+      `${change.label} ${change.path} ${change.className} ${change.properties.map((p) => `${p.name} ${propertyLabel(p.name)} ${p.before ?? ""} ${p.after ?? ""} ${[...(p.beforeReferences ?? []), ...(p.afterReferences ?? [])].map((reference) => `${reference.label} ${reference.target}`).join(" ")}`).join(" ")}`
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
@@ -291,6 +435,13 @@ export function FileReview({
         <LinkButton className="ss-button" href={file.reviewUrl}>
           Load original scene diff <ArrowUpRight size={14} />
         </LinkButton>
+      )}
+      {embedded && changes.length > 0 && (
+        <div className="ss-property ss-property-head ss-column-head" aria-hidden="true">
+          <span>Property</span>
+          <span>Before</span>
+          <span>After</span>
+        </div>
       )}
       {changes.map((change) => (
         <ChangedSection

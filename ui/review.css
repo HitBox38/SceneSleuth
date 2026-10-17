@@ -650,3 +650,119 @@
   outline: 2px solid currentColor;
   outline-offset: 2px;
 }
+
+/* Read-only inspector fields: axis labels and swatches complement the diff. */
+.ss-inline .ss-column-head {
+  border: 0;
+  background: transparent;
+  margin-top: 2px;
+}
+.ss-inline .ss-section > summary {
+  flex-wrap: wrap;
+}
+.ss-inline .ss-source-links {
+  font: 9px/1.4 var(--ss-font);
+  color: var(--ss-muted);
+  white-space: nowrap;
+}
+.ss-inline .ss-type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ss-inline .ss-source-links a {
+  color: inherit;
+  text-decoration: none;
+}
+.ss-inline .ss-source-links a:hover {
+  text-decoration: underline;
+}
+.ss-inline .ss-property-name {
+  font-family: var(--ss-font);
+}
+.ss-inline .ss-property-name small a {
+  color: inherit;
+  text-decoration: none;
+}
+.ss-inline .ss-property-name small a:hover {
+  text-decoration: underline;
+}
+.ss-property-group > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-top: 1px solid var(--ss-border);
+  background: var(--ss-panel);
+  color: var(--ss-muted);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ss-property-group > summary::-webkit-details-marker {
+  display: none;
+}
+.ss-property-group:not([open]) > summary > .ss-chevron {
+  transform: rotate(-90deg);
+}
+.ss-inspector-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ss-components {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 54px), 1fr));
+  flex: 1;
+  min-width: 0;
+  gap: 3px;
+}
+.ss-component {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--ss-inset) 35%, transparent);
+}
+.ss-axis {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--ss-muted);
+}
+.ss-axis[data-axis="x"],
+.ss-axis[data-axis="r"] {
+  color: var(--ss-danger);
+}
+.ss-axis[data-axis="y"],
+.ss-axis[data-axis="g"] {
+  color: var(--ss-success);
+}
+.ss-axis[data-axis="z"],
+.ss-axis[data-axis="b"] {
+  color: var(--ss-accent);
+}
+.ss-color-swatch {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--ss-border);
+  border-radius: 3px;
+  overflow: hidden;
+  background-color: var(--ss-bg);
+  background-image: conic-gradient(
+    var(--ss-hover) 25%,
+    transparent 0 50%,
+    var(--ss-hover) 0 75%,
+    transparent 0
+  );
+  background-size: 8px 8px;
+}
+.ss-color-swatch > span {
+  width: 100%;
+  height: 100%;
+}

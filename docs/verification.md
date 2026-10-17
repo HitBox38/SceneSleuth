@@ -176,3 +176,13 @@ Checked on 2026-10-17 in Chrome with the installed extension, after the user rel
 - All nine shader tables retain their native `table` display. The checked page console has no warnings or errors.
 
 This PR has no changed resource-reference values, so reference navigation and image tooltips are not exercised here. Popup close/reopen, light-theme behavior on real GitHub, and Firefox are not part of this run. No runtime source changed; the previously passing build checks above were not repeated for this verification-only update.
+
+## Inspector-style property presentation
+
+Checked on 2026-10-17 in the shared browser's synthetic GitHub fixture, using the production shadow-root renderer. Inline reviews now show collapsible groups for common node properties, numeric vector components, RGBA swatches, readable property labels, and distinct icons for familiar node classes. Before/After headings appear once per file, section metadata moves into the node header, and compact property markers retain operation text for assistive technology. Grouping is a presentation convention, not a complete reflection of Godot's property schema. Unknown fields remain available in Properties.
+
+The inspector fixture retains all eight changed property rows across Player, Camera3D, and Sprite, with four color swatches and exact signed/exponent vector labels. Serialized values remain available in hover text and screen-reader text. Executable-looking text stays literal, with no inserted image elements. Four Node regressions cover literal recognition, malformed/unsupported values, color alpha, and grouping without lost changes.
+
+Browser checks passed for dark/light palettes, keyboard group disclosure, readable-label search (`collision layer`), source-line links revealing the original table, pointer/keyboard view switching, and repeated processing without duplicate mounts. At 360 px, the page width remains 360 px and property cells have no horizontal overflow. An existing image-reference tooltip still loads its synthetic 128 × 128 image on keyboard focus. A fresh fixture snapshot has no console entries. These are fixture checks; the installed extension needs another reload before verifying this presentation on a real PR. Firefox remains untested.
+
+All 49 Node tests, lint, formatting, type checking, production bundling, and manifest/classic-script checks pass. The two existing Lucide directive warnings remain non-failing.
