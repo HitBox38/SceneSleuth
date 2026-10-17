@@ -165,3 +165,14 @@ Checked on 2026-10-17. Shared theme tokens inherit GitHub's current and legacy s
 The shared-browser fixture verified dark and light palettes, live theme changes while an image tooltip is open, filter/search behavior, keyboard Scene/Original diff switching, and repeated mounting without duplicates. At 360 px, page width remained 360 px and the 280 px tooltip stayed within the viewport. Sample text contrasts passed 4.5:1, including the light-theme blue reference link against the added-value background (4.66:1). A fresh standalone popup load shows the matching dark palette at 360 px with no console errors.
 
 All 45 Node tests, lint, formatting, type checking, bundling, and classic-script/manifest checks pass. The production content bundle contains the resolved theme styles with no unresolved CSS import. These are shared-browser and build checks; the installed extension needs a reload for real GitHub verification, and Firefox runtime styling remains untested.
+
+## Public Godot PR verification
+
+Checked on 2026-10-17 in Chrome with the installed extension, after the user reloaded the current build (`d079561`). The public [Godot demo PR #1356](https://github.com/godotengine/godot-demo-projects/pull/1356/changes) changes `2d/sprite_shaders/sprite_shaders.tscn` and nine shader files.
+
+- The scene renders exactly one inline review and one header switch, with 12 changed nodes and 13 property changes matching a separate parse of the public unified patch. Root scale is `Vector2(0.3, 0.3)` before and `Vector2(0.4, 0.4)` after; the removed root position and Camera2D offset change also match. Coverage remains explicitly partial.
+- All 12 node headers show the current type icons. The inline background and native GitHub body both resolve to `rgb(33, 40, 48)` in the active dark theme. No values from previously tested scenes appear.
+- Pointer activation of Original diff restores the source table; keyboard Enter on Scene restores the review. Search for `scale` retains only the owning SpriteShaders section, and clearing search restores the 12 sections without duplicate mounts.
+- All nine shader tables retain their native `table` display. The checked page console has no warnings or errors.
+
+This PR has no changed resource-reference values, so reference navigation and image tooltips are not exercised here. Popup close/reopen, light-theme behavior on real GitHub, and Firefox are not part of this run. No runtime source changed; the previously passing build checks above were not repeated for this verification-only update.
