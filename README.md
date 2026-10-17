@@ -80,7 +80,7 @@ pnpm run preview     # Serve built pages; does not install the extension
 pnpm run ui info     # Inspect the pinned shadcn React Aria configuration
 ```
 
-The tests use Node’s built-in test runner and TypeScript stripping; Node 22 may print an experimental warning. No separate test framework is installed. `test.html` is an older captured GitHub fixture, not the live markup contract. Committed regression fixtures are synthetic; do not add private game source to this repository.
+The tests use Node’s built-in test runner and TypeScript stripping; Node 22 may print an experimental warning. No separate test framework is installed. Committed regression fixtures are synthetic; do not add private game source or captured authenticated GitHub pages to this repository.
 
 The standalone popup displays setup guidance when extension APIs are absent. It does not fabricate review data. Actual injection, permissions, messaging, navigation, and popup reopening require a loaded extension.
 

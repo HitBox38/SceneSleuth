@@ -13,6 +13,9 @@ dist
 dist-ssr
 *.local
 
+# Legacy private GitHub capture; use synthetic fixtures in tests/ instead.
+/test.html
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
