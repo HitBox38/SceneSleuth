@@ -1,5 +1,6 @@
 import type { SceneReview } from "../../shared/model.ts";
 import { reviewDiff } from "./diffParser.ts";
+import { navigationContext } from "../../shared/referenceLinks.ts";
 
 type RecordValue = Record<string, unknown>;
 // GitHub's repo SPA can retain the initial page's script after navigating to
@@ -44,6 +45,39 @@ export function reviewGithubData(value: unknown, changesUrl: string) {
   );
   if (!Array.isArray(route.diffSummaries)) return undefined;
   const contents = Array.isArray(route.diffContents) ? route.diffContents.map(record) : [];
+  const navigation = navigationContext(changesUrl);
+  if (navigation) {
+    const comparison = record(route.comparison);
+    const selected = record(comparison.selectedRange);
+    const full = record(comparison.fullDiff);
+    const range = /\/(?:changes|files)\/.+/.test(new URL(changesUrl).pathname);
+    const before =
+      selected.baseOid ??
+      contents.find((content) => typeof content.oldCommitOid === "string")?.oldCommitOid ??
+      (!range ? full.baseOid : undefined);
+    const after =
+      selected.headOid ??
+      contents.find((content) => typeof content.newCommitOid === "string")?.newCommitOid ??
+      (!range ? full.headOid : undefined);
+    navigation.beforeRevision = typeof before === "string" ? before : undefined;
+    navigation.afterRevision = typeof after === "string" ? after : undefined;
+    navigation.files = route.diffSummaries
+      .map(record)
+      .filter((summary) => typeof summary.path === "string")
+      .map((summary) => {
+        const content = contents.find((item) => item.path === summary.path);
+        const previous = record(content?.oldTreeEntry).path;
+        return {
+          path: String(summary.path),
+          previousPath: typeof previous === "string" ? previous : undefined,
+          status: status(summary.changeType),
+          reviewUrl:
+            typeof summary.pathDigest === "string" && summary.pathDigest
+              ? `${changesUrl}#diff-${encodeURIComponent(summary.pathDigest)}`
+              : undefined,
+        };
+      });
+  }
   const files = route.diffSummaries
     .map(record)
     .filter((file) => typeof file.path === "string" && file.path.endsWith(".tscn"))
@@ -96,5 +130,5 @@ export function reviewGithubData(value: unknown, changesUrl: string) {
       }
       return review;
     });
-  return { comparisonKey: JSON.stringify(route.comparison), files };
+  return { comparisonKey: JSON.stringify(route.comparison), files, navigation };
 }

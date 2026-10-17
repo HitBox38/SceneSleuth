@@ -1,7 +1,7 @@
 import { observeGithubDiffs, readGithubReview } from "./scripts/githubDom.ts";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
 import { isReviewRequest, reviewContext } from "../shared/protocol.ts";
-import type { ReviewSnapshot, SceneReview } from "../shared/model.ts";
+import type { ReviewSnapshot, SceneReview, ReferenceNavigation } from "../shared/model.ts";
 
 function start() {
   if (document.documentElement.hasAttribute("data-scenesleuth-active")) return;
@@ -18,6 +18,7 @@ function start() {
   let signature = "";
   let deadline = Date.now() + 10000;
   const cached = new Map<string, SceneReview>();
+  let cachedNavigation: ReferenceNavigation | undefined;
   const runtime =
     typeof browser !== "undefined"
       ? browser.runtime
@@ -37,6 +38,7 @@ function start() {
   }
   function refresh() {
     cached.clear();
+    cachedNavigation = undefined;
     signature = "";
     deadline = Date.now() + 10000;
     checkPage();
@@ -48,6 +50,7 @@ function start() {
       contextKey = pageKey;
       comparisonKey = undefined;
       cached.clear();
+      cachedNavigation = undefined;
       signature = "";
       deadline = Date.now() + 10000;
     }
@@ -88,6 +91,7 @@ function start() {
       } else {
         if (comparisonKey !== data.comparisonKey) {
           cached.clear();
+          cachedNavigation = undefined;
           comparisonKey = data.comparisonKey;
         }
         for (const file of data.files) {
@@ -99,6 +103,13 @@ function start() {
           )
             cached.set(file.filePath, file);
         }
+        if (data.navigation) {
+          const targets = new Map(
+            (data.partialListing ? cachedNavigation?.files : [])?.map((file) => [file.path, file]),
+          );
+          for (const target of data.navigation.files) targets.set(target.path, target);
+          cachedNavigation = { ...data.navigation, files: [...targets.values()] };
+        }
         snapshot = {
           reviewKey: `${context.key}:${comparisonKey}`,
           title: context.title,
@@ -107,6 +118,7 @@ function start() {
             ? [...cached.values()]
             : data.files.map((file) => cached.get(file.filePath) ?? file),
           partialListing: data.partialListing,
+          navigation: cachedNavigation,
         };
       }
     } catch (error) {

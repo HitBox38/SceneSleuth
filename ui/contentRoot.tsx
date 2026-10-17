@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { enableShadowDOM } from "@react-stately/flags";
 import { InlineSceneReview, InlineViewSwitch } from "./SceneReview.tsx";
 import styles from "./review.css?inline";
-import type { ReviewSnapshot, SceneReview } from "../shared/model.ts";
+import type { ReviewSnapshot, SceneReview, ReferenceNavigation } from "../shared/model.ts";
 
 class ReviewBoundary extends Component<
   { children: ReactNode; onError: () => void },
@@ -34,6 +34,7 @@ export function createInlineReviews(doc: Document = document) {
   const entries = new Map<HTMLTableElement, ReturnType<typeof mount>>();
   const originalFiles = new Map<string, boolean>();
   let reviewKey = "";
+  let navigation: ReferenceNavigation | undefined;
   function switchAnchor(table: HTMLTableElement) {
     const header = table.closest('[role="region"]')?.querySelector("[data-diff-header-wrapper]");
     const viewed = header?.querySelector(
@@ -93,7 +94,7 @@ export function createInlineReviews(doc: Document = document) {
         originalFiles.set(file.filePath, isLineHash(table, doc.location.hash));
       const original = originalFiles.get(file.filePath)!;
       showTable(original || failed);
-      const next = JSON.stringify([file, original]);
+      const next = JSON.stringify([file, original, navigation]);
       if (signature === next) return;
       signature = next;
       root.render(
@@ -103,7 +104,12 @@ export function createInlineReviews(doc: Document = document) {
             showTable(true);
           }}
         >
-          <InlineSceneReview key={file.filePath} file={file} original={original} />
+          <InlineSceneReview
+            key={file.filePath}
+            file={file}
+            original={original}
+            navigation={navigation}
+          />
         </ReviewBoundary>,
       );
       switchRoot.render(
@@ -151,14 +157,34 @@ export function createInlineReviews(doc: Document = document) {
       url.origin === doc.location.origin &&
       url.pathname === doc.location.pathname &&
       url.search === doc.location.search
-    )
+    ) {
       revealLine(url.hash);
+      if (
+        link.dataset.scenesleuthFileReference === "diff" &&
+        event.button === 0 &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.shiftKey &&
+        !event.altKey
+      ) {
+        // GitHub's tree handler loads/scrolls virtualized diffs that do not yet
+        // have a DOM anchor. Preserve native modified-click/new-tab behavior.
+        const native = [
+          ...doc.querySelectorAll<HTMLAnchorElement>('[role="treeitem"] a[href]'),
+        ].find((anchor) => new URL(anchor.href, doc.location.href).href === url.href);
+        if (native) {
+          event.preventDefault();
+          native.click();
+        }
+      }
+    }
   }
   doc.addEventListener("click", onSourceClick, true);
   doc.defaultView?.addEventListener("hashchange", onHashChange);
 
   return {
     update(snapshot: ReviewSnapshot) {
+      navigation = snapshot.navigation;
       if (reviewKey !== snapshot.reviewKey) {
         clear();
         originalFiles.clear();

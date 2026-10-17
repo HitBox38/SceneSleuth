@@ -45,6 +45,20 @@ export interface ValueReference {
   label: string;
   target: string;
   className: string;
+  resourcePath?: string;
+}
+export interface ReviewFileTarget {
+  path: string;
+  previousPath?: string;
+  status: SceneReview["status"];
+  reviewUrl?: string;
+}
+export interface ReferenceNavigation {
+  changesUrl: string;
+  repositoryUrl: string;
+  beforeRevision?: string;
+  afterRevision?: string;
+  files: ReviewFileTarget[];
 }
 export interface SectionChange {
   id: string;
@@ -78,4 +92,5 @@ export interface ReviewSnapshot {
   error?: string;
   changesUrl?: string;
   partialListing?: boolean;
+  navigation?: ReferenceNavigation;
 }

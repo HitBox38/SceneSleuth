@@ -8,8 +8,10 @@ import type {
   SectionChange,
   SectionKind,
   ValueReference,
+  ReferenceNavigation,
 } from "../shared/model.ts";
 import { inlineFileContents } from "./fileContents.ts";
+import { referenceLink } from "../shared/referenceLinks.ts";
 
 const labels: Record<SectionKind, string> = {
   node: "Node",
@@ -43,22 +45,54 @@ export function sceneStats(files: SceneReview[]) {
     properties: changes.reduce((sum, item) => sum + item.properties.length, 0),
   };
 }
-function ReferenceValue({ raw, references }: { raw?: string; references?: ValueReference[] }) {
+function ReferenceValue({
+  raw,
+  references,
+  file,
+  side,
+  navigation,
+}: {
+  raw?: string;
+  references?: ValueReference[];
+  file: SceneReview;
+  side: "before" | "after";
+  navigation?: ReferenceNavigation;
+}) {
   if (raw === undefined) return "—";
   if (!references?.length) return raw;
   return (
     <>
-      {references.map((reference, index) => (
-        <span key={reference.start}>
-          {raw.slice(index ? references[index - 1].end : 0, reference.start)}
+      {references.map((reference, index) => {
+        const link = referenceLink(reference, file, side, navigation);
+        const title = `${reference.className ? reference.className + " · " : ""}${reference.target}\n${raw.slice(reference.start, reference.end)}`;
+        return (
           <span
-            className="ss-reference"
-            title={`${reference.className ? reference.className + " · " : ""}${reference.target}\n${raw.slice(reference.start, reference.end)}`}
+            key={reference.start}
+            title={
+              link
+                ? `${link.inReview ? "Jump to PR diff" : "Open repository file"}\n${title}`
+                : undefined
+            }
           >
-            {reference.label}
+            {raw.slice(index ? references[index - 1].end : 0, reference.start)}
+            {link ? (
+              <LinkButton
+                className="ss-reference ss-reference-link"
+                variant="link"
+                href={link.href}
+                data-scenesleuth-file-reference={link.inReview ? "diff" : "repository"}
+                aria-label={`${reference.label} — ${side} — ${link.inReview ? "jump to PR diff" : "open repository file"}`}
+              >
+                {reference.label}
+              </LinkButton>
+            ) : (
+              <span className="ss-reference" title={title}>
+                {reference.label}
+              </span>
+            )}
           </span>
-        </span>
-      ))}
+        );
+      })}
       {raw.slice(references[references.length - 1].end)}
     </>
   );
@@ -67,10 +101,14 @@ function ChangedSection({
   change,
   reviewUrl,
   compact = false,
+  file,
+  navigation,
 }: {
   change: SectionChange;
   reviewUrl?: string;
   compact?: boolean;
+  file: SceneReview;
+  navigation?: ReferenceNavigation;
 }) {
   const path = compact
     ? change.path && change.path !== "." && change.path !== change.label
@@ -134,10 +172,22 @@ function ChangedSection({
                 </small>
               </span>
               <code className="ss-before">
-                <ReferenceValue raw={property.before} references={property.beforeReferences} />
+                <ReferenceValue
+                  raw={property.before}
+                  references={property.beforeReferences}
+                  file={file}
+                  side="before"
+                  navigation={navigation}
+                />
               </code>
               <code className="ss-after">
-                <ReferenceValue raw={property.after} references={property.afterReferences} />
+                <ReferenceValue
+                  raw={property.after}
+                  references={property.afterReferences}
+                  file={file}
+                  side="after"
+                  navigation={navigation}
+                />
               </code>
             </div>
           ))}
@@ -155,11 +205,13 @@ export function FileReview({
   filter,
   search,
   embedded = false,
+  navigation,
 }: {
   file: SceneReview;
   filter: Filter;
   search: string;
   embedded?: boolean;
+  navigation?: ReferenceNavigation;
 }) {
   const changes = file.changes.filter(
     (change) =>
@@ -213,6 +265,8 @@ export function FileReview({
           change={change}
           reviewUrl={file.reviewUrl}
           compact={embedded}
+          file={file}
+          navigation={navigation}
         />
       ))}
       {!changes.length && !file.pending && (
@@ -265,7 +319,15 @@ export function InlineViewSwitch({
     </fieldset>
   );
 }
-export function InlineSceneReview({ file, original }: { file: SceneReview; original: boolean }) {
+export function InlineSceneReview({
+  file,
+  original,
+  navigation,
+}: {
+  file: SceneReview;
+  original: boolean;
+  navigation?: ReferenceNavigation;
+}) {
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const contents = inlineFileContents(file);
@@ -303,7 +365,13 @@ export function InlineSceneReview({ file, original }: { file: SceneReview; origi
             references.
           </p>
         ) : (
-          <FileReview file={contents} filter={filter} search={search} embedded />
+          <FileReview
+            file={contents}
+            filter={filter}
+            search={search}
+            navigation={navigation}
+            embedded
+          />
         )}
       </div>
     </section>
@@ -424,7 +492,13 @@ export function Inspector({
             </div>
             <div className="ss-files">
               {snapshot.files.map((file) => (
-                <FileReview key={file.filePath} file={file} filter={filter} search={search} />
+                <FileReview
+                  key={file.filePath}
+                  file={file}
+                  filter={filter}
+                  search={search}
+                  navigation={snapshot.navigation}
+                />
               ))}
             </div>
           </>

@@ -13,6 +13,7 @@ Open a pull request’s **Files changed** tab. SceneSleuth automatically replace
 - Browse scene files and their changed sections, with node paths and Godot classes.
 - Compare property values before and after in compact rows, with change status and source line numbers beside each property name.
 - See referenced nodes, scenes, scripts, textures, and embedded resources by name instead of serialized IDs. Relative node paths resolve within the file, and references inside arrays and dictionaries resolve too. Hover a name for its target and original expression; both sides keep their own targets. Search also matches the resolved names and paths.
+- Click a referenced file to jump to its PR diff, including scripts, images, and files whose text has not loaded yet. Files outside the selected comparison open in the repository at the corresponding before/after commit. Links support keyboard activation and the browser’s usual open-in-new-tab actions.
 - Filter nodes, resources, or signals, and search names, properties, and values.
 - Expand resources and inspect the original patch text when you need more detail.
 - Switch between **Scene** and **Original diff** independently for each file using the control in GitHub’s file header, between Copilot and Viewed. The scene body starts with filters and search on one compact row, wrapping on narrow screens. It has no extra brand, counts, or context-explanation row. Use the original view for GitHub line comments; source-line links reveal that view automatically.
@@ -34,6 +35,8 @@ GitHub loads some file diffs lazily. Those scenes appear as waiting for text in 
 During navigation without a page reload, GitHub can retain the initial page’s embedded data. SceneSleuth rejects data from a different route and reads the current rendered tables instead. In that case the popup labels its results as **loaded scenes**, since more files may appear as you browse. Those tables provide diff context only; they do not establish complete scene contents or file creation/rename metadata.
 
 The adapter targets GitHub’s modern **Files changed** layout. GitHub’s markup and embedded data are not a stable public API; unsupported layouts produce a recoverable message. Very large or GitHub-limited diffs may remain partial. There is no full scene preview, inherited-scene expansion, Godot execution, or speculative matching of renamed nodes/resource identifiers. References resolve only from declarations available in that file’s diff context. Missing targets, absolute/unique node paths, and node paths inside animation resources retain their original text. Other constructors remain source text; no values are evaluated.
+
+File links treat Godot’s `res://` project root as the repository root; relative resource paths resolve beside the scene file. Projects nested inside a larger repository need additional project-root support. During DOM-only navigation, PR links cover the file tree and diffs discovered so far. When GitHub omits comparison commit IDs, repository links use `HEAD` (the default branch) instead of claiming an exact revision. Nodes and embedded resources remain local values, without repository links.
 
 ## Install locally
 

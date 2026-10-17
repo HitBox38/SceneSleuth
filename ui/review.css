@@ -622,3 +622,23 @@
   text-decoration: underline dotted;
   text-underline-offset: 3px;
 }
+.ss .ss-reference-link {
+  display: inline;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  white-space: inherit;
+  cursor: pointer;
+  text-decoration-style: solid;
+}
+.ss .ss-reference-link[data-hovered] {
+  color: var(--ss-green);
+}
+.ss .ss-reference-link[data-focus-visible] {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}

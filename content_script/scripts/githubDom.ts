@@ -1,6 +1,7 @@
 import type { SceneReview } from "../../shared/model.ts";
 import { reviewDiff } from "./diffParser.ts";
 import { embeddedRouteMatches, header, reviewGithubData } from "./githubReview.ts";
+import { navigationContext } from "../../shared/referenceLinks.ts";
 
 export function observeGithubDiffs(root: Node, onChange: () => void) {
   const observer = new MutationObserver((records) => {
@@ -85,6 +86,19 @@ export function readGithubReview(document: Document, changesUrl: string) {
   const tables = document.querySelectorAll('table[aria-label^="Diff for: "]');
   if (!data && !tables.length) return;
   const files = new Map(data?.files.map((file) => [file.filePath, file]));
+  const navigation = data?.navigation ?? navigationContext(changesUrl);
+  const targets = new Map(navigation?.files.map((file) => [file.path, file]));
+  // The native tree retains paths and anchors for binary and not-yet-loaded files.
+  for (const item of document.querySelectorAll('[role="treeitem"][id]')) {
+    const anchor = item.querySelector('a[href^="#diff-"]');
+    const path = item.getAttribute("id");
+    if (path && anchor?.closest('[role="treeitem"]') === item && !targets.has(path))
+      targets.set(path, {
+        path,
+        status: "modified",
+        reviewUrl: `${changesUrl}${anchor.getAttribute("href")}`,
+      });
+  }
   for (const table of tables) {
     const path = table.getAttribute("aria-label")?.slice(10) ?? "";
     const previous = files.get(path);
@@ -92,6 +106,12 @@ export function readGithubReview(document: Document, changesUrl: string) {
     // contains more source lines (for example after expanding context).
     const review = reviewGithubTable(table, previous);
     const anchor = table.getAttribute("data-diff-anchor");
+    if (path && anchor && !targets.has(path))
+      targets.set(path, {
+        path,
+        status: "modified",
+        reviewUrl: `${changesUrl}#${encodeURIComponent(anchor)}`,
+      });
     if (review && !review.reviewUrl && anchor)
       review.reviewUrl = `${changesUrl}#${encodeURIComponent(anchor)}`;
     if (
@@ -100,9 +120,11 @@ export function readGithubReview(document: Document, changesUrl: string) {
     )
       files.set(review.filePath, review);
   }
+  if (navigation) navigation.files = [...targets.values()];
   return {
     comparisonKey: data?.comparisonKey ?? `rendered:${changesUrl}`,
     files: [...files.values()],
     partialListing: !data,
+    navigation,
   };
 }

@@ -62,6 +62,7 @@ export function sceneReferenceResolver(sections: SceneSection[]) {
       return {
         label: (pathsByName.get(resource.label)?.size ?? 0) > 1 ? resource.path : resource.label,
         target: resource.path,
+        resourcePath: resource.path,
         className: resource.className,
       };
     }

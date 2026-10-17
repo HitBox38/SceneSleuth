@@ -66,6 +66,19 @@ const ready: ReviewSnapshot = {
   title: "Synthetic game #12",
   status: "ready",
   files: data.files,
+  navigation: {
+    changesUrl: `${location.origin}${location.pathname}${location.search}`,
+    repositoryUrl: "https://github.com/example/game",
+    beforeRevision: "a".repeat(40),
+    afterRevision: "b".repeat(40),
+    files: [
+      {
+        path: "Scripts/light_controller.gd",
+        status: "modified",
+        reviewUrl: `${location.origin}${location.pathname}${location.search}#diff-reference-script`,
+      },
+    ],
+  },
 };
 function makeTable(split: boolean, sourceLines = lines, filePath = path, anchor = "diff-fixture") {
   const table = document.createElement("table");
@@ -126,10 +139,26 @@ function verifyRouteFallback() {
   });
   app.append(script);
   doc.body.append(app, makeTable(false));
+  const item = doc.createElement("li");
+  item.setAttribute("role", "treeitem");
+  item.id = "Scripts/current.gd";
+  const link = doc.createElement("a");
+  link.href = "#diff-current-script";
+  item.append(link);
+  const folder = doc.createElement("li");
+  folder.id = "Scripts";
+  folder.setAttribute("role", "treeitem");
+  folder.append(item);
+  doc.body.append(folder);
   const review = readGithubReview(doc, "https://github.com/example/game/pull/12/changes");
   if (
     !review?.partialListing ||
     review.files.length !== 1 ||
+    review.navigation?.files.find((file) => file.path === "Scripts/current.gd")?.reviewUrl !==
+      "https://github.com/example/game/pull/12/changes#diff-current-script" ||
+    review.navigation?.files.some((file) => file.path === "wrong-pr.tscn") ||
+    review.navigation?.files.some((file) => file.path === "Scripts") ||
+    review.navigation?.afterRevision !== undefined ||
     review.files[0]?.filePath !== path ||
     JSON.stringify(review.files[0]?.changes) !== JSON.stringify(data.files[0]?.changes) ||
     review.files[0]?.reviewUrl !== "https://github.com/example/game/pull/12/changes#diff-fixture" ||
@@ -227,6 +256,28 @@ otherTable.setAttribute("aria-label", "Diff for: Scripts/player.gd");
 otherTable.textContent = "Non-scene diff remains unchanged";
 otherTable.style.display = "table";
 inlineContainer.append(otherTable);
+const nativeTree = document.createElement("ul");
+nativeTree.setAttribute("role", "tree");
+nativeTree.setAttribute("aria-label", "File Tree");
+const nativeItem = document.createElement("li");
+nativeItem.setAttribute("role", "treeitem");
+nativeItem.id = "Scripts/light_controller.gd";
+const nativeFileLink = document.createElement("a");
+nativeFileLink.href = "#diff-reference-script";
+nativeFileLink.textContent = "Scripts/light_controller.gd (lazy diff)";
+nativeFileLink.addEventListener("click", () => {
+  nativeFileLink.dataset.visits = String(Number(nativeFileLink.dataset.visits ?? 0) + 1);
+  if (!document.getElementById("diff-reference-script")) {
+    const target = document.createElement("section");
+    target.id = "diff-reference-script";
+    target.setAttribute("aria-label", "Referenced script diff");
+    target.textContent = "Scripts/light_controller.gd · native GitHub diff loaded";
+    inlineContainer.append(target);
+  }
+});
+nativeItem.append(nativeFileLink);
+nativeTree.append(nativeItem);
+inlineContainer.append(nativeTree);
 document.body.prepend(inlineContainer);
 const inlineReviews = createInlineReviews();
 inlineReviews.update(ready);
