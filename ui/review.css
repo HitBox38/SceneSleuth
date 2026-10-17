@@ -1,21 +1,12 @@
+@import "./theme.css";
+
 .ss {
-  --ss-bg: #141916;
-  --ss-panel: #1a201c;
-  --ss-border: #303a33;
-  --ss-text: #e2e9e4;
-  --ss-muted: #95a59a;
-  --ss-green: #95d5a5;
   box-sizing: border-box;
   color: var(--ss-text);
   background: var(--ss-bg);
-  font:
-    13px/1.5 system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font: 13px/1.5 var(--ss-font);
   text-align: left;
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 .ss *,
 .ss *::before,
@@ -42,11 +33,11 @@
 .ss input:focus-visible,
 .ss summary:focus-visible,
 .ss a:focus-visible {
-  outline: 2px solid var(--ss-green);
+  outline: 2px solid var(--ss-accent);
   outline-offset: 3px;
 }
 .ss a {
-  color: var(--ss-green);
+  color: var(--ss-accent);
 }
 .ss-header {
   display: flex;
@@ -74,10 +65,10 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  background: #2c4936;
-  color: #b1edbd;
-  border: 1px solid #41694d;
-  border-radius: 10px;
+  background: var(--ss-accent-bg);
+  color: var(--ss-node);
+  border: 1px solid color-mix(in srgb, var(--ss-accent) 25%, transparent);
+  border-radius: 6px;
 }
 .ss-actions {
   display: flex;
@@ -95,7 +86,7 @@
   border-radius: 6px;
 }
 .ss button.ss-icon-button[data-hovered] {
-  background: #303a33;
+  background: var(--ss-hover);
   color: var(--ss-text);
 }
 .ss-review-title {
@@ -105,7 +96,7 @@
   font-size: 9px;
   font-weight: 650;
   letter-spacing: 1.8px;
-  color: var(--ss-green);
+  color: var(--ss-accent);
 }
 .ss-review-title p {
   font-size: 16px;
@@ -121,9 +112,7 @@
   font-size: 11px;
 }
 .ss-stats strong {
-  font:
-    600 17px/1.5 ui-monospace,
-    monospace;
+  font: 600 17px/1.5 var(--ss-mono);
   color: var(--ss-text);
   margin-right: 3px;
 }
@@ -152,12 +141,14 @@
   height: auto;
 }
 .ss button.ss-filter[aria-pressed="true"] {
-  background: #293a2e;
-  border-color: #3a5441;
-  color: #b9eac4;
+  background: var(--ss-accent-bg);
+  border-color: color-mix(in srgb, var(--ss-accent) 30%, transparent);
+  color: var(--ss-accent);
 }
-.ss button.ss-filter[data-hovered] {
+.ss button.ss-filter[data-hovered],
+.ss button.ss-filter:hover {
   color: var(--ss-text);
+  background: var(--ss-hover);
 }
 .ss-search {
   display: flex;
@@ -165,8 +156,8 @@
   align-items: center;
   padding: 8px 10px;
   border: 1px solid var(--ss-border);
-  border-radius: 7px;
-  background: #101512;
+  border-radius: 6px;
+  background: var(--ss-bg);
   color: var(--ss-muted);
 }
 .ss-search input {
@@ -179,7 +170,11 @@
   font-size: 11px;
 }
 .ss-search input::placeholder {
-  color: #75877a;
+  color: var(--ss-muted);
+}
+.ss-search:focus-within {
+  border-color: var(--ss-accent);
+  box-shadow: 0 0 0 1px var(--ss-accent);
 }
 .ss-files {
   padding: 18px 24px;
@@ -199,15 +194,13 @@
 }
 .ss-line-count {
   white-space: nowrap;
-  font:
-    11px ui-monospace,
-    monospace;
+  font: 11px var(--ss-mono);
 }
 .ss-line-count span:first-child {
-  color: #a8e3b4;
+  color: var(--ss-success);
 }
 .ss-line-count span:last-child {
-  color: #d9a498;
+  color: var(--ss-danger);
   margin-left: 8px;
 }
 .ss-context {
@@ -218,9 +211,9 @@
 .ss-notes {
   font-size: 11px;
   padding: 10px 12px;
-  border-left: 2px solid #a79063;
-  color: #d8c79f;
-  background: #28251d;
+  border-left: 2px solid var(--ss-attention);
+  color: var(--ss-text);
+  background: var(--ss-attention-bg);
   margin-bottom: 12px;
 }
 .ss-notes p + p {
@@ -230,7 +223,7 @@
   border: 1px solid var(--ss-border);
   border-radius: 7px;
   margin: 8px 0;
-  background: var(--ss-panel);
+  background: var(--ss-bg);
   overflow: hidden;
 }
 .ss-section > summary {
@@ -240,16 +233,20 @@
   gap: 9px;
   padding: 11px 12px;
   cursor: pointer;
+  background: var(--ss-panel);
+}
+.ss-section > summary:hover {
+  background: color-mix(in srgb, var(--ss-panel) 70%, var(--ss-hover));
 }
 .ss-section > summary::-webkit-details-marker {
   display: none;
 }
-.ss-section > summary > svg {
+.ss-section > summary > .ss-chevron {
   color: var(--ss-muted);
   flex-shrink: 0;
   transition: none;
 }
-.ss-section:not([open]) > summary > svg {
+.ss-section:not([open]) > summary > .ss-chevron {
   transform: rotate(-90deg);
 }
 .ss-operation {
@@ -259,19 +256,37 @@
   height: 19px;
   flex-shrink: 0;
   border-radius: 4px;
-  font:
-    600 12px ui-monospace,
-    monospace;
-  background: #313a32;
-  color: #c4d3c6;
+  font: 600 12px var(--ss-mono);
+  background: var(--ss-attention-bg);
+  color: var(--ss-attention);
 }
 .ss-operation.ss-added {
-  background: #274333;
-  color: #b7edc2;
+  background: var(--ss-success-bg);
+  color: var(--ss-success);
 }
 .ss-operation.ss-removed {
-  background: #49302c;
-  color: #edbdb1;
+  background: var(--ss-danger-bg);
+  color: var(--ss-danger);
+}
+.ss-kind-icon {
+  flex-shrink: 0;
+  color: var(--ss-node);
+}
+.ss-kind-sub_resource,
+.ss-kind-ext_resource {
+  color: var(--ss-resource);
+}
+.ss-kind-connection {
+  color: var(--ss-attention);
+}
+.ss-kind-unknown {
+  color: var(--ss-muted);
+}
+.ss-kind-icon[data-node-family="3d"] {
+  color: var(--ss-danger);
+}
+.ss-kind-icon[data-node-family="control"] {
+  color: var(--ss-success);
 }
 .ss-section-name {
   flex: 1;
@@ -282,23 +297,17 @@
 }
 .ss-section-path {
   display: block;
-  font:
-    10px/1.4 ui-monospace,
-    monospace;
+  font: 10px/1.4 var(--ss-mono);
   color: var(--ss-muted);
   font-weight: 400;
   margin-top: 2px;
 }
 .ss-type {
-  font:
-    9px ui-monospace,
-    monospace;
+  font: 10px var(--ss-mono);
   max-width: 150px;
   overflow-wrap: anywhere;
-  color: #b0bdb3;
-  background: #252e28;
-  padding: 3px 6px;
-  border-radius: 4px;
+  color: var(--ss-muted);
+  padding: 0;
 }
 .ss-section-meta {
   display: flex;
@@ -323,26 +332,24 @@
   overflow: auto;
 }
 .ss-property > code {
-  font:
-    10px/1.6 ui-monospace,
-    SFMono-Regular,
-    monospace;
+  font: 11px/1.6 var(--ss-mono);
   border-left: 1px solid var(--ss-border);
-  color: #c9d3cc;
+  color: var(--ss-text);
 }
 .ss-property > code.ss-before {
-  background: #33252066;
-  color: #d6b8b1;
+  background: var(--ss-danger-bg);
 }
 .ss-property > code.ss-after {
-  background: #1b352666;
-  color: #b5d7be;
+  background: var(--ss-success-bg);
+}
+.ss-property > code[data-empty="true"] {
+  color: var(--ss-muted);
+  background: var(--ss-bg);
 }
 .ss-property-head {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-  background: #161c18;
+  font-size: 10px;
+  font-weight: 500;
+  background: var(--ss-panel);
   color: var(--ss-muted);
 }
 .ss-property-head > span {
@@ -350,14 +357,12 @@
   padding-bottom: 6px;
 }
 .ss-property-name {
-  font:
-    10px/1.5 ui-monospace,
-    monospace;
+  font: 11px/1.5 var(--ss-mono);
 }
 .ss-property-name small {
   display: block;
   color: var(--ss-muted);
-  font: 9px/1.5 system-ui;
+  font: 9px/1.5 var(--ss-font);
   margin-top: 4px;
 }
 .ss-raw {
@@ -371,16 +376,14 @@
   cursor: pointer;
 }
 .ss-raw pre {
-  background: #0d120e;
+  background: var(--ss-inset);
   max-height: 300px;
   overflow: auto;
   padding: 14px;
   border: 1px solid var(--ss-border);
   border-radius: 6px;
-  color: #aabbb0;
-  font:
-    10px/1.6 ui-monospace,
-    monospace;
+  color: var(--ss-text);
+  font: 10px/1.6 var(--ss-mono);
   white-space: pre;
 }
 .ss-empty {
@@ -408,13 +411,17 @@
   gap: 8px;
   text-decoration: none;
   padding: 8px 13px;
-  background: #a5dcb2;
-  color: #15241a;
-  border: 1px solid #bce8c6;
+  background: var(--ss-panel);
+  color: var(--ss-text);
+  border: 1px solid var(--ss-border);
   border-radius: 6px;
   font-weight: 600;
   height: auto;
   font-size: 11px;
+}
+.ss .ss-button[data-hovered],
+.ss .ss-button:hover {
+  background: var(--ss-hover);
 }
 .ss-footer {
   display: flex;
@@ -585,7 +592,7 @@
   margin-top: 0;
 }
 .ss-inline .ss-type {
-  padding: 2px 5px;
+  padding: 0;
 }
 .ss-inline .ss-section-meta {
   padding: 3px 8px;
@@ -629,7 +636,7 @@
   border: 0;
   border-radius: 2px;
   background: none;
-  color: inherit;
+  color: var(--ss-accent);
   font: inherit;
   white-space: inherit;
   cursor: pointer;
@@ -637,7 +644,7 @@
 }
 .ss .ss-reference-link[data-hovered],
 .ss .ss-reference-link:hover {
-  color: var(--ss-green);
+  color: var(--ss-accent);
 }
 .ss .ss-reference-link[data-focus-visible] {
   outline: 2px solid currentColor;

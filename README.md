@@ -10,6 +10,8 @@ The goal is to answer **“What changed in this scene?”** without opening the 
 
 Open a pull request’s **Files changed** tab. SceneSleuth automatically replaces each loaded `.tscn` diff body with a structured scene review. GitHub’s file header and review controls stay in place. The toolbar popup summarizes the current tab; **Go to scene changes** scrolls to an inline review.
 
+The inline review follows GitHub’s active color theme, with Godot-inspired scene-type icons, left-hand disclosure arrows, and compact inspector rows. Nodes, resources, and signals have distinct icon colors; before/after values use GitHub’s diff colors. The header switch and image previews share the same theme. The standalone toolbar popup uses a matching dark palette.
+
 - Browse scene files and their changed sections, with node paths and Godot classes.
 - Compare property values before and after in compact rows, with change status and source line numbers beside each property name.
 - See referenced nodes, scenes, scripts, textures, and embedded resources by name instead of serialized IDs. Relative node paths resolve within the file, and references inside arrays and dictionaries resolve too. Hover a name for its target and original expression; both sides keep their own targets. Search also matches the resolved names and paths.

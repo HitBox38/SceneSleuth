@@ -1,5 +1,18 @@
 import { useState } from "react";
-import { Search, GitBranch, Layers, ArrowUpRight, RefreshCw, X, ChevronDown } from "lucide-react";
+import {
+  Search,
+  GitBranch,
+  Layers,
+  ArrowUpRight,
+  RefreshCw,
+  X,
+  ChevronDown,
+  Box,
+  Diamond,
+  Zap,
+  FileBox,
+  CircleHelp,
+} from "lucide-react";
 import { Button } from "../popup/src/components/ui/button.tsx";
 import { LinkButton } from "../popup/src/components/ui/button.tsx";
 import type {
@@ -21,6 +34,14 @@ const labels: Record<SectionKind, string> = {
   connection: "Signal",
   scene: "Scene",
   unknown: "Unresolved",
+};
+const kindIcons = {
+  node: Box,
+  ext_resource: Diamond,
+  sub_resource: Diamond,
+  connection: Zap,
+  scene: FileBox,
+  unknown: CircleHelp,
 };
 const kindGroups = {
   all: "All changes",
@@ -105,6 +126,17 @@ function ChangedSection({
   file: SceneReview;
   navigation?: ReferenceNavigation;
 }) {
+  const KindIcon = kindIcons[change.kind];
+  const nodeFamily =
+    change.kind !== "node"
+      ? undefined
+      : change.className.includes("3D")
+        ? "3d"
+        : /(?:Control|Button|Label|Container|Panel|ProgressBar|LineEdit|TextEdit|TextureRect|ColorRect)$/.test(
+              change.className,
+            )
+          ? "control"
+          : "2d";
   const path = compact
     ? change.path && change.path !== "." && change.path !== change.label
       ? change.path
@@ -113,15 +145,21 @@ function ChangedSection({
   return (
     <details className="ss-section" open={change.kind === "node" || change.kind === "unknown"}>
       <summary>
-        <span className={`ss-operation ss-${change.operation}`}>
-          {change.operation === "added" ? "+" : change.operation === "removed" ? "−" : "~"}
-        </span>
+        <ChevronDown className="ss-chevron" size={12} aria-hidden="true" />
+        <KindIcon
+          className={`ss-kind-icon ss-kind-${change.kind}`}
+          data-node-family={nodeFamily}
+          size={14}
+          aria-hidden="true"
+        />
         <span className="ss-section-name">
           {change.label}
           {path && <span className="ss-section-path">{path}</span>}
         </span>
         <span className="ss-type">{change.className || labels[change.kind]}</span>
-        <ChevronDown size={13} />
+        <span className={`ss-operation ss-${change.operation}`} aria-label={change.operation}>
+          {change.operation === "added" ? "+" : change.operation === "removed" ? "−" : "~"}
+        </span>
       </summary>
       <div className="ss-section-meta">
         <span>
@@ -166,7 +204,7 @@ function ChangedSection({
                       : ""}
                 </small>
               </span>
-              <code className="ss-before">
+              <code className="ss-before" data-empty={property.before === undefined}>
                 <ReferenceValue
                   raw={property.before}
                   references={property.beforeReferences}
@@ -175,7 +213,7 @@ function ChangedSection({
                   navigation={navigation}
                 />
               </code>
-              <code className="ss-after">
+              <code className="ss-after" data-empty={property.after === undefined}>
                 <ReferenceValue
                   raw={property.after}
                   references={property.afterReferences}

@@ -1,0 +1,41 @@
+/* GitHub's semantic tokens cross the shadow boundary. Defaults also give the
+   standalone popup a matching dark palette without touching the host page. */
+:where(.ss, .ss-image-preview) {
+  --ss-bg: var(--bgColor-default, var(--color-canvas-default, #0d1117));
+  --ss-panel: var(--bgColor-muted, var(--color-canvas-subtle, #151b23));
+  --ss-inset: var(--bgColor-inset, var(--color-canvas-inset, #010409));
+  --ss-overlay: var(--overlay-bgColor, var(--ss-panel));
+  --ss-border: var(--borderColor-default, var(--color-border-default, #3d444d));
+  --ss-border-muted: var(--borderColor-muted, var(--color-border-muted, #3d444db3));
+  --ss-text: var(--fgColor-default, var(--color-fg-default, #d1d7e0));
+  --ss-muted: var(--fgColor-muted, var(--color-fg-muted, #9198a1));
+  --ss-accent: var(--fgColor-accent, var(--color-accent-fg, #4493f8));
+  --ss-accent-bg: var(--bgColor-accent-muted, var(--color-accent-subtle, #388bfd1a));
+  --ss-hover: var(--control-transparent-bgColor-hover, var(--bgColor-neutral-muted, #656c7633));
+  --ss-success: var(--fgColor-success, var(--color-success-fg, #3fb950));
+  --ss-success-bg: var(--diffBlob-addition-bgColor-line, var(--bgColor-success-muted, #2ea04326));
+  --ss-danger: var(--fgColor-danger, var(--color-danger-fg, #f85149));
+  --ss-danger-bg: var(--diffBlob-deletion-bgColor-line, var(--bgColor-danger-muted, #f8514926));
+  --ss-attention: var(--fgColor-attention, var(--color-attention-fg, #d29922));
+  --ss-attention-bg: var(--bgColor-attention-muted, var(--color-attention-subtle, #bb800926));
+  --ss-resource: var(--fgColor-done, var(--color-done-fg, #ab7df8));
+  --ss-node: color-mix(in srgb, var(--ss-accent) 75%, #478cbf);
+  --ss-font: var(
+    --fontStack-system,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Noto Sans",
+    Helvetica,
+    Arial,
+    sans-serif
+  );
+  --ss-mono: var(
+    --fontStack-monospace,
+    ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace
+  );
+}

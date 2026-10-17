@@ -150,3 +150,18 @@ Checked on 2026-10-17. Browser-supported image references now open React Aria to
 The shared-browser fixture checks the actual shadow-root review with synthetic images served by a worker scoped to the test page. Before and after show distinct 128 × 128 and 160 × 128 graphics at their respective commit URLs. Hover, keyboard focus, hovering the tooltip itself, Escape dismissal, failed loads, Original diff cleanup, and existing PR-file navigation passed. At a 360 px viewport, the 280 px tooltip stayed within the viewport. Pointer tests caught a shadow-root enter/leave issue; bubbling pointer events now drive React Aria's tooltip state there. The deliberate missing-image case produces an expected network 404 and a readable fallback.
 
 Chrome separately loaded the real private Raven PNG through the signed-in GitHub raw-file URL and decoded it at 1000 × 1000. This verifies source access, not the new installed tooltip: that integration still needs a manual extension and PR reload. Firefox remains untested. All 45 Node tests, lint, formatting, type checking, production bundling, and manifest/classic-script checks pass; the existing Lucide directive warnings remain non-failing.
+
+## GitHub and Godot visual integration
+
+Checked on 2026-10-17. Shared theme tokens inherit GitHub's current and legacy semantic colors through the review's shadow roots. The standalone popup has GitHub-dark defaults. The tooltip uses the same token sheet outside the shadow root, so it follows the page theme too.
+
+| Before                                            | After                                                                   | Purpose                                  |
+| ------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------- |
+| Fixed forest colors                               | GitHub surfaces, borders, text, and diff tints                          | Blend into the active page theme         |
+| Right-hand disclosure and generic section styling | Left-hand disclosure, colored scene-type icons, restrained class labels | Recall Godot's scene tree and inspector  |
+| Tinted empty before/after cells                   | Neutral empty cells, red/green actual values                            | Keep change emphasis on available values |
+| Separate green image tooltip                      | Shared overlay colors and neutral checkerboard                          | Match the review and GitHub hover cards  |
+
+The shared-browser fixture verified dark and light palettes, live theme changes while an image tooltip is open, filter/search behavior, keyboard Scene/Original diff switching, and repeated mounting without duplicates. At 360 px, page width remained 360 px and the 280 px tooltip stayed within the viewport. Sample text contrasts passed 4.5:1, including the light-theme blue reference link against the added-value background (4.66:1). A fresh standalone popup load shows the matching dark palette at 360 px with no console errors.
+
+All 45 Node tests, lint, formatting, type checking, bundling, and classic-script/manifest checks pass. The production content bundle contains the resolved theme styles with no unresolved CSS import. These are shared-browser and build checks; the installed extension needs a reload for real GitHub verification, and Firefox runtime styling remains untested.

@@ -58,7 +58,7 @@ export function createInlineReviews(doc: Document = document) {
     host.style.cssText = "display:block;min-width:0;scroll-margin-top:100px;";
     const shadow = host.attachShadow({ mode: "open" });
     const style = doc.createElement("style");
-    style.textContent = `:host{all:initial;display:block;min-width:0}${styles}`;
+    style.textContent = `:host{all:initial;display:block;min-width:0;color-scheme:inherit}${styles}`;
     const target = doc.createElement("div");
     shadow.append(style, target);
     table.before(host);
@@ -68,7 +68,7 @@ export function createInlineReviews(doc: Document = document) {
     switchHost.style.cssText = "display:inline-flex;flex-shrink:0;vertical-align:middle;";
     const switchShadow = switchHost.attachShadow({ mode: "open" });
     const switchStyle = doc.createElement("style");
-    switchStyle.textContent = `:host{all:initial;display:inline-flex;flex-shrink:0}${styles}`;
+    switchStyle.textContent = `:host{all:initial;display:inline-flex;flex-shrink:0;color-scheme:inherit}${styles}`;
     const switchTarget = doc.createElement("div");
     switchShadow.append(switchStyle, switchTarget);
     anchor.before(switchHost);

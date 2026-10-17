@@ -20,6 +20,7 @@ import {
   imageReferenceReview,
 } from "./fixtures/file-contents.ts";
 import "../ui/review.css";
+import "./github-theme.css";
 
 // Mock only this fixture's synthetic image URLs, including requests from the
 // shadow-root review. No extension code registers a service worker or mocks data.
@@ -232,12 +233,12 @@ try {
 const inlineContainer = document.createElement("div");
 inlineContainer.id = "inline-fixture";
 inlineContainer.style.cssText =
-  "max-width:740px;margin:32px auto;color:#d1d7e0;border:1px solid #3d444d;border-radius:6px;";
+  "max-width:740px;margin:32px auto;color:var(--fgColor-default);border:1px solid var(--borderColor-default);border-radius:6px;";
 function makeHeader(filePath: string) {
   const header = document.createElement("header");
   header.setAttribute("data-diff-header-wrapper", "");
   header.style.cssText =
-    "padding:10px;background:#252b34;display:flex;align-items:center;justify-content:space-between;gap:8px;font:12px system-ui;";
+    "padding:10px;background:var(--bgColor-muted);display:flex;align-items:center;justify-content:space-between;gap:8px;font:12px system-ui;";
   const title = document.createElement("strong");
   title.textContent = filePath;
   title.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;";
@@ -248,7 +249,7 @@ function makeHeader(filePath: string) {
   copilot.setAttribute("aria-label", "Ask about this diff");
   copilot.setAttribute("data-testid", "copilot-diff-explain-button");
   copilot.style.cssText =
-    "background:transparent;color:#d1d7e0;border:1px solid #3d444d;border-radius:5px;padding:5px;";
+    "background:transparent;color:var(--fgColor-default);border:1px solid var(--borderColor-default);border-radius:5px;padding:5px;";
   const label = document.createElement("label");
   label.style.cssText = "display:flex;align-items:center;white-space:nowrap;gap:3px;";
   const checkbox = document.createElement("input");
@@ -330,6 +331,22 @@ function Fixture() {
         <h1 style={{ fontSize: 18 }}>SceneSleuth development fixture</h1>
         <p style={{ margin: "8px 0" }}>Synthetic data · {domResult}</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <Button
+            className="ss-button"
+            onPress={() => {
+              document.documentElement.dataset.colorMode = "dark";
+            }}
+          >
+            GitHub dark
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
+              document.documentElement.dataset.colorMode = "light";
+            }}
+          >
+            GitHub light
+          </Button>
           <Button className="ss-button" onPress={() => inlineReviews.open()}>
             Go to inline review
           </Button>

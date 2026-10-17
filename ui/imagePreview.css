@@ -1,17 +1,17 @@
+@import "./theme.css";
+
 .ss-image-preview {
   box-sizing: border-box;
   width: min(280px, calc(100vw - 24px));
   max-height: calc(100vh - 24px);
   overflow: hidden;
   padding: 10px;
-  border: 1px solid #46534a;
-  border-radius: 8px;
-  color: #e2e9e4;
-  background: #1a201c;
-  box-shadow: 0 8px 28px #0006;
-  font:
-    12px/1.4 system-ui,
-    sans-serif;
+  border: 1px solid var(--ss-border);
+  border-radius: 6px;
+  color: var(--ss-text);
+  background: var(--ss-overlay);
+  box-shadow: var(--shadow-floating-small, 0 8px 24px #0004);
+  font: 12px/1.4 var(--ss-font);
   text-align: left;
 }
 .ss-image-preview-name,
@@ -28,8 +28,14 @@
   margin: 8px 0;
   border-radius: 4px;
   overflow: hidden;
-  background-color: #202620;
-  background-image: conic-gradient(#303830 25%, transparent 0 50%, #303830 0 75%, transparent 0);
+  border: 1px solid var(--ss-border-muted);
+  background-color: var(--ss-bg);
+  background-image: conic-gradient(
+    var(--ss-panel) 25%,
+    transparent 0 50%,
+    var(--ss-panel) 0 75%,
+    transparent 0
+  );
   background-size: 16px 16px;
 }
 .ss-image-preview-stage img {
@@ -46,12 +52,12 @@
   place-content: center;
   padding: 16px;
   text-align: center;
-  background: #1a201cee;
-  color: #bdc8bf;
+  background: var(--ss-overlay);
+  color: var(--ss-muted);
 }
 .ss-image-preview-path,
 .ss-image-preview-size {
-  color: #a4b4a8;
+  color: var(--ss-muted);
   font-size: 11px;
 }
 .ss-image-preview-size {
