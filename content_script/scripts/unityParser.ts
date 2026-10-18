@@ -157,7 +157,7 @@ export function describeUnitySections(sections: SceneSection[], format: ReviewFi
     if (
       (owner && owner.fileID !== "0" && !owner.guid) ||
       ["Transform", "RectTransform"].includes(section.className) ||
-      (section.className === "MonoBehaviour" && format !== "unity_asset")
+      (section.className === "MonoBehaviour" && ["unity_scene", "unity_prefab"].includes(format))
     ) {
       section.kind = "component";
       if (gameObject?.kind === "gameobject") section.label = gameObject.label;

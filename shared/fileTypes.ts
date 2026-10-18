@@ -2,7 +2,12 @@ import type { SceneReview } from "./model.ts";
 
 export type GodotFileKind = "scene" | "project" | "resource";
 
-export type ReviewFileKind = GodotFileKind | "unity_scene" | "unity_prefab" | "unity_asset";
+export type ReviewFileKind =
+  | GodotFileKind
+  | "unity_scene"
+  | "unity_prefab"
+  | "unity_asset"
+  | "unity_material";
 
 export function supportedFileKind(path?: string): ReviewFileKind | undefined {
   if (path?.endsWith(".tscn")) return "scene";
@@ -11,6 +16,7 @@ export function supportedFileKind(path?: string): ReviewFileKind | undefined {
   if (path?.endsWith(".unity")) return "unity_scene";
   if (path?.endsWith(".prefab")) return "unity_prefab";
   if (path?.endsWith(".asset")) return "unity_asset";
+  if (path?.endsWith(".mat")) return "unity_material";
 }
 
 export function reviewViewLabel(file: Pick<SceneReview, "filePath" | "previousPath">): string {
@@ -21,6 +27,7 @@ export function reviewViewLabel(file: Pick<SceneReview, "filePath" | "previousPa
     unity_scene: "Scene",
     unity_prefab: "Prefab",
     unity_asset: "Asset",
+    unity_material: "Material",
   }[reviewFileKind(file)];
 }
 

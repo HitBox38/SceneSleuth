@@ -631,27 +631,29 @@ export function InlineSceneReview({
   return (
     <section className="ss ss-inline" aria-label={`SceneSleuth review for ${file.filePath}`}>
       <div className="ss-toolbar">
-        {!project && !resource && (
-          <div className="ss-filters" aria-label="Filter scene changes">
-            {Object.entries(kindGroups)
-              .filter(([key]) =>
-                unity
-                  ? ["all", "gameobject", "component", "unity_object"].includes(key)
-                  : !["project", "gameobject", "component", "unity_object"].includes(key),
-              )
-              .map(([key, label]) => (
-                <Button
-                  key={key}
-                  className="ss-filter"
-                  variant="ghost"
-                  aria-pressed={filter === key}
-                  onPress={() => setFilter(key as Filter)}
-                >
-                  {key === "resource" ? "Embedded resources" : label}
-                </Button>
-              ))}
-          </div>
-        )}
+        {!project &&
+          !resource &&
+          (!unity || ["unity_scene", "unity_prefab"].includes(reviewFileKind(file))) && (
+            <div className="ss-filters" aria-label="Filter scene changes">
+              {Object.entries(kindGroups)
+                .filter(([key]) =>
+                  unity
+                    ? ["all", "gameobject", "component", "unity_object"].includes(key)
+                    : !["project", "gameobject", "component", "unity_object"].includes(key),
+                )
+                .map(([key, label]) => (
+                  <Button
+                    key={key}
+                    className="ss-filter"
+                    variant="ghost"
+                    aria-pressed={filter === key}
+                    onPress={() => setFilter(key as Filter)}
+                  >
+                    {key === "resource" ? "Embedded resources" : label}
+                  </Button>
+                ))}
+            </div>
+          )}
         <label className="ss-search">
           <Search size={14} />
           <span className="ss-sr-only">
