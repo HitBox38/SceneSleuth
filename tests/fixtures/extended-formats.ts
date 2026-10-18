@@ -153,5 +153,18 @@ extendedFormatSources.push({
     'script="plugin.gd"',
   ],
 });
+extendedFormatSources.push({
+  path: "Game/Scenes/Model.escn",
+  source: [
+    "[gd_scene format=3]",
+    '[ext_resource type="Texture2D" path="res://Textures/Water.png" id="texture"]',
+    '[sub_resource type="StandardMaterial3D" id="material"]',
+    'albedo_texture=ExtResource("texture")',
+    '[node name="Model" type="Node3D"]',
+    '[node name="Mesh" type="MeshInstance3D" parent="."]',
+    "position=Vector3(1, 2, 3)",
+    'surface_material_override/0=SubResource("material")',
+  ],
+});
 export const extendedFormatPatches = () =>
   extendedFormatSources.map(({ path, source }) => unityPatch(path, source));

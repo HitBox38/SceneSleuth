@@ -22,7 +22,7 @@ export type ReviewFileKind =
 
 export function supportedFileKind(path?: string): ReviewFileKind | undefined {
   if (path?.split("/").includes(".godot")) return;
-  if (path?.endsWith(".tscn")) return "scene";
+  if (path?.endsWith(".tscn") || path?.endsWith(".escn")) return "scene";
   if (path?.endsWith(".godot")) return "project";
   if (path?.endsWith(".tres")) return "resource";
   if (path?.endsWith(".import")) return "import";

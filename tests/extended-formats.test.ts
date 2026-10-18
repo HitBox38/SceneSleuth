@@ -358,3 +358,37 @@ test("Godot plugin configurations expose metadata and resolve only the script fi
   );
   assert.equal(hostile.changes[0].properties[0].afterReferences, undefined);
 });
+
+test("ESCN exported scenes share scene parsing, references, partial ownership and source lines", () => {
+  const example = extendedFormatSources.find((f) => f.path.endsWith(".escn"))!;
+  const file = reviewDiff(unityPatch(example.path, example.source))[0];
+  assert.equal(reviewViewLabel(file), "Scene");
+  assert.equal(file.coverage, "complete");
+  assert.deepEqual(file.diagnostics, []);
+  assert.deepEqual(
+    file.changes,
+    reviewDiff(unityPatch(example.path.replace(".escn", ".tscn"), example.source))[0].changes,
+  );
+  const mesh = file.changes.find((c) => c.label === "Mesh")!;
+  assert.equal(
+    mesh.properties.find((p) => p.name === "surface_material_override/0")?.afterReferences?.[0]
+      .label,
+    "StandardMaterial3D",
+  );
+  const changed = modified(
+    example.path,
+    ['[node name="Mesh" type="MeshInstance3D" parent="."]', "position=Vector3(1, 2, 3)"],
+    ['[node name="Mesh" type="MeshInstance3D" parent="."]', "position=Vector3(4, 2, 3)"],
+    10,
+  );
+  assert.equal(changed.changes[0].properties[0].before, "Vector3(1, 2, 3)");
+  assert.equal(changed.changes[0].properties[0].after, "Vector3(4, 2, 3)");
+  assert.equal(changed.changes[0].properties[0].newLine, 11);
+  assert.equal(
+    modified(example.path, ["position=Vector3(1, 2, 3)"], ["position=Vector3(4, 2, 3)"], 40)
+      .changes[0].kind,
+    "unknown",
+  );
+  assert.equal(supportedFileKind("Game/Model.scn"), undefined);
+  assert.equal(supportedFileKind("Game/Material.res"), undefined);
+});

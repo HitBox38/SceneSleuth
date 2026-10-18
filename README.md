@@ -2,7 +2,7 @@
 
 **See the scene behind the diff.**
 
-SceneSleuth helps Godot and Unity developers review serialized scenes and assets in GitHub pull requests. It supports Godot `.tscn`, `.tres`, `.godot`, `.import`, `.gdextension`, `export_presets.cfg`, and `plugin.cfg` files, plus Unity text-serialized `.unity`, `.prefab`, `.asset`, `.mat`, `.meta`, `.controller`, `.overrideController`, and `.anim` files. Instead of reconstructing changes from serialized lines, you can inspect nodes, resources, properties, signal connections, and project settings directly in each file’s diff area.
+SceneSleuth helps Godot and Unity developers review serialized scenes and assets in GitHub pull requests. It supports Godot `.tscn`, `.escn`, `.tres`, `.godot`, `.import`, `.gdextension`, `export_presets.cfg`, and `plugin.cfg` files, plus Unity text-serialized `.unity`, `.prefab`, `.asset`, `.mat`, `.meta`, `.controller`, `.overrideController`, and `.anim` files. Instead of reconstructing changes from serialized lines, you can inspect nodes, resources, properties, signal connections, and project settings directly in each file’s diff area.
 
 The goal is to answer **“What changed in this scene or asset?”** without opening the project in the editor.
 
@@ -12,7 +12,7 @@ Open a pull request’s **Files changed** tab. SceneSleuth automatically replace
 
 The inline review follows GitHub’s active color theme, with Godot-inspired scene-type icons, left-hand disclosure arrows, and compact inspector rows. Nodes, resources, and signals have distinct icon colors; before/after values use GitHub’s diff colors. The header switch and image previews share the same theme. The standalone toolbar popup uses a matching dark palette.
 
-- Browse scene files and their changed sections, with node paths and Godot classes.
+- Browse `.tscn` and exported `.escn` scene files and their changed sections, with node paths and Godot classes.
 - Review Unity `.anim` clips with grouped tracks/keyframes, events, and clip settings, including sample rate and serialized looping options. Curve keys, slopes, paths, and event parameters expand as YAML trees; compressed payloads remain source text. This is a property review, without animation playback or plotted curves.
 - Review Unity `.overrideController` base-controller references and original/replacement clip pairs in a dedicated clip-replacements group. Available GUID mappings provide navigation; the base controller is not expanded into this file.
 - Inspect Unity `.controller` animation state machines as serialized objects, with named local state references and grouped parameters, layers, transition destinations, conditions, and timing. Nested blend trees retain their available properties; no runtime animation graph is evaluated.
@@ -34,7 +34,7 @@ The inline review follows GitHub’s active color theme, with Godot-inspired sce
 - Hover or keyboard-focus an image filename for a preview, with transparency shown against a checkerboard and the image dimensions below it. Previews load from GitHub only when opened and use the corresponding before/after revision. Clicking the filename still navigates to the file. Unavailable previews show a fallback message.
 - Filter Godot nodes/resources/signals or Unity GameObjects/components/other objects, and search names, properties, and values.
 - Expand resources and inspect the original patch text when you need more detail.
-- Switch between **Scene**, **Resource**, **Settings**, **Prefab**, or **Asset** and **Original diff** independently for each file using the control in GitHub’s file header, between Copilot and Viewed. The scene body starts with filters and search on one compact row; project settings and text resources start with search. These layouts wrap on narrow screens and omit extra brand, counts, or context-explanation rows. Use the original view for GitHub line comments; source-line links reveal that view automatically.
+- Switch between file-appropriate views (**Scene**, **Resource**, **Settings**, **Import settings**, **Export**, **Extension**, **Plugin**, **Prefab**, **Asset**, **Material**, **Controller**, **Overrides**, or **Animation**) and **Original diff** independently for each file using the control in GitHub’s file header, between Copilot and Viewed. The scene body starts with filters and search on one compact row; project settings and text resources start with search. These layouts wrap on narrow screens and omit extra brand, counts, or context-explanation rows. Use the original view for GitHub line comments; source-line links reveal that view automatically.
 - Each inline view shows only its own file’s objects, settings, properties, embedded resources, and signals. Referenced script, image, and scene files are not displayed as separate cards. References remain readable as property values, and their declarations remain in **Original diff**. When GitHub reuses a diff table for another file, SceneSleuth replaces the old view rather than carrying its values over.
 - Keep GitHub’s file navigation, Viewed checkboxes, and review controls. Other file types keep their original diffs, and SceneSleuth never submits reviews.
 
