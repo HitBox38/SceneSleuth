@@ -172,7 +172,7 @@ test("GUID mappings are side-specific, unique, revision-aware, and never use unr
   });
 });
 
-test("GitHub discovers Unity scenes, prefabs and assets and reads metadata without rendering it as an asset", () => {
+test("GitHub discovers Unity scenes, prefabs and assets and reads metadata as an independent review", () => {
   const snapshot = reviewGithubData(
     {
       payload: {
@@ -195,9 +195,9 @@ test("GitHub discovers Unity scenes, prefabs and assets and reads metadata witho
     },
     "https://github.com/example/game/pull/2/changes",
   )!;
-  assert.equal(snapshot.files.length, 3);
+  assert.equal(snapshot.files.length, 4);
   assert.equal(
-    snapshot.files.every((f) => f.pending),
+    snapshot.files.filter((f) => !f.filePath.endsWith(".meta")).every((f) => f.pending),
     true,
   );
   assert.equal(

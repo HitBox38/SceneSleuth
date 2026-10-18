@@ -1,7 +1,12 @@
 import type { SceneReview, SourceLine, SceneSection } from "../../shared/model.ts";
 import { compareSections, parseScene } from "./contentParser.ts";
 import { supportedFileKind, reviewFileKind } from "../../shared/fileTypes.ts";
-import { parseUnity, describeUnitySections, unityReferenceResolver } from "./unityParser.ts";
+import {
+  parseUnity,
+  parseUnityMetadata,
+  describeUnitySections,
+  unityReferenceResolver,
+} from "./unityParser.ts";
 
 interface Hunk {
   oldStart: number;
@@ -94,6 +99,7 @@ export function parseUnifiedDiff(text: string): PatchFile[] {
 export function reviewPatch(file: PatchFile): SceneReview {
   const format = reviewFileKind(file);
   const unity = format.startsWith("unity_");
+  const unityParser = format === "unity_metadata" ? parseUnityMetadata : parseUnity;
   const before = new Map<string, SceneSection>();
   const after = new Map<string, SceneSection>();
   function collect(target: Map<string, SceneSection>, sections: SceneSection[]) {
@@ -116,13 +122,13 @@ export function reviewPatch(file: PatchFile): SceneReview {
       (file.status === "removed" && file.hunks[0].oldStart === 1 && file.hunks[0].newCount === 0));
   for (const [index, hunk] of file.hunks.entries()) {
     const oldScene = unity
-      ? parseUnity(hunk.before, `hunk-${index}`, complete && hunk.before.length === hunk.oldCount)
+      ? unityParser(hunk.before, `hunk-${index}`, complete && hunk.before.length === hunk.oldCount)
       : parseScene(hunk.before, `hunk-${index}`, {
           format: format as "scene" | "resource" | "project",
           startsAtFileBeginning: hunk.oldStart <= 1,
         });
     const newScene = unity
-      ? parseUnity(hunk.after, `hunk-${index}`, complete && hunk.after.length === hunk.newCount)
+      ? unityParser(hunk.after, `hunk-${index}`, complete && hunk.after.length === hunk.newCount)
       : parseScene(hunk.after, `hunk-${index}`, {
           format: format as "scene" | "resource" | "project",
           startsAtFileBeginning: hunk.newStart <= 1,

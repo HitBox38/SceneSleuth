@@ -7,7 +7,8 @@ export type ReviewFileKind =
   | "unity_scene"
   | "unity_prefab"
   | "unity_asset"
-  | "unity_material";
+  | "unity_material"
+  | "unity_metadata";
 
 export function supportedFileKind(path?: string): ReviewFileKind | undefined {
   if (path?.endsWith(".tscn")) return "scene";
@@ -17,6 +18,7 @@ export function supportedFileKind(path?: string): ReviewFileKind | undefined {
   if (path?.endsWith(".prefab")) return "unity_prefab";
   if (path?.endsWith(".asset")) return "unity_asset";
   if (path?.endsWith(".mat")) return "unity_material";
+  if (path?.endsWith(".meta")) return "unity_metadata";
 }
 
 export function reviewViewLabel(file: Pick<SceneReview, "filePath" | "previousPath">): string {
@@ -28,6 +30,7 @@ export function reviewViewLabel(file: Pick<SceneReview, "filePath" | "previousPa
     unity_prefab: "Prefab",
     unity_asset: "Asset",
     unity_material: "Material",
+    unity_metadata: "Import settings",
   }[reviewFileKind(file)];
 }
 

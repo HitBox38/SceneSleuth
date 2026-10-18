@@ -48,3 +48,56 @@ test("Unity material reviews keep shader, texture, and saved properties with exa
     "unknown",
   );
 });
+
+test("Unity metadata exposes root and importer settings without carrying owners across hunks", () => {
+  const file = reviewDiff(
+    unityPatch("Assets/Player.png.meta", [
+      "fileFormatVersion: 2",
+      `guid: ${imageGuid}`,
+      "TextureImporter:",
+      "  mipmaps:",
+      "    enableMipMap: 0",
+      "  spriteMode: 1",
+      "  platformSettings:",
+      "  - buildTarget: Standalone",
+      "    maxTextureSize: 2048",
+    ]),
+  )[0];
+  assert.equal(reviewViewLabel(file), "Import settings");
+  assert.equal(file.coverage, "complete");
+  assert.deepEqual(file.diagnostics, []);
+  assert.deepEqual(
+    file.changes.map((c) => c.label),
+    ["File metadata", "TextureImporter"],
+  );
+  assert.equal(
+    file.changes[1].properties.find((p) => p.name === "mipmaps")?.after,
+    "\n    enableMipMap: 0",
+  );
+  const changed = modified(
+    "Assets/Player.png.meta",
+    ["TextureImporter:", "  maxTextureSize: 1024", "  spriteMode: 1"],
+    ["TextureImporter:", "  maxTextureSize: 2048", "  spriteMode: 1"],
+  );
+  assert.deepEqual(
+    changed.changes[0].properties.map((p) => [p.name, p.before, p.after]),
+    [["maxTextureSize", "1024", "2048"]],
+  );
+  const partial = modified(
+    "Assets/Player.png.meta",
+    ["  maxTextureSize: 1024"],
+    ["  maxTextureSize: 2048"],
+    40,
+  );
+  assert.equal(partial.changes[0].kind, "unknown");
+  assert.equal(partial.changes[0].properties[0].newLine, 40);
+  const malicious = reviewDiff(
+    unityPatch("Assets/x.meta", ["TextureImporter:", "  value: !execute danger"]),
+  )[0];
+  assert.equal(malicious.changes[0].properties[0].afterIncomplete, true);
+  assert.equal(
+    reviewDiff(unityPatch("Assets/x.meta", ["folderAsset: yes", `guid: ${imageGuid}`]))[0]
+      .changes[0].properties[0].after,
+    "yes",
+  );
+});

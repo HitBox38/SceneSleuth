@@ -207,3 +207,86 @@ export function unityReferenceResolver(sections: SceneSection[]) {
     return references;
   };
 }
+
+// Metadata has no Unity document headers. Root scalars belong to the file;
+// importer properties require an explicit root mapping in this same hunk.
+export function parseUnityMetadata(lines: SourceLine[], scope: string, complete: boolean) {
+  const sections: SceneSection[] = [];
+  const diagnostics = new Set<string>();
+  let importer: SceneSection | undefined;
+  let root: SceneSection | undefined;
+  let unknown: SceneSection | undefined;
+  const section = (
+    id: string,
+    label: string,
+    line: SourceLine,
+    unresolved = false,
+  ): SceneSection => {
+    const result: SceneSection = {
+      id,
+      kind: unresolved ? "unknown" : "unity_object",
+      label,
+      className: unresolved ? "" : "Importer settings",
+      path: "",
+      line: line.line,
+      headerChanged: line.changed && !unresolved,
+      attributes: new Map(),
+      properties: new Map(),
+    };
+    sections.push(result);
+    return result;
+  };
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
+    if (!line.text.trim() || line.text.trimStart().startsWith("#")) continue;
+    const header = /^([A-Za-z_]\w*):\s*$/.exec(line.text);
+    if (header) {
+      importer = section(`meta:importer:${header[1]}`, header[1], line);
+      continue;
+    }
+    const top = /^([A-Za-z_]\w*):(?:[ \t]*(.*))?$/.exec(line.text);
+    const property = top ?? propertyHeader.exec(line.text);
+    if (top) importer = undefined;
+    const group = [line];
+    while (
+      index + 1 < lines.length &&
+      !/^(?:[A-Za-z_]\w*:|  [A-Za-z_]\w*:)/.test(lines[index + 1].text)
+    )
+      group.push(lines[++index]);
+    const target = top
+      ? (root ??= section("meta:file", "File metadata", line))
+      : (importer ??
+        (unknown ??= section(
+          `unknown:${scope}`,
+          "Unresolved import settings context",
+          line,
+          true,
+        )));
+    const raw = property
+      ? (property[2] ?? "") +
+        group
+          .slice(1)
+          .map((item) => `\n${item.text}`)
+          .join("")
+      : group.map((item) => item.text).join("\n");
+    const name = property ? property[1] : `Diff text L${line.line}`;
+    const incomplete =
+      !property ||
+      (!!raw.trim() && !unityYaml(raw)) ||
+      (!complete && index === lines.length - 1 && group.length > 1);
+    if (target.properties.has(name))
+      diagnostics.add(`Duplicate metadata key near line ${line.line}; inspect the original diff.`);
+    if (incomplete)
+      diagnostics.add(
+        `Import value near line ${line.line} may be incomplete or unsupported; inspect the original diff.`,
+      );
+    target.properties.set(name, {
+      raw,
+      canonical: raw.trimEnd(),
+      line: line.line,
+      changed: group.some((item) => item.changed),
+      ...(incomplete ? { incomplete: true } : {}),
+    });
+  }
+  return { sections, diagnostics: [...diagnostics] };
+}
