@@ -99,6 +99,8 @@ export interface SceneReview {
   reviewUrl?: string;
 }
 export interface ReviewSnapshot {
+  repositoryTheme?: import("./reviewTheme.ts").RepositoryTheme;
+  colorMode?: "light" | "dark";
   reviewKey: string;
   title: string;
   status: "loading" | "ready" | "error";

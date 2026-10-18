@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { Tooltip, TooltipTrigger, TooltipTriggerStateContext } from "react-aria-components";
 import { LinkButton } from "../popup/src/components/ui/button.tsx";
 import previewStyles from "./imagePreview.css?inline";
+import { EngineThemeContext } from "./EngineTheme.ts";
 
 function ImagePreview({
   src,
@@ -113,6 +114,7 @@ export function ReferenceFileLink({
   imageSrc,
   path,
 }: ReferenceFileLinkProps) {
+  const theme = useContext(EngineThemeContext);
   const link = <ReferenceAnchor href={href} inReview={inReview} label={label} side={side} />;
   if (!imageSrc) return <span title={title}>{link}</span>;
   return (
@@ -120,6 +122,7 @@ export function ReferenceFileLink({
       {link}
       <Tooltip
         className="ss-image-preview"
+        data-ss-engine={theme}
         placement="top"
         offset={8}
         containerPadding={12}

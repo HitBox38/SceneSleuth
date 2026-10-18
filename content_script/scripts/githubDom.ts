@@ -10,7 +10,9 @@ export function observeGithubDiffs(root: Node, onChange: () => void) {
     if (
       records.some((record) => {
         if (record.type === "attributes")
-          return record.target instanceof Element && record.target.matches("table, react-app");
+          return (
+            record.target instanceof Element && record.target.matches("table, react-app, html")
+          );
         if (record.type === "childList") {
           const changed = [...record.addedNodes, ...record.removedNodes];
           if (
@@ -35,7 +37,14 @@ export function observeGithubDiffs(root: Node, onChange: () => void) {
     subtree: true,
     characterData: true,
     attributes: true,
-    attributeFilter: ["aria-label", "data-diff-anchor", "initial-path"],
+    attributeFilter: [
+      "aria-label",
+      "data-diff-anchor",
+      "initial-path",
+      "data-color-mode",
+      "data-dark-theme",
+      "data-light-theme",
+    ],
   });
   return observer;
 }

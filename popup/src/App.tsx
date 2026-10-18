@@ -12,6 +12,7 @@ import {
   isSettingsFile,
 } from "../../shared/fileTypes.ts";
 import "../../ui/review.css";
+import { reviewTheme } from "../../shared/reviewTheme.ts";
 
 type State =
   | { kind: "loading" | "unsupported" | "error"; message?: string }
@@ -137,7 +138,11 @@ export default function App() {
   const engines = reviewEngines(snapshot?.files ?? []);
   const hasProjects = snapshot?.files.some((file) => isSettingsFile(file));
   return (
-    <main className="ss ss-popup">
+    <main
+      className="ss ss-popup"
+      data-ss-engine={snapshot ? reviewTheme(snapshot) : "github"}
+      data-ss-color-mode={snapshot?.colorMode}
+    >
       <header className="ss-header">
         <div className="ss-brand">
           <span className="ss-logo">

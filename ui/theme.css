@@ -20,6 +20,12 @@
   --ss-attention-bg: var(--bgColor-attention-muted, var(--color-attention-subtle, #bb800926));
   --ss-resource: var(--fgColor-done, var(--color-done-fg, #ab7df8));
   --ss-node: color-mix(in srgb, var(--ss-accent) 75%, #478cbf);
+  --ss-resource-icon: var(--ss-resource);
+  --ss-node-3d: var(--ss-danger);
+  --ss-node-control: var(--ss-success);
+  --ss-gameobject-icon: var(--ss-accent);
+  --ss-component-icon: var(--ss-success);
+  --ss-object-icon: var(--ss-resource);
   --ss-font: var(
     --fontStack-system,
     -apple-system,
@@ -38,4 +44,59 @@
     "Liberation Mono",
     monospace
   );
+}
+
+/* Engine identity is independent of GitHub's light/dark semantic palette. */
+[data-ss-engine="github"] {
+  --ss-node: var(--ss-muted);
+  --ss-resource-icon: var(--ss-muted);
+  --ss-node-3d: var(--ss-muted);
+  --ss-node-control: var(--ss-muted);
+  --ss-gameobject-icon: var(--ss-muted);
+  --ss-component-icon: var(--ss-muted);
+  --ss-object-icon: var(--ss-muted);
+}
+[data-ss-engine="godot"] {
+  --ss-node: color-mix(in srgb, var(--ss-accent) 75%, #478cbf);
+  --ss-resource-icon: var(--ss-resource);
+  --ss-node-3d: var(--ss-danger);
+  --ss-node-control: var(--ss-success);
+  --ss-gameobject-icon: var(--ss-accent);
+  --ss-component-icon: var(--ss-success);
+  --ss-object-icon: var(--ss-resource);
+}
+[data-ss-engine="unity"] {
+  --ss-node: var(--ss-muted);
+  --ss-resource-icon: var(--ss-muted);
+  --ss-node-3d: var(--ss-muted);
+  --ss-node-control: var(--ss-muted);
+  --ss-gameobject-icon: var(--ss-text);
+  --ss-component-icon: var(--ss-muted);
+  --ss-object-icon: color-mix(in srgb, var(--ss-text) 75%, var(--ss-accent));
+}
+
+/* The popup cannot inherit the tab's CSS variables. Mirror its color mode. */
+.ss-popup[data-ss-color-mode="dark"] {
+  color-scheme: dark;
+}
+.ss-popup[data-ss-color-mode="light"] {
+  color-scheme: light;
+  --ss-bg: #ffffff;
+  --ss-panel: #f6f8fa;
+  --ss-inset: #f6f8fa;
+  --ss-overlay: #ffffff;
+  --ss-border: #d1d9e0;
+  --ss-border-muted: #d1d9e0b3;
+  --ss-text: #1f2328;
+  --ss-muted: #59636e;
+  --ss-accent: #0969da;
+  --ss-accent-bg: #ddf4ff;
+  --ss-hover: #818b981f;
+  --ss-success: #1a7f37;
+  --ss-success-bg: #dafbe1;
+  --ss-danger: #d1242f;
+  --ss-danger-bg: #ffebe9;
+  --ss-attention: #9a6700;
+  --ss-attention-bg: #fff8c5;
+  --ss-resource: #8250df;
 }

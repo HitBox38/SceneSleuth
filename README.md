@@ -10,7 +10,7 @@ The goal is to answer **“What changed in this scene or asset?”** using the e
 
 Open a pull request’s **Files changed** tab. SceneSleuth automatically replaces each loaded supported file’s diff body with a structured review. GitHub’s file header and review controls stay in place. The toolbar popup summarizes the current tab; **Go to Godot changes**, **Go to Unity changes**, or the combined action scrolls to an inline review.
 
-The inline review follows GitHub’s active color theme, with Godot-inspired scene-type icons, left-hand disclosure arrows, and compact inspector rows. Nodes, resources, and signals have distinct icon colors; before/after values use GitHub’s diff colors. The header switch and image previews share the same theme. The standalone toolbar popup uses a matching dark palette.
+The review automatically combines GitHub’s active color theme with the repository’s engine. **Godot + GitHub** keeps colored node/resource icons, disclosure arrows, and compact grouped Inspector rows. **Unity + GitHub** uses flat component headers, neutral object icons, triangle foldouts, blue selection, and inset value fields. Both retain GitHub’s before/after diff colors and readable keyboard focus. The file-header switch, image previews, and toolbar popup use the same engine theme; the popup also follows the tab’s light/dark appearance.
 
 - Browse `.tscn` and exported `.escn` scene files and their changed sections, with node paths and Godot classes.
 - Review Unity `.anim` clips with grouped tracks/keyframes, events, and clip settings, including sample rate and serialized looping options. Curve keys, slopes, paths, and event parameters expand as YAML trees; compressed payloads remain source text. This is a property review, without animation playback or plotted curves.
@@ -39,6 +39,8 @@ The inline review follows GitHub’s active color theme, with Godot-inspired sce
 - Each inline view shows only its own file’s objects, settings, properties, embedded resources, and signals. Referenced script, image, and scene files are not displayed as separate cards. References remain readable as property values, and their declarations remain in **Original diff**. When GitHub reuses a diff table for another file, SceneSleuth replaces the old view rather than carrying its values over.
 - Keep GitHub’s file navigation, Viewed checkboxes, and review controls. Other file types keep their original diffs, and SceneSleuth never submits reviews.
 
+Engine detection checks the repository root at the comparison’s exact head commit for `project.godot` or Unity’s `Assets` and `ProjectSettings` directories. It uses one same-origin GitHub tree request, with a 5-second timeout and 2 MB response limit. The PR’s known file listing supplies a fallback, including pending/offscreen files. Mixed-engine repositories theme each supported file by its format and keep the popup neutral. Unknown repositories use GitHub styling. Detection resets with the PR/comparison and never changes GitHub’s own theme settings.
+
 Private repositories work through your existing GitHub sign-in. SceneSleuth reads the current page’s review data and rendered diff tables, and preloads available text through GitHub’s own comparison endpoint using the same signed-in session. There is no backend, API token, analytics, or external scene upload.
 
 The content script starts on GitHub pages so it can detect GitHub’s navigation into a PR without a full reload. It reads scene review data and displays its UI only on PR pages.
@@ -60,6 +62,8 @@ The adapter targets GitHub’s modern **Files changed** layout. GitHub’s marku
 File links and image previews resolve Godot’s `res://` paths inside the nearest parent project whose `project.godot` is listed in the PR. This supports repositories containing several Godot projects and keeps each scene’s references in its own project. If no project marker is available in the comparison, the repository root remains the fallback; unchanged nested project markers are not discovered automatically. Relative resource paths resolve beside the scene file. During DOM-only navigation, PR links cover the file tree and diffs discovered so far. When GitHub omits comparison commit IDs, repository links use `HEAD` (the default branch) instead of claiming an exact revision. Nodes and embedded resources remain local values, without repository links.
 
 Unity Inspector context uses same-origin GitHub blob pages at exact comparison commits, including the old path for renamed files. Every available hunk line must match those sources. Loading is limited to mounted modified/renamed `.unity`, `.prefab`, and `.asset` reviews: one file at a time, two side requests, a 15-second timeout, an 8 MB response limit per side, and at most 50,000 lines / 2 million source characters per side. Navigation cancels loading; failed, unsupported, or mismatched source retains the diff fallback, with Refresh available to retry. Full source supplies context, while native hunks still determine which properties changed. No custom Editor scripts or property drawers are executed, so arbitrary custom Inspector layouts are not reproduced.
+
+Engine detection does not crawl nested projects. A repository with no engine marker at its root and no engine-specific paths in the comparison remains on the neutral GitHub theme. A failed root lookup uses the available file evidence; private access uses the existing GitHub session.
 
 Unity support requires text serialization. Binary assets, rendered scene previews, inherited prefab expansion, automatic repository-wide GUID lookup, and matching regenerated file IDs are outside this phase. A GUID without an unambiguous loaded `.meta` mapping remains unresolved, including references to Unity/package built-ins. Nested property fragments without their parent stay raw; collection values cut off at a hunk boundary keep their source with an uncertainty note. Unsupported YAML tags, aliases, duplicate keys, excessive nesting, and oversized values stay raw. No YAML expressions, scripts, or constructors are executed. Unchanged YAML patches are cached only within the current PR comparison; changing source, routes, or comparisons invalidates them.
 
@@ -109,6 +113,8 @@ For repeatable UI checks, open `/tests/browser.html` on the Vite development ser
 
 The `/tests/virtualized.html` fixture preloads synthetic patch responses while mounting and removing native tables on scroll. It checks that counts stay available without rendering every file. **Verify scroll anchor** compares a visible file’s position before and after replacing earlier native diffs; the transport is mocked, while the production loader, data adapters, cache, and renderer run unchanged.
 
+The `/tests/themes.html` fixture exercises automatic Unity, Godot, and mixed-repository themes, light/dark appearance, separate shadow-root controls, portaled image previews, and popup reopen. It uses the actual popup with synthetic tab messaging and repository responses; no fixture mocks ship in the extension.
+
 The `/tests/unity-inspector.html` fixture covers a nested Input Action change whose hunk omits the component and property headers. It exercises the production context loader, comparison, and shadow-root Inspector with synthetic blob responses.
 
 The additional `/tests/formats.html` gallery covers all ten extended formats with synthetic sources. Its file selector reuses one native diff table, validating DOM extraction and file isolation on each change. Use its Reconcile, Replace header, Unsupported file, and theme controls to check mounting and cleanup.
@@ -127,6 +133,8 @@ The fixture’s **Image preview states** control covers before/after graphics an
 - `content_script/scripts/unityParser.ts`: Unity document identities, properties, and local references.
 - `content_script/scripts/githubUnityContext.ts`, `unityContext.ts`: exact-revision source loading and recovery of Unity Inspector context.
 - `shared/unityYaml.ts`, `shared/unityMeta.ts`: bounded YAML syntax inspection and side-specific metadata evidence.
+- `shared/reviewTheme.ts`, `content_script/scripts/repositoryTheme.ts`: repository engine evidence and bounded root-marker detection.
+- `ui/theme.css`: shared GitHub tokens and engine-specific accents; `ui/review.css` adds engine-specific Inspector styling.
 - `shared/`: review models and the `GET_REVIEW` / `REFRESH_REVIEW` / `OPEN_REVIEW` protocol.
 - `ui/`: shared review presentation and per-file shadow-root mounting, original-diff toggles, and cleanup.
 - `popup/src/`: React toolbar popup and React Aria primitives.

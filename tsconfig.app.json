@@ -35,6 +35,7 @@
     "tests/browser.tsx",
     "tests/formats.ts",
     "tests/virtualized.ts",
-    "tests/unity-inspector.ts"
+    "tests/unity-inspector.ts",
+    "tests/themes.tsx"
   ]
 }

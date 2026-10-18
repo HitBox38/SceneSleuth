@@ -14,6 +14,9 @@
   font: 12px/1.4 var(--ss-font);
   text-align: left;
 }
+.ss-image-preview[data-ss-engine="unity"] {
+  border-radius: 2px;
+}
 .ss-image-preview-name,
 .ss-image-preview-path,
 .ss-image-preview-size {

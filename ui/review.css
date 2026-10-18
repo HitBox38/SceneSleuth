@@ -276,7 +276,7 @@
 .ss-kind-resource,
 .ss-kind-resource_header,
 .ss-kind-ext_resource {
-  color: var(--ss-resource);
+  color: var(--ss-resource-icon);
 }
 .ss-kind-connection {
   color: var(--ss-attention);
@@ -285,10 +285,10 @@
   color: var(--ss-muted);
 }
 .ss-kind-icon[data-node-family="3d"] {
-  color: var(--ss-danger);
+  color: var(--ss-node-3d);
 }
 .ss-kind-icon[data-node-family="control"] {
-  color: var(--ss-success);
+  color: var(--ss-node-control);
 }
 .ss-section-name {
   flex: 1;
@@ -860,11 +860,72 @@
 }
 
 .ss-kind-gameobject {
-  color: var(--ss-accent);
+  color: var(--ss-gameobject-icon);
 }
 .ss-kind-component {
-  color: var(--ss-success);
+  color: var(--ss-component-icon);
 }
 .ss-kind-unity_object {
-  color: var(--ss-resource);
+  color: var(--ss-object-icon);
+}
+
+/* Unity's Inspector: flat component strips, triangle foldouts and inset
+   fields. GitHub still owns the page palette and before/after diff colors. */
+[data-ss-engine="unity"] .ss-section {
+  border-radius: 2px;
+  border-color: var(--ss-border-muted);
+}
+[data-ss-engine="unity"] .ss-section > summary {
+  box-shadow: inset 0 1px color-mix(in srgb, var(--ss-text) 7%, transparent);
+  border-bottom: 1px solid var(--ss-border-muted);
+  gap: 7px;
+}
+[data-ss-engine="unity"] .ss-chevron {
+  width: 10px;
+  height: 10px;
+  background: currentColor;
+  color: var(--ss-muted);
+  clip-path: polygon(10% 25%, 90% 25%, 50% 75%);
+}
+[data-ss-engine="unity"] .ss-chevron > * {
+  display: none;
+}
+[data-ss-engine="unity"] .ss-search,
+[data-ss-engine="unity"] .ss-filter,
+[data-ss-engine="unity"].ss-view-switch,
+[data-ss-engine="unity"] .ss-component {
+  border-radius: 2px;
+}
+[data-ss-engine="unity"] .ss-search {
+  background: var(--ss-inset);
+  box-shadow: inset 0 1px 2px #0001;
+}
+[data-ss-engine="unity"] .ss-property > .ss-value-cell {
+  font-family: var(--ss-font);
+}
+[data-ss-engine="unity"] .ss-tree-entries {
+  border-left: 0;
+  padding-left: 10px;
+}
+[data-ss-engine="unity"] .ss-tree-entry {
+  border-top: 0;
+  padding: 2px 0;
+}
+[data-ss-engine="unity"] .ss-tree-key {
+  font-size: 11px;
+}
+[data-ss-engine="unity"] .ss-tree-literal,
+[data-ss-engine="unity"] .ss-component {
+  min-height: 20px;
+  padding: 1px 5px;
+  border: 1px solid var(--ss-border-muted);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ss-inset) 65%, transparent);
+  box-shadow: inset 0 1px 2px #0001;
+}
+[data-ss-engine="unity"] .ss-value-source > code {
+  font-family: var(--ss-mono);
+}
+[data-ss-engine="unity"] .ss-operation {
+  border-radius: 2px;
 }

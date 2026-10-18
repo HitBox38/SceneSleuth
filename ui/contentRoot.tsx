@@ -6,6 +6,7 @@ import { InlineSceneReview, InlineViewSwitch } from "./SceneReview.tsx";
 import styles from "./review.css?inline";
 import type { ReviewSnapshot, SceneReview, ReferenceNavigation } from "../shared/model.ts";
 import { reviewViewLabel } from "../shared/fileTypes.ts";
+import { reviewTheme } from "../shared/reviewTheme.ts";
 
 class ReviewBoundary extends Component<
   { children: ReactNode; onError: () => void },
@@ -37,6 +38,7 @@ export function createInlineReviews(doc: Document = document) {
   const originalFiles = new Map<string, boolean>();
   let reviewKey = "";
   let navigation: ReferenceNavigation | undefined;
+  let themeSnapshot: ReviewSnapshot;
   function switchAnchor(table: HTMLTableElement) {
     const header = table.closest('[role="region"]')?.querySelector("[data-diff-header-wrapper]");
     const viewed = header?.querySelector(
@@ -96,7 +98,8 @@ export function createInlineReviews(doc: Document = document) {
         originalFiles.set(file.filePath, isLineHash(table, doc.location.hash));
       const original = originalFiles.get(file.filePath)!;
       showTable(original || failed);
-      const next = JSON.stringify([file, original, navigation]);
+      const theme = reviewTheme(themeSnapshot, file);
+      const next = JSON.stringify([file, original, navigation, theme]);
       if (signature === next) return;
       signature = next;
       root.render(
@@ -111,6 +114,7 @@ export function createInlineReviews(doc: Document = document) {
             file={file}
             original={original}
             navigation={navigation}
+            theme={theme}
           />
         </ReviewBoundary>,
       );
@@ -120,6 +124,7 @@ export function createInlineReviews(doc: Document = document) {
           viewLabel={reviewViewLabel(file)}
           original={original}
           onOriginal={setOriginal}
+          theme={theme}
         />,
       );
     }
@@ -191,6 +196,7 @@ export function createInlineReviews(doc: Document = document) {
 
   return {
     update(snapshot: ReviewSnapshot) {
+      themeSnapshot = snapshot;
       navigation = snapshot.navigation;
       if (reviewKey !== snapshot.reviewKey) {
         clear();

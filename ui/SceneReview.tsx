@@ -52,6 +52,8 @@ import {
 } from "../shared/fileTypes.ts";
 import { StructuredValue } from "./StructuredValue.tsx";
 import { unityInspectorValue } from "./unityPresentation.ts";
+import { reviewTheme, type EngineTheme } from "../shared/reviewTheme.ts";
+import { EngineThemeContext } from "./EngineTheme.ts";
 
 const labels: Record<SectionKind, string> = {
   node: "Node",
@@ -479,12 +481,14 @@ export function FileReview({
   search,
   embedded = false,
   navigation,
+  theme,
 }: {
   file: SceneReview;
   filter: Filter;
   search: string;
   embedded?: boolean;
   navigation?: ReferenceNavigation;
+  theme?: EngineTheme;
 }) {
   const project = isSettingsFile(file);
   const resource = reviewFileKind(file) === "resource";
@@ -510,87 +514,90 @@ export function FileReview({
           .includes(search.toLowerCase())),
   );
   return (
-    <article
-      className="ss-file"
-      aria-label={
-        embedded
-          ? `${file.coverage === "partial" ? `Partial ${subject}` : subject[0].toUpperCase() + subject.slice(1)} diff for ${file.filePath}`
-          : undefined
-      }
-    >
-      {!embedded && (
-        <header className="ss-file-header">
-          <div>
-            <h2>{file.filePath}</h2>
-            {file.previousPath && <p className="ss-muted">Previously {file.previousPath}</p>}
+    <EngineThemeContext.Provider value={theme ?? reviewTheme({ files: [file], navigation }, file)}>
+      <article
+        className="ss-file"
+        data-ss-engine={theme ?? reviewTheme({ files: [file], navigation }, file)}
+        aria-label={
+          embedded
+            ? `${file.coverage === "partial" ? `Partial ${subject}` : subject[0].toUpperCase() + subject.slice(1)} diff for ${file.filePath}`
+            : undefined
+        }
+      >
+        {!embedded && (
+          <header className="ss-file-header">
+            <div>
+              <h2>{file.filePath}</h2>
+              {file.previousPath && <p className="ss-muted">Previously {file.previousPath}</p>}
+            </div>
+            <span className="ss-line-count">
+              <span>+{file.additions}</span> <span>−{file.deletions}</span>
+            </span>
+          </header>
+        )}
+        {!embedded && (
+          <p className="ss-context">
+            {file.coverage === "partial"
+              ? "Diff context only. Unchanged sections are omitted; — means no value is present in this hunk."
+              : `Complete ${file.status === "removed" ? "removed" : "new"} ${subject} from the patch.`}
+          </p>
+        )}
+        {file.diagnostics.length > 0 && (
+          <div className="ss-notes">
+            {file.diagnostics.map((note) => (
+              <p key={note}>{note}</p>
+            ))}
           </div>
-          <span className="ss-line-count">
-            <span>+{file.additions}</span> <span>−{file.deletions}</span>
-          </span>
-        </header>
-      )}
-      {!embedded && (
-        <p className="ss-context">
-          {file.coverage === "partial"
-            ? "Diff context only. Unchanged sections are omitted; — means no value is present in this hunk."
-            : `Complete ${file.status === "removed" ? "removed" : "new"} ${subject} from the patch.`}
-        </p>
-      )}
-      {file.diagnostics.length > 0 && (
-        <div className="ss-notes">
-          {file.diagnostics.map((note) => (
-            <p key={note}>{note}</p>
-          ))}
-        </div>
-      )}
-      {file.sourceContext === "loading" && (
-        <output className="ss-notes">Loading Unity Inspector context…</output>
-      )}
-      {file.sourceContext === "unavailable" && (
-        <p className="ss-notes">
-          Full file context is unavailable. Showing the available diff; Refresh retries.
-        </p>
-      )}
-      {file.pending && file.reviewUrl && (
-        <LinkButton className="ss-button" href={file.reviewUrl}>
-          Load original {subject} diff <ArrowUpRight size={14} />
-        </LinkButton>
-      )}
-      {embedded && changes.length > 0 && (
-        <div className="ss-property ss-property-head ss-column-head" aria-hidden="true">
-          <span>Property</span>
-          <span>Before</span>
-          <span>After</span>
-        </div>
-      )}
-      {changes.map((change) => (
-        <ChangedSection
-          key={change.id}
-          change={change}
-          reviewUrl={file.reviewUrl}
-          compact={embedded}
-          file={file}
-          navigation={navigation}
-        />
-      ))}
-      {!changes.length && !file.pending && (
-        <p className="ss-empty">
-          {file.changes.length
-            ? "No changes match these filters."
-            : embedded
-              ? "No structured changes found. Select Original diff to inspect this file."
-              : "No structured changes found. Inspect the original diff below."}
-        </p>
-      )}
-      {!file.pending && !embedded && (
-        <details className="ss-raw">
-          <summary>
-            Original diff <span>{file.additions + file.deletions} changed lines</span>
-          </summary>
-          <pre>{file.rawDiff}</pre>
-        </details>
-      )}
-    </article>
+        )}
+        {file.sourceContext === "loading" && (
+          <output className="ss-notes">Loading Unity Inspector context…</output>
+        )}
+        {file.sourceContext === "unavailable" && (
+          <p className="ss-notes">
+            Full file context is unavailable. Showing the available diff; Refresh retries.
+          </p>
+        )}
+        {file.pending && file.reviewUrl && (
+          <LinkButton className="ss-button" href={file.reviewUrl}>
+            Load original {subject} diff <ArrowUpRight size={14} />
+          </LinkButton>
+        )}
+        {embedded && changes.length > 0 && (
+          <div className="ss-property ss-property-head ss-column-head" aria-hidden="true">
+            <span>Property</span>
+            <span>Before</span>
+            <span>After</span>
+          </div>
+        )}
+        {changes.map((change) => (
+          <ChangedSection
+            key={change.id}
+            change={change}
+            reviewUrl={file.reviewUrl}
+            compact={embedded}
+            file={file}
+            navigation={navigation}
+          />
+        ))}
+        {!changes.length && !file.pending && (
+          <p className="ss-empty">
+            {file.changes.length
+              ? "No changes match these filters."
+              : embedded
+                ? "No structured changes found. Select Original diff to inspect this file."
+                : "No structured changes found. Inspect the original diff below."}
+          </p>
+        )}
+        {!file.pending && !embedded && (
+          <details className="ss-raw">
+            <summary>
+              Original diff <span>{file.additions + file.deletions} changed lines</span>
+            </summary>
+            <pre>{file.rawDiff}</pre>
+          </details>
+        )}
+      </article>
+    </EngineThemeContext.Provider>
   );
 }
 export function InlineViewSwitch({
@@ -598,14 +605,20 @@ export function InlineViewSwitch({
   viewLabel = "Scene",
   original,
   onOriginal,
+  theme = "github",
 }: {
   filePath: string;
   viewLabel?: string;
   original: boolean;
   onOriginal: (original: boolean) => void;
+  theme?: EngineTheme;
 }) {
   return (
-    <fieldset className="ss ss-view-switch" aria-label={`Diff view for ${filePath}`}>
+    <fieldset
+      className="ss ss-view-switch"
+      data-ss-engine={theme}
+      aria-label={`Diff view for ${filePath}`}
+    >
       <Button
         className="ss-filter"
         variant="ghost"
@@ -629,10 +642,12 @@ export function InlineSceneReview({
   file,
   original,
   navigation,
+  theme,
 }: {
   file: SceneReview;
   original: boolean;
   navigation?: ReferenceNavigation;
+  theme?: EngineTheme;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
@@ -642,7 +657,11 @@ export function InlineSceneReview({
   const unity = reviewEngine(file) === "unity";
   if (original) return null;
   return (
-    <section className="ss ss-inline" aria-label={`SceneSleuth review for ${file.filePath}`}>
+    <section
+      className="ss ss-inline"
+      data-ss-engine={theme ?? reviewTheme({ files: [file], navigation }, file)}
+      aria-label={`SceneSleuth review for ${file.filePath}`}
+    >
       <div className="ss-toolbar">
         {!project &&
           !resource &&
@@ -705,6 +724,7 @@ export function InlineSceneReview({
             search={search}
             navigation={navigation}
             embedded
+            theme={theme}
           />
         )}
       </div>
@@ -730,7 +750,11 @@ export function Inspector({
   const hasUnity = snapshot.files.some((file) => reviewEngine(file) === "unity");
   const engines = reviewEngines(snapshot.files);
   return (
-    <section className="ss ss-inspector" aria-label={`SceneSleuth ${engines} review`}>
+    <section
+      className="ss ss-inspector"
+      data-ss-engine={reviewTheme(snapshot)}
+      aria-label={`SceneSleuth ${engines} review`}
+    >
       <header className="ss-header">
         <div className="ss-brand">
           <span className="ss-logo">
@@ -867,6 +891,7 @@ export function Inspector({
                   filter={filter}
                   search={search}
                   navigation={snapshot.navigation}
+                  theme={reviewTheme(snapshot, file)}
                 />
               ))}
             </div>

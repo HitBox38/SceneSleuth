@@ -6,6 +6,17 @@ import type { GithubParseCache } from "./scripts/githubReview.ts";
 import { createGithubLoader, githubResponseText } from "./scripts/githubLoader.ts";
 import { createReviewState, type GithubReviewData } from "./scripts/reviewState.ts";
 import { createUnityContextLoader } from "./scripts/githubUnityContext.ts";
+import { createRepositoryThemeLoader } from "./scripts/repositoryTheme.ts";
+import type { RepositoryTheme } from "../shared/reviewTheme.ts";
+
+function embeddedData(html: string): unknown {
+  const page = new DOMParser().parseFromString(html, "text/html");
+  const data = page.querySelector(
+    'script[type="application/json"][data-target="react-app.embeddedData"]',
+  );
+  if (!data?.textContent) throw new Error("GitHub data is unavailable.");
+  return JSON.parse(data.textContent) as unknown;
+}
 
 function start() {
   if (document.documentElement.hasAttribute("data-scenesleuth-active")) return;
@@ -22,6 +33,21 @@ function start() {
   let deadline = Date.now() + 10000;
   const reviewState = createReviewState();
   const parseCache: GithubParseCache = { files: new Map() };
+  let repositoryTheme: RepositoryTheme | undefined;
+  let repositoryThemeKey = "";
+  const themeLoader = createRepositoryThemeLoader({
+    readData: embeddedData,
+    onTheme(theme) {
+      const context = reviewContext(location.href);
+      if (
+        !context?.isChangesPage ||
+        `${context.key}:${location.pathname}:${location.search}` !== contextKey
+      )
+        return;
+      repositoryTheme = theme;
+      publish();
+    },
+  });
   const runtime =
     typeof browser !== "undefined"
       ? browser.runtime
@@ -44,14 +70,7 @@ function start() {
       snapshot = { ...snapshot, files: merged.files };
       publish();
     },
-    readBlob(html) {
-      const page = new DOMParser().parseFromString(html, "text/html");
-      const data = page.querySelector(
-        'script[type="application/json"][data-target="react-app.embeddedData"]',
-      );
-      if (!data?.textContent) throw new Error("GitHub source data is unavailable.");
-      return JSON.parse(data.textContent) as unknown;
-    },
+    readBlob: embeddedData,
   });
   const loader = createGithubLoader({
     onData(data) {
@@ -110,6 +129,25 @@ function start() {
     loader.update(current, context.changesUrl);
   }
   function publish() {
+    if (repositoryThemeKey !== snapshot.reviewKey) {
+      repositoryThemeKey = snapshot.reviewKey;
+      repositoryTheme = undefined;
+    }
+    const scheme = getComputedStyle(document.documentElement).colorScheme;
+    snapshot = {
+      ...snapshot,
+      repositoryTheme,
+      colorMode:
+        scheme === "light" || scheme === "dark"
+          ? scheme
+          : matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light",
+    };
+    themeLoader.update(
+      snapshot.reviewKey,
+      snapshot.status === "ready" ? snapshot.navigation : undefined,
+    );
     // GitHub may replace a table without changing its scene data.
     inlineReviews.update(snapshot);
     unityContext.update(
@@ -132,6 +170,8 @@ function start() {
   }
   function refresh() {
     loader.clear();
+    themeLoader.clear();
+    repositoryTheme = undefined;
     unityContext.clear();
     reviewState.clear();
     parseCache.files.clear();
@@ -145,6 +185,8 @@ function start() {
     if (pageKey !== contextKey) {
       contextKey = pageKey;
       loader.clear();
+      themeLoader.clear();
+      repositoryTheme = undefined;
       unityContext.clear();
       reviewState.clear();
       parseCache.files.clear();
@@ -218,6 +260,7 @@ function start() {
     });
   });
   window.addEventListener("popstate", checkPage);
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", checkPage);
   document.addEventListener("turbo:load", checkPage);
   document.addEventListener("pjax:end", checkPage);
   // Bound loading even when GitHub stops mutating the document.
