@@ -1,3 +1,4 @@
+import { reviewGithubData } from "../content_script/scripts/githubReview.ts";
 import { extendedFormatSources } from "./fixtures/extended-formats.ts";
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -391,4 +392,71 @@ test("ESCN exported scenes share scene parsing, references, partial ownership an
   );
   assert.equal(supportedFileKind("Game/Model.scn"), undefined);
   assert.equal(supportedFileKind("Game/Material.res"), undefined);
+});
+
+test("every added format supports GitHub lazy discovery, loaded hunks, deletion and renames", () => {
+  const summaries = extendedFormatSources.map((f, i) => ({
+    path: f.path,
+    pathDigest: `format-${i}`,
+    changeType: "ADDED",
+    linesAdded: f.source.length,
+  }));
+  const route = {
+    diffSummaries: [
+      ...summaries,
+      { path: "ignored.cs", pathDigest: "ignored", changeType: "ADDED", linesAdded: 2 },
+    ],
+    diffContents: [] as { path: string; diffLines: { type: string; text: string }[] }[],
+  };
+  const url = "https://github.com/example/game/pull/1/changes";
+  const pending = reviewGithubData({ payload: { pullRequestsChangesRoute: route } }, url)!;
+  assert.equal(pending.files.length, 10);
+  assert.ok(pending.files.every((f) => f.pending));
+  route.diffContents = extendedFormatSources.map((f) => ({
+    path: f.path,
+    diffLines: [
+      { type: "HUNK", text: `@@ -0,0 +1,${f.source.length} @@` },
+      ...f.source.map((text) => ({ type: "ADDITION", text: "+" + text })),
+    ],
+  }));
+  const loaded = reviewGithubData({ payload: { pullRequestsChangesRoute: route } }, url)!;
+  assert.ok(
+    loaded.files.every((f) => !f.pending && f.coverage === "complete" && f.changes.length > 0),
+  );
+  assert.equal(
+    loaded.navigation!.files.find((f) => f.path.endsWith(".meta"))!.unityGuidAfter,
+    imageGuid,
+  );
+  for (const example of extendedFormatSources) {
+    const removed = reviewDiff(unityPatch(example.path, example.source, true))[0];
+    assert.equal(removed.status, "removed");
+    assert.ok(removed.changes.every((c) => c.operation === "removed"));
+    const renamed = reviewDiff(
+      `diff --git a/old/${example.path} b/${example.path}\nrename from old/${example.path}\nrename to ${example.path}\n`,
+    )[0];
+    assert.equal(renamed.status, "renamed");
+    assert.equal(renamed.previousPath, `old/${example.path}`);
+    assert.equal(reviewViewLabel(renamed), reviewViewLabel(removed));
+  }
+});
+
+test("ambiguous metadata retains duplicate values and does not merge repeated importers", () => {
+  const source = [
+    "TextureImporter:",
+    "  maxTextureSize: 1024",
+    "  maxTextureSize: 2048",
+    "TextureImporter:",
+    "  spriteMode: 1",
+  ];
+  const file = reviewDiff(unityPatch("Assets/Water.png.meta", source))[0];
+  assert.match(file.diagnostics.join(" "), /Duplicate metadata/);
+  assert.equal(file.changes[0].properties[0].after, "1024");
+  assert.equal(file.changes[0].properties[1].after, "  maxTextureSize: 2048");
+  assert.equal(file.changes[0].properties[1].afterIncomplete, true);
+  assert.equal(file.changes[1].kind, "unknown");
+  const gap = reviewDiff(
+    "diff --git a/a.meta b/a.meta\n--- a/a.meta\n+++ b/a.meta\n@@ -1,2 +1,2 @@\n TextureImporter:\n-  spriteMode: 1\n+  spriteMode: 2\n@@ -80,1 +80,1 @@\n-  maxTextureSize: 1024\n+  maxTextureSize: 2048\n",
+  )[0];
+  assert.equal(gap.changes[1].kind, "unknown");
+  assert.equal(gap.changes[0].properties.length, 1);
 });

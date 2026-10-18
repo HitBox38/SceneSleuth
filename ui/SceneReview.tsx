@@ -533,7 +533,7 @@ export function FileReview({
         <p className="ss-context">
           {file.coverage === "partial"
             ? "Diff context only. Unchanged sections are omitted; — means no value is present in this hunk."
-            : `Complete ${file.status === "removed" ? "removed" : "new"} ${project ? "configuration" : resource ? "resource" : "scene"} from the patch.`}
+            : `Complete ${file.status === "removed" ? "removed" : "new"} ${subject} from the patch.`}
         </p>
       )}
       {file.diagnostics.length > 0 && (

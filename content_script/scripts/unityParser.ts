@@ -215,6 +215,7 @@ export function parseUnityMetadata(lines: SourceLine[], scope: string, complete:
   const diagnostics = new Set<string>();
   let importer: SceneSection | undefined;
   let root: SceneSection | undefined;
+  const importers = new Set<string>();
   let unknown: SceneSection | undefined;
   const section = (
     id: string,
@@ -241,7 +242,18 @@ export function parseUnityMetadata(lines: SourceLine[], scope: string, complete:
     if (!line.text.trim() || line.text.trimStart().startsWith("#")) continue;
     const header = /^([A-Za-z_]\w*):\s*$/.exec(line.text);
     if (header) {
-      importer = section(`meta:importer:${header[1]}`, header[1], line);
+      const duplicate = importers.has(header[1]);
+      importers.add(header[1]);
+      importer = section(
+        duplicate ? `unknown:${scope}:duplicate:${index}` : `meta:importer:${header[1]}`,
+        duplicate ? `Duplicate ${header[1]}` : header[1],
+        line,
+        duplicate,
+      );
+      if (duplicate)
+        diagnostics.add(
+          `Duplicate metadata importer near line ${line.line}; inspect the original diff.`,
+        );
       continue;
     }
     const top = /^([A-Za-z_]\w*):(?:[ \t]*(.*))?$/.exec(line.text);
@@ -270,18 +282,20 @@ export function parseUnityMetadata(lines: SourceLine[], scope: string, complete:
           .join("")
       : group.map((item) => item.text).join("\n");
     const name = property ? property[1] : `Diff text L${line.line}`;
+    const duplicate = target.properties.has(name);
     const incomplete =
       !property ||
+      duplicate ||
       (!!raw.trim() && !unityYaml(raw)) ||
       (!complete && index === lines.length - 1 && group.length > 1);
-    if (target.properties.has(name))
+    if (duplicate)
       diagnostics.add(`Duplicate metadata key near line ${line.line}; inspect the original diff.`);
     if (incomplete)
       diagnostics.add(
         `Import value near line ${line.line} may be incomplete or unsupported; inspect the original diff.`,
       );
-    target.properties.set(name, {
-      raw,
+    target.properties.set(duplicate ? `${name} (duplicate at L${line.line})` : name, {
+      raw: duplicate ? group.map((item) => item.text).join("\n") : raw,
       canonical: raw.trimEnd(),
       line: line.line,
       changed: group.some((item) => item.changed),

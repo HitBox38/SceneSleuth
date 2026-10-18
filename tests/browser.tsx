@@ -303,11 +303,13 @@ function verifyUnityDom() {
   );
   const fallback = readGithubReview(doc, "https://github.com/example/game/pull/12/changes");
   if (
-    fallback?.files.length !== 1 ||
+    fallback?.files.length !== 2 ||
+    fallback.files.find((file) => file.filePath.endsWith(".meta"))?.changes[0]?.kind !==
+      "unity_object" ||
     fallback.navigation?.files.find((file) => file.path.endsWith(".meta"))?.unityGuidAfter !==
       scriptGuid
   )
-    throw new Error("Unity DOM fallback lost metadata or rendered it as a scene");
+    throw new Error("Unity DOM fallback lost the metadata review or GUID mapping");
 }
 let domResult =
   "DOM checks passed: unified and split rows produce identical changes and source lines.";

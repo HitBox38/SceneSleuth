@@ -102,6 +102,8 @@ The standalone popup displays setup guidance when extension APIs are absent. It 
 
 For repeatable UI checks, open `/tests/browser.html` on the Vite development server. The synthetic inline fixture mounts the actual shadow-root review beside a preserved source table and file header. Exercise the view toggle, keyboard controls, filters, search, repeated processing, table remounts, delayed files, and cleanup with its controls. A standalone inspector below it covers loading, empty, and error states. The fixture is excluded from the production build and does not establish installed-extension integration.
 
+The additional `/tests/formats.html` gallery covers all ten extended formats with synthetic sources. Its file selector reuses one native diff table, validating DOM extraction and file isolation on each change. Use its Reconcile, Replace header, Unsupported file, and theme controls to check mounting and cleanup.
+
 The fixture’s **Image preview states** control covers before/after graphics and failed image loads. A service worker scoped to `/tests/` serves synthetic images for `example/game` URLs only; it is never registered or included by the extension.
 
 ### Source map
