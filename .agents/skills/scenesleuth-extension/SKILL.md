@@ -9,7 +9,7 @@ Read the root `AGENTS.md` and relevant source before making changes. Resolve pat
 
 ## Follow the actual data path
 
-Start with `public/manifest.json`, the matching `vite*.config.ts`, `content_script/content-script.ts`, and the message consumer in `popup/src/App.tsx`. There is currently no background process; the popup talks directly to its tab’s content script. Check these facts again as the project evolves.
+Start with `public/manifest.json`, the matching `vite*.config.ts`, `content_script/content-script.ts`, and the message consumer in `popup/src/App.tsx`. The popup talks directly to its tab’s content script. The small `background/` handler only updates per-tab Scene Eye toolbar icons/titles from validated `SET_ICON_THEME` messages; it does not load scenes or cache reviews. Check these facts again as the project evolves.
 
 Identify the responsible context: page DOM work in the content script, presentation in the popup, and background work only where needed. Keep parsers independent of browser globals. Inspect both sides of a message before changing its shape; prefer a shared discriminated union and runtime checks at message boundaries.
 
@@ -27,7 +27,7 @@ If an observer changes the subtree it watches, ensure that its own updates do no
 
 Build from source with `pnpm run build`; inspect `dist/manifest.json` and every referenced asset. Check the output script format for the declared execution context, not just the existence of a bundle.
 
-Choose browser-specific manifest fields deliberately. The current manifest has no background declaration. If adding background work, Chrome MV3 uses `background.service_worker`; Firefox has separate requirements. Consult the [Chrome service-worker guidance](https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers) and [Firefox background manifest reference](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background) when modifying manifests or lifecycle code; check official API documentation for changes to messaging semantics. Preserve the task's browser scope and explain any browser left untested.
+Choose browser-specific manifest fields deliberately. The current manifest declares the same classic `assets/background.js` for Chrome’s service worker and Firefox’s background scripts (Chrome/Firefox 121+). Keep its scope limited to tab-specific icons and titles; review messages remain content-script ↔ popup. Chrome MV3 uses `background.service_worker`; Firefox has separate requirements. Consult the [Chrome service-worker guidance](https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers) and [Firefox background manifest reference](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background) when modifying manifests or lifecycle code; check official API documentation for changes to messaging semantics. Preserve the task's browser scope and explain any browser left untested.
 
 Keep permissions and web-accessible resources tied to the implemented feature. Scene text belongs in escaped/text rendering, not executable markup. Do not add a page-to-extension bridge or network relay unless the feature needs one.
 

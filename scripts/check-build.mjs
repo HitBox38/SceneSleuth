@@ -23,8 +23,21 @@ for (const [, path] of popup.matchAll(/(?:src|href)="([^"#]+)"/g)) {
 }
 
 for (const path of Object.values(manifest.icons ?? {})) asset(path);
-for (const path of manifest.background?.scripts ?? []) asset(path);
-if (manifest.background?.service_worker) asset(manifest.background.service_worker);
+for (const path of Object.values(manifest.action.default_icon ?? {})) asset(path);
+for (const path of new Set(
+  [...(manifest.background?.scripts ?? []), manifest.background?.service_worker].filter(Boolean),
+)) {
+  new Script(readFileSync(asset(path), "utf8"), { filename: path });
+}
+for (const theme of ["github", "godot", "unity"]) {
+  asset(`icons/scene-eye-${theme}.svg`);
+  for (const size of [16, 24, 32, 48, 64, 128]) {
+    const png = readFileSync(asset(`icons/${theme}/icon-${size}.png`));
+    assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+    assert.equal(png.readUInt32BE(16), size);
+    assert.equal(png.readUInt32BE(20), size);
+  }
+}
 
 for (const entry of manifest.content_scripts ?? []) {
   for (const path of entry.js ?? []) {

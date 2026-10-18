@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "pnpm run typecheck && vite build --config vite.config.ts && vite build --config vite-content.config.ts && pnpm run build:check",
+    "build": "pnpm run typecheck && vite build --config vite.config.ts && vite build --config vite-content.config.ts && vite build --config vite-background.config.ts && pnpm run build:check",
+    "icons:svg": "node --experimental-strip-types scripts/write-icon-svgs.ts",
     "lint": "oxlint --deny-warnings",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",

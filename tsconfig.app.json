@@ -30,12 +30,14 @@
   "include": [
     "popup/src",
     "content_script",
+    "background",
     "shared",
     "ui",
     "tests/browser.tsx",
     "tests/formats.ts",
     "tests/virtualized.ts",
     "tests/unity-inspector.ts",
-    "tests/themes.tsx"
+    "tests/themes.tsx",
+    "tests/icon-assets.ts"
   ]
 }

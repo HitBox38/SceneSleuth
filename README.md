@@ -1,8 +1,12 @@
 # SceneSleuth
 
+<img src="public/icons/scene-eye.svg" alt="Scene Eye, the SceneSleuth icon" width="64" height="64" />
+
 **See the scene behind the diff.**
 
 SceneSleuth helps Godot and Unity developers review serialized scenes and assets in GitHub pull requests. It supports Godot `.tscn`, `.escn`, `.tres`, `.godot`, `.import`, `.gdextension`, `export_presets.cfg`, and `plugin.cfg` files, plus Unity text-serialized `.unity`, `.prefab`, `.asset`, `.mat`, `.meta`, `.controller`, `.overrideController`, and `.anim` files. Instead of reconstructing changes from serialized lines, you can inspect nodes, resources, properties, signal connections, and project settings directly in each file’s diff area.
+
+**Scene Eye** is the project and extension icon. It keeps one shape and follows the PR’s detected engine: Godot uses blue/mint, Unity uses off-white/blue, and mixed or unknown contexts use neutral gray. The toolbar icon and accessible title are set per tab, so two PRs can display different palettes. Navigation outside a review restores neutral branding. The popup and Inspector header use the matching vector icon.
 
 The goal is to answer **“What changed in this scene or asset?”** using the engine editor’s familiar Inspector structure, directly in GitHub. Unity reviews should identify the GameObject, component, and named fields you would inspect in Unity.
 
@@ -89,7 +93,7 @@ In Chrome:
 
 After editing code, rebuild, reload the extension in `chrome://extensions`, and reload the GitHub page. Chrome can keep an older registered content script even while the popup reads newer files from `dist/`. If the popup reports an unexpected response, reload **the extension first**, then reload the PR tab; refreshing the page alone may keep running the old script.
 
-The manifest uses Manifest V3 without a background process. Firefox can load `dist/manifest.json` through [temporary add-on debugging](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/), but Firefox runtime compatibility still needs separate verification.
+The manifest uses Manifest V3 with a small background handler solely for tab-specific toolbar icons and titles. The popup still requests review data directly from its tab’s content script. Chrome 121+ uses the packaged service worker; Firefox 121+ uses the same classic script as a background event page through the [cross-browser background declaration](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background#cross-browser_manifest_v3_background_scripts). Firefox can load `dist/manifest.json` through [temporary add-on debugging](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/), but Firefox runtime compatibility still needs separate verification.
 
 ## Development
 
@@ -121,6 +125,8 @@ The additional `/tests/formats.html` gallery covers all ten extended formats wit
 
 The fixture’s **Image preview states** control covers before/after graphics and failed image loads. A service worker scoped to `/tests/` serves synthetic images for `example/game` URLs only; it is never registered or included by the extension.
 
+The Scene Eye geometry and engine palettes live in `shared/sceneEye.ts`. `pnpm run icons:svg` writes the standalone SVGs under `public/icons/`. Open `/tests/icon-assets.html` to export each palette as a JSON bundle of PNG sizes, then run `node scripts/write-icon-pngs.mjs <bundle.json>` for each bundle. Chrome requires [PNG toolbar assets for unpacked extensions](https://developer.chrome.com/docs/extensions/reference/api/action#icon); these are deterministic raster exports of the same SVG artwork, without image generation. The build verifies every packaged size.
+
 ### Source map
 
 - `content_script/content-script.ts`: page lifecycle, review cache, and popup messaging.
@@ -140,6 +146,8 @@ The fixture’s **Image preview states** control covers before/after graphics an
 - `popup/src/`: React toolbar popup and React Aria primitives.
 - `tests/`: focused regression coverage with Node’s built-in runner.
 - `public/manifest.json`: permissions and entry points.
+- `background/`: tab-scoped Scene Eye icon/title updates and navigation resets; no scene loading or review storage.
+- `shared/sceneEye.ts`, `ui/SceneEyeIcon.tsx`, `public/icons/`: shared vector branding, engine palettes, and browser assets.
 - `vite*.config.ts`, `scripts/check-build.mjs`: popup and classic content-script packaging.
 
 The stack is TypeScript 7, React, Vite 8, Tailwind CSS, and React Aria Components. Oxlint/Oxfmt handle linting/formatting. `components.json` selects shadcn’s `aria-vega` style. Use `pnpm run ui add <component>` for new Aria primitives. Actions use `Button` with `onPress`/`isDisabled`; navigation uses `LinkButton` with `href`.

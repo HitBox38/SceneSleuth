@@ -3,8 +3,28 @@
   "name": "SceneSleuth",
   "description": "Review Godot and Unity scene and asset changes in GitHub pull requests: objects, components, properties, resources, and settings.",
   "version": "0.1.0",
+  "minimum_chrome_version": "121",
+  "icons": {
+    "16": "icons/github/icon-16.png",
+    "32": "icons/github/icon-32.png",
+    "48": "icons/github/icon-48.png",
+    "128": "icons/github/icon-128.png"
+  },
+  "background": {
+    "service_worker": "assets/background.js",
+    "scripts": ["assets/background.js"]
+  },
   "permissions": ["activeTab"],
   "action": {
+    "default_title": "SceneSleuth",
+    "default_icon": {
+      "16": "icons/github/icon-16.png",
+      "24": "icons/github/icon-24.png",
+      "32": "icons/github/icon-32.png",
+      "48": "icons/github/icon-48.png",
+      "64": "icons/github/icon-64.png",
+      "128": "icons/github/icon-128.png"
+    },
     "default_popup": "popup/index.html"
   },
   "content_scripts": [

@@ -65,10 +65,7 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  background: var(--ss-accent-bg);
-  color: var(--ss-node);
-  border: 1px solid color-mix(in srgb, var(--ss-accent) 25%, transparent);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .ss-actions {
   display: flex;

@@ -14,7 +14,7 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 - `shared/`, `ui/`: domain/message types, shared scene presentation, and per-file shadow-root reviews.
 - `tests/`: synthetic parser, patch, and GitHub-data regression coverage.
 - `popup/src/`: popup components, styles, and browser messaging consumer.
-- `vite.config.ts`, `vite-content.config.ts`: popup and classic IIFE content-script build entry points. No background process is needed.
+- `vite.config.ts`, `vite-content.config.ts`, `vite-background.config.ts`: popup, classic IIFE content-script, and icon-handler builds. `background/` only updates per-tab toolbar icons/titles; the popup still talks directly to the content script.
 - `scripts/check-build.mjs`: verifies built manifest assets and classic content script syntax; runs at the end of the build.
 - `dist/`: current generated output, ignored by Git. `build/`: older generated output. Edit source files rather than either output directory.
 
@@ -34,6 +34,7 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 - Keep the GitHub startup match broad enough to detect navigation from non-PR pages into a PR. Gate scene extraction and inspector creation behind `reviewContext`; do not read scene payloads or render a panel on other pages.
 - Enable React Aria's shadow-DOM support through `@react-stately/flags` before mounting the in-page inspector. Verify press, focus, and keyboard interactions in the actual shadow root, not only a standalone React page.
 - Keep popup data scoped to the active tab. The popup can close and reopen while the content script continues running.
+- Scene Eye geometry and palettes are centralized in `shared/sceneEye.ts`. Keep SVG masters and PNG exports aligned. Toolbar changes must use the sender’s tab ID, validate main-frame extension messages and current PR identity, reset on navigation, and tolerate worker restarts or closed tabs. The background handler owns only icon/title state, without scene parsing, network access, or new permissions.
 - Keep engine styling separate from GitHub color mode. Resolve repository engine context from validated root markers and comparison file evidence; handle mixed repositories per file and unknown repositories neutrally. Carry the theme through separate header shadow roots, image-preview portals, and tab-scoped popup snapshots. Preserve GitHub semantic tokens, diff colors, and keyboard focus. Do not infer the engine from repository names or add permissions for theme detection.
 - Use the existing styling and component approach. Include visible loading, empty, unsupported-page, and error states when changing popup data flows.
 - `components.json` uses shadcn's `aria-vega` style. Use `pnpm run ui info` or `pnpm run ui add <component>` with the pinned CLI. Keep new components on the React Aria base.

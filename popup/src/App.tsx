@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { GitBranch, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { SceneEyeIcon } from "../../ui/SceneEyeIcon.tsx";
 import { Button } from "./components/ui/button.tsx";
 import { LinkButton } from "./components/ui/button.tsx";
 import { isReviewSnapshot, reviewContext } from "../../shared/protocol.ts";
@@ -146,7 +147,7 @@ export default function App() {
       <header className="ss-header">
         <div className="ss-brand">
           <span className="ss-logo">
-            <GitBranch size={19} />
+            <SceneEyeIcon theme={snapshot ? reviewTheme(snapshot) : "github"} />
           </span>
           <div>
             <strong>SceneSleuth</strong>

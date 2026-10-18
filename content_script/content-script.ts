@@ -8,6 +8,8 @@ import { createReviewState, type GithubReviewData } from "./scripts/reviewState.
 import { createUnityContextLoader } from "./scripts/githubUnityContext.ts";
 import { createRepositoryThemeLoader } from "./scripts/repositoryTheme.ts";
 import type { RepositoryTheme } from "../shared/reviewTheme.ts";
+import { reviewTheme } from "../shared/reviewTheme.ts";
+import type { IconThemeMessage } from "../shared/iconProtocol.ts";
 
 function embeddedData(html: string): unknown {
   const page = new DOMParser().parseFromString(html, "text/html");
@@ -30,6 +32,7 @@ function start() {
   const inlineReviews = createInlineReviews();
   let contextKey: string | undefined;
   let signature = "";
+  let iconSignature = "";
   let deadline = Date.now() + 10000;
   const reviewState = createReviewState();
   const parseCache: GithubParseCache = { files: new Map() };
@@ -144,6 +147,31 @@ function start() {
             ? "dark"
             : "light",
     };
+    const iconTheme = snapshot.status === "ready" ? reviewTheme(snapshot) : "github";
+    const nextIcon = `${snapshot.reviewKey}:${iconTheme}`;
+    if (runtime && iconSignature !== nextIcon) {
+      iconSignature = nextIcon;
+      const message: IconThemeMessage = {
+        action: "SET_ICON_THEME",
+        theme: iconTheme,
+        reviewKey: snapshot.reviewKey,
+      };
+      const retry = () => {
+        if (iconSignature === nextIcon) iconSignature = "";
+      };
+      void runtime
+        .sendMessage(message)
+        .then((response: unknown) => {
+          if (
+            !response ||
+            typeof response !== "object" ||
+            !("iconUpdated" in response) ||
+            response.iconUpdated !== true
+          )
+            retry();
+        })
+        .catch(retry);
+    }
     themeLoader.update(
       snapshot.reviewKey,
       snapshot.status === "ready" ? snapshot.navigation : undefined,
@@ -202,7 +230,7 @@ function start() {
         files: [],
         error: "Open a GitHub pull request to review its Godot or Unity files.",
       };
-      inlineReviews.update(snapshot);
+      publish();
       return;
     }
     if (!context.isChangesPage) {

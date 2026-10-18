@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   Search,
-  GitBranch,
   Layers,
   ArrowUpRight,
   RefreshCw,
@@ -54,6 +53,7 @@ import { StructuredValue } from "./StructuredValue.tsx";
 import { unityInspectorValue } from "./unityPresentation.ts";
 import { reviewTheme, type EngineTheme } from "../shared/reviewTheme.ts";
 import { EngineThemeContext } from "./EngineTheme.ts";
+import { SceneEyeIcon } from "./SceneEyeIcon.tsx";
 
 const labels: Record<SectionKind, string> = {
   node: "Node",
@@ -758,7 +758,7 @@ export function Inspector({
       <header className="ss-header">
         <div className="ss-brand">
           <span className="ss-logo">
-            <GitBranch size={19} />
+            <SceneEyeIcon theme={reviewTheme(snapshot)} />
           </span>
           <div>
             <strong>SceneSleuth</strong>
