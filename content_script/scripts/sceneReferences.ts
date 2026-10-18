@@ -85,7 +85,15 @@ export function sceneReferenceResolver(sections: SceneSection[]) {
       const value = match ? quotedString(match[1]) : undefined;
       const singleton = owner.path === "autoload" && value?.startsWith("*res://");
       const path = singleton ? value?.slice(1) : value;
-      if (!match || !path?.startsWith("res://")) return [];
+      const relative =
+        owner.className === "GDExtension" && ["libraries", "icons"].includes(owner.path);
+      if (
+        !match ||
+        !path ||
+        (!path.startsWith("res://") &&
+          (!relative || /^[\w+.-]+:/.test(path) || path.startsWith("/") || path.startsWith("\\")))
+      )
+        return [];
       const start = raw.indexOf(match[1]);
       return [
         {

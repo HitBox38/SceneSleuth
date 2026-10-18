@@ -4,6 +4,7 @@ import { test } from "node:test";
 import { reviewDiff } from "../content_script/scripts/diffParser.ts";
 import { reviewViewLabel, supportedFileKind, isSettingsFile } from "../shared/fileTypes.ts";
 import { unityStructuredValue, unityInspectorValue } from "../ui/unityPresentation.ts";
+import { referenceFilePath } from "../shared/referenceLinks.ts";
 import { propertyGroups } from "../ui/propertyPresentation.ts";
 import { unityPatch, imageGuid } from "./fixtures/unity.ts";
 
@@ -286,4 +287,38 @@ test("Godot export presets keep platform options and identical keys in separate 
   assert.equal(supportedFileKind("Game/other.cfg"), undefined);
   assert.equal(supportedFileKind("Game/.godot/export_credentials.cfg"), undefined);
   assert.equal(reviewDiff(unityPatch(example.path, example.source, true))[0].coverage, "complete");
+});
+
+test("GDExtension reviews preserve configuration, relative library links, dependencies, and match order", () => {
+  const example = extendedFormatSources.find((f) => f.path.endsWith(".gdextension"))!;
+  const file = reviewDiff(unityPatch(example.path, example.source))[0];
+  assert.equal(reviewViewLabel(file), "Extension");
+  assert.deepEqual(file.diagnostics, []);
+  assert.deepEqual(
+    file.changes.map((c) => c.label),
+    ["configuration", "libraries", "icons", "dependencies"],
+  );
+  const library = file.changes[1].properties.find((p) => p.name === "linux.debug.x86_64")!;
+  assert.equal(library.afterReferences![0].resourcePath, "./bin/libexample.debug.so");
+  assert.equal(
+    referenceFilePath(library.afterReferences![0], file, "after", {
+      repositoryUrl: "https://github.com/example/game",
+      changesUrl: "https://github.com/example/game/pull/1/changes",
+      files: [],
+    }),
+    "Game/addons/native/bin/libexample.debug.so",
+  );
+  const before = ["[libraries]", 'linux.debug="./bin/editor.so"', 'linux="./bin/runtime.so"'];
+  const after = [before[0], before[2], before[1]];
+  const changed = modified(example.path, before, after);
+  assert.deepEqual(
+    changed.changes[0].properties.map((p) => p.name),
+    ["@Library order in available diff"],
+  );
+  assert.equal(changed.changes[0].properties[0].before, '["linux.debug","linux"]');
+  assert.equal(changed.changes[0].properties[0].after, '["linux","linux.debug"]');
+  assert.equal(
+    modified(example.path, ['linux="./a.so"'], ['linux="./b.so"'], 40).changes[0].kind,
+    "unknown",
+  );
 });

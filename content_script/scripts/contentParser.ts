@@ -348,3 +348,21 @@ export function compareSections(
   }
   return changes;
 }
+
+// GDExtension matches library feature tags in source order. Report the order
+// established by the available diff, without claiming to know omitted entries.
+export function describeGodotSettings(sections: SceneSection[], format: GodotFileKind) {
+  if (format !== "extension") return;
+  for (const section of sections) {
+    if (section.kind !== "project" || section.path !== "libraries" || !section.properties.size)
+      continue;
+    const properties = [...section.properties].sort((a, b) => a[1].line - b[1].line);
+    const raw = JSON.stringify(properties.map(([name]) => name));
+    section.attributes.set("Library order in available diff", {
+      raw,
+      canonical: raw,
+      line: properties[0][1].line,
+      changed: properties.some(([, value]) => value.changed) || section.headerChanged,
+    });
+  }
+}

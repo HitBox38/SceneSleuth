@@ -126,5 +126,21 @@ extendedFormatSources.push({
     "html/canvas_resize_policy=2",
   ],
 });
+extendedFormatSources.push({
+  path: "Game/addons/native/example.gdextension",
+  source: [
+    "[configuration]",
+    'entry_symbol="example_library_init"',
+    'compatibility_minimum="4.2"',
+    "reloadable=true",
+    "[libraries]",
+    'linux.debug.x86_64="./bin/libexample.debug.so"',
+    'linux.release.x86_64="./bin/libexample.release.so"',
+    "[icons]",
+    'ExampleNode="res://icons/example.svg"',
+    "[dependencies]",
+    'linux.debug={"res://bin/helper.so": ""}',
+  ],
+});
 export const extendedFormatPatches = () =>
   extendedFormatSources.map(({ path, source }) => unityPatch(path, source));

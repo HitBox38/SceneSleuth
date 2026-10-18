@@ -1,5 +1,5 @@
 import type { SceneReview, SourceLine, SceneSection } from "../../shared/model.ts";
-import { compareSections, parseScene } from "./contentParser.ts";
+import { compareSections, parseScene, describeGodotSettings } from "./contentParser.ts";
 import {
   supportedFileKind,
   reviewFileKind,
@@ -157,6 +157,9 @@ export function reviewPatch(file: PatchFile): SceneReview {
   if (unity) {
     describeUnitySections([...before.values()], format);
     describeUnitySections([...after.values()], format);
+  } else {
+    describeGodotSettings([...before.values()], format as GodotFileKind);
+    describeGodotSettings([...after.values()], format as GodotFileKind);
   }
   const changes = compareSections(
     [...before.values()],
