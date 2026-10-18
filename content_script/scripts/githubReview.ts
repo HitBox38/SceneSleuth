@@ -1,6 +1,7 @@
 import type { SceneReview } from "../../shared/model.ts";
 import { reviewDiff } from "./diffParser.ts";
 import { navigationContext } from "../../shared/referenceLinks.ts";
+import { godotFileKind } from "../../shared/fileTypes.ts";
 
 type RecordValue = Record<string, unknown>;
 // GitHub's repo SPA can retain the initial page's script after navigating to
@@ -80,7 +81,17 @@ export function reviewGithubData(value: unknown, changesUrl: string) {
   }
   const files = route.diffSummaries
     .map(record)
-    .filter((file) => typeof file.path === "string" && file.path.endsWith(".tscn"))
+    .filter(
+      (file) =>
+        typeof file.path === "string" &&
+        (godotFileKind(file.path) ||
+          godotFileKind(
+            String(
+              record(contents.find((content) => content.path === file.path)?.oldTreeEntry).path ??
+                "",
+            ),
+          )),
+    )
     .map((summary) => {
       const path = String(summary.path);
       const content = contents.find((file) => file.path === path);
@@ -106,7 +117,7 @@ export function reviewGithubData(value: unknown, changesUrl: string) {
           )
           .join("\n");
       const review = reviewDiff(patch)[0];
-      if (!review) throw new Error("GitHub returned an unreadable scene path.");
+      if (!review) throw new Error("GitHub returned an unreadable Godot file path.");
       review.status = operation;
       review.reviewUrl = `${changesUrl}#diff-${encodeURIComponent(String(summary.pathDigest ?? ""))}`;
       if (
@@ -120,7 +131,7 @@ export function reviewGithubData(value: unknown, changesUrl: string) {
         review.additions = Number(summary.linesAdded) || 0;
         review.deletions = Number(summary.linesDeleted) || 0;
         review.diagnostics = [
-          "GitHub has not loaded this scene's text. Open its original diff; SceneSleuth updates as it loads.",
+          "GitHub has not loaded this file's text. Open its original diff; SceneSleuth updates as it loads.",
         ];
       } else if (content?.isTooBig || content?.truncatedReason) {
         review.coverage = "partial";

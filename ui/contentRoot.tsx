@@ -4,6 +4,7 @@ import { enableShadowDOM } from "@react-stately/flags";
 import { InlineSceneReview, InlineViewSwitch } from "./SceneReview.tsx";
 import styles from "./review.css?inline";
 import type { ReviewSnapshot, SceneReview, ReferenceNavigation } from "../shared/model.ts";
+import { reviewFileKind } from "../shared/fileTypes.ts";
 
 class ReviewBoundary extends Component<
   { children: ReactNode; onError: () => void },
@@ -113,7 +114,12 @@ export function createInlineReviews(doc: Document = document) {
         </ReviewBoundary>,
       );
       switchRoot.render(
-        <InlineViewSwitch filePath={file.filePath} original={original} onOriginal={setOriginal} />,
+        <InlineViewSwitch
+          filePath={file.filePath}
+          viewLabel={reviewFileKind(file) === "project" ? "Settings" : "Scene"}
+          original={original}
+          onOriginal={setOriginal}
+        />,
       );
     }
     render();

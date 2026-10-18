@@ -23,6 +23,7 @@ import {
   PanelTop,
   MousePointer2,
   Type,
+  Settings2,
 } from "lucide-react";
 import { Button } from "../popup/src/components/ui/button.tsx";
 import { LinkButton } from "../popup/src/components/ui/button.tsx";
@@ -39,6 +40,7 @@ import { inlineFileContents } from "./fileContents.ts";
 import { referenceLink, referenceImageSource } from "../shared/referenceLinks.ts";
 import { ReferenceFileLink } from "./ReferenceFileLink.tsx";
 import { inspectorValue, propertyGroups, propertyLabel } from "./propertyPresentation.ts";
+import { reviewFileKind } from "../shared/fileTypes.ts";
 
 const labels: Record<SectionKind, string> = {
   node: "Node",
@@ -46,6 +48,7 @@ const labels: Record<SectionKind, string> = {
   sub_resource: "Resource",
   connection: "Signal",
   scene: "Scene",
+  project: "Settings",
   unknown: "Unresolved",
 };
 const kindIcons = {
@@ -54,6 +57,7 @@ const kindIcons = {
   sub_resource: Diamond,
   connection: Zap,
   scene: FileBox,
+  project: Settings2,
   unknown: CircleHelp,
 };
 const nodeIcons = {
@@ -93,6 +97,7 @@ const kindGroups = {
   node: "Nodes",
   resource: "Resources",
   connection: "Signals",
+  project: "Project settings",
 } as const;
 type Filter = keyof typeof kindGroups;
 function matchesKind(change: SectionChange, filter: Filter) {
@@ -110,6 +115,13 @@ export function sceneStats(files: SceneReview[]) {
     resources: changes.filter((item) => item.kind.includes("resource")).length,
     signals: changes.filter((item) => item.kind === "connection").length,
     properties: changes.reduce((sum, item) => sum + item.properties.length, 0),
+    settings: files
+      .filter((file) => reviewFileKind(file) === "project")
+      .reduce(
+        (sum, file) =>
+          sum + file.changes.reduce((count, change) => count + change.properties.length, 0),
+        0,
+      ),
   };
 }
 function ReferenceValue({
@@ -297,7 +309,10 @@ function ChangedSection({
       : undefined
     : change.path || labels[change.kind];
   return (
-    <details className="ss-section" open={change.kind === "node" || change.kind === "unknown"}>
+    <details
+      className="ss-section"
+      open={change.kind === "node" || change.kind === "unknown" || change.kind === "project"}
+    >
       <summary>
         <ChevronDown className="ss-chevron" size={12} aria-hidden="true" />
         <KindIcon
@@ -307,7 +322,7 @@ function ChangedSection({
           aria-hidden="true"
         />
         <span className="ss-section-name">
-          {change.label}
+          {change.kind === "project" ? propertyLabel(change.label) : change.label}
           {path && <span className="ss-section-path">{path}</span>}
         </span>
         <span className="ss-type" title={change.className || labels[change.kind]}>
@@ -390,6 +405,7 @@ export function FileReview({
   embedded?: boolean;
   navigation?: ReferenceNavigation;
 }) {
+  const project = reviewFileKind(file) === "project";
   const changes = file.changes.filter(
     (change) =>
       matchesKind(change, filter) &&
@@ -402,7 +418,7 @@ export function FileReview({
       className="ss-file"
       aria-label={
         embedded
-          ? `${file.coverage === "partial" ? "Partial scene diff" : "Scene diff"} for ${file.filePath}`
+          ? `${file.coverage === "partial" ? (project ? "Partial project settings diff" : "Partial scene diff") : project ? "Project settings diff" : "Scene diff"} for ${file.filePath}`
           : undefined
       }
     >
@@ -421,7 +437,7 @@ export function FileReview({
         <p className="ss-context">
           {file.coverage === "partial"
             ? "Diff context only. Unchanged sections are omitted; — means no value is present in this hunk."
-            : `Complete ${file.status === "removed" ? "removed" : "new"} scene from the patch.`}
+            : `Complete ${file.status === "removed" ? "removed" : "new"} ${project ? "project configuration" : "scene"} from the patch.`}
         </p>
       )}
       {file.diagnostics.length > 0 && (
@@ -433,7 +449,7 @@ export function FileReview({
       )}
       {file.pending && file.reviewUrl && (
         <LinkButton className="ss-button" href={file.reviewUrl}>
-          Load original scene diff <ArrowUpRight size={14} />
+          Load original {project ? "settings" : "scene"} diff <ArrowUpRight size={14} />
         </LinkButton>
       )}
       {embedded && changes.length > 0 && (
@@ -475,10 +491,12 @@ export function FileReview({
 }
 export function InlineViewSwitch({
   filePath,
+  viewLabel = "Scene",
   original,
   onOriginal,
 }: {
   filePath: string;
+  viewLabel?: string;
   original: boolean;
   onOriginal: (original: boolean) => void;
 }) {
@@ -490,7 +508,7 @@ export function InlineViewSwitch({
         aria-pressed={!original}
         onPress={() => onOriginal(false)}
       >
-        Scene
+        {viewLabel}
       </Button>
       <Button
         className="ss-filter"
@@ -515,30 +533,37 @@ export function InlineSceneReview({
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const contents = inlineFileContents(file);
+  const project = reviewFileKind(file) === "project";
   if (original) return null;
   return (
     <section className="ss ss-inline" aria-label={`SceneSleuth review for ${file.filePath}`}>
       <div className="ss-toolbar">
-        <div className="ss-filters" aria-label="Filter scene changes">
-          {Object.entries(kindGroups).map(([key, label]) => (
-            <Button
-              key={key}
-              className="ss-filter"
-              variant="ghost"
-              aria-pressed={filter === key}
-              onPress={() => setFilter(key as Filter)}
-            >
-              {key === "resource" ? "Embedded resources" : label}
-            </Button>
-          ))}
-        </div>
+        {!project && (
+          <div className="ss-filters" aria-label="Filter scene changes">
+            {Object.entries(kindGroups)
+              .filter(([key]) => key !== "project")
+              .map(([key, label]) => (
+                <Button
+                  key={key}
+                  className="ss-filter"
+                  variant="ghost"
+                  aria-pressed={filter === key}
+                  onPress={() => setFilter(key as Filter)}
+                >
+                  {key === "resource" ? "Embedded resources" : label}
+                </Button>
+              ))}
+          </div>
+        )}
         <label className="ss-search">
           <Search size={14} />
-          <span className="ss-sr-only">Search nodes and properties</span>
+          <span className="ss-sr-only">
+            {project ? "Search project settings" : "Search nodes and properties"}
+          </span>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search scene…"
+            placeholder={project ? "Search project settings…" : "Search scene…"}
           />
         </label>
       </div>
@@ -574,7 +599,7 @@ export function Inspector({
   const [search, setSearch] = useState("");
   const stats = sceneStats(snapshot.files);
   return (
-    <section className="ss ss-inspector" aria-label="SceneSleuth scene review">
+    <section className="ss ss-inspector" aria-label="SceneSleuth Godot review">
       <header className="ss-header">
         <div className="ss-brand">
           <span className="ss-logo">
@@ -610,11 +635,11 @@ export function Inspector({
         </div>
       </header>
       <div className="ss-review-title">
-        <span className="ss-eyebrow">GODOT SCENE REVIEW</span>
+        <span className="ss-eyebrow">GODOT REVIEW</span>
         <p>{snapshot.title}</p>
       </div>
       {snapshot.status === "loading" && (
-        <output className="ss-empty">Reading scene changes…</output>
+        <output className="ss-empty">Reading Godot changes…</output>
       )}
       {snapshot.status === "error" && (
         <div className="ss-empty" role="alert">
@@ -638,7 +663,7 @@ export function Inspector({
             <div className="ss-stats">
               <span>
                 <strong>{snapshot.files.length}</strong>{" "}
-                {snapshot.files.length === 1 ? "scene" : "scenes"}
+                {snapshot.files.length === 1 ? "file" : "files"}
               </span>
               <span>
                 <strong>{stats.nodes}</strong> nodes
@@ -649,6 +674,11 @@ export function Inspector({
               <span>
                 <strong>{stats.signals}</strong> signals
               </span>
+              {snapshot.files.some((file) => reviewFileKind(file) === "project") && (
+                <span>
+                  <strong>{stats.settings}</strong> settings
+                </span>
+              )}
             </div>
             <div className="ss-toolbar">
               <div className="ss-filters" aria-label="Filter scene changes">
@@ -689,8 +719,8 @@ export function Inspector({
         ) : (
           <div className="ss-empty">
             <Layers size={28} />
-            <h2>No Godot scenes changed</h2>
-            <p>This pull request has no .tscn file changes.</p>
+            <h2>No Godot files changed</h2>
+            <p>This pull request has no .tscn or .godot file changes.</p>
           </div>
         ))}
       <footer className="ss-footer">

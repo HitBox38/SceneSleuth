@@ -1,5 +1,6 @@
 import type { SceneReview, SourceLine, SceneSection } from "../../shared/model.ts";
 import { compareSections, parseScene } from "./contentParser.ts";
+import { godotFileKind, reviewFileKind } from "../../shared/fileTypes.ts";
 
 interface Hunk {
   oldStart: number;
@@ -84,12 +85,11 @@ export function parseUnifiedDiff(text: string): PatchFile[] {
       }
     }
   }
-  return files.filter(
-    (file) => file.filePath.endsWith(".tscn") || file.previousPath?.endsWith(".tscn"),
-  );
+  return files.filter((file) => godotFileKind(file.filePath) || godotFileKind(file.previousPath));
 }
 
 export function reviewPatch(file: PatchFile): SceneReview {
+  const format = reviewFileKind(file);
   const before = new Map<string, SceneSection>();
   const after = new Map<string, SceneSection>();
   function collect(target: Map<string, SceneSection>, sections: SceneSection[]) {
@@ -111,8 +111,14 @@ export function reviewPatch(file: PatchFile): SceneReview {
     ((file.status === "added" && file.hunks[0].newStart === 1 && file.hunks[0].oldCount === 0) ||
       (file.status === "removed" && file.hunks[0].oldStart === 1 && file.hunks[0].newCount === 0));
   for (const [index, hunk] of file.hunks.entries()) {
-    const oldScene = parseScene(hunk.before, `hunk-${index}`);
-    const newScene = parseScene(hunk.after, `hunk-${index}`);
+    const oldScene = parseScene(hunk.before, `hunk-${index}`, {
+      format,
+      startsAtFileBeginning: hunk.oldStart <= 1,
+    });
+    const newScene = parseScene(hunk.after, `hunk-${index}`, {
+      format,
+      startsAtFileBeginning: hunk.newStart <= 1,
+    });
     for (const note of [...oldScene.diagnostics, ...newScene.diagnostics]) diagnostics.add(note);
     if (hunk.before.length !== hunk.oldCount || hunk.after.length !== hunk.newCount) {
       complete = false;
@@ -132,7 +138,9 @@ export function reviewPatch(file: PatchFile): SceneReview {
   const changes = compareSections([...before.values()], [...after.values()], !complete);
   if (changes.some((change) => change.kind === "unknown"))
     diagnostics.add(
-      "Some owning sections are outside the diff. Their changes are listed without guessing a node or resource.",
+      format === "project"
+        ? "Some settings sections are outside the diff. Their changes are listed without guessing a section."
+        : "Some owning sections are outside the diff. Their changes are listed without guessing a node or resource.",
     );
   return {
     filePath: file.filePath,

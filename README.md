@@ -2,17 +2,18 @@
 
 **See the scene behind the diff.**
 
-SceneSleuth helps Godot developers review `.tscn` changes in GitHub pull requests. Instead of reconstructing a scene from serialized lines, you can inspect changed nodes, resources, properties, and signal connections directly in each scene file’s diff area.
+SceneSleuth helps Godot developers review `.tscn` scenes and `.godot` project configurations in GitHub pull requests. Instead of reconstructing changes from serialized lines, you can inspect nodes, resources, properties, signal connections, and project settings directly in each file’s diff area.
 
 The goal is to answer **“What changed in this scene?”** without opening the project in Godot.
 
 ## What you can do
 
-Open a pull request’s **Files changed** tab. SceneSleuth automatically replaces each loaded `.tscn` diff body with a structured scene review. GitHub’s file header and review controls stay in place. The toolbar popup summarizes the current tab; **Go to scene changes** scrolls to an inline review.
+Open a pull request’s **Files changed** tab. SceneSleuth automatically replaces each loaded `.tscn` or `.godot` diff body with a structured review. GitHub’s file header and review controls stay in place. The toolbar popup summarizes the current tab; **Go to Godot changes** scrolls to an inline review.
 
 The inline review follows GitHub’s active color theme, with Godot-inspired scene-type icons, left-hand disclosure arrows, and compact inspector rows. Nodes, resources, and signals have distinct icon colors; before/after values use GitHub’s diff colors. The header switch and image previews share the same theme. The standalone toolbar popup uses a matching dark palette.
 
 - Browse scene files and their changed sections, with node paths and Godot classes.
+- Review `project.godot` settings under their own sections, including Application, Autoload, Input, and Rendering. Global file settings, slash-separated keys, multiline descriptions, and input-event dictionaries retain their original values. The header uses **Settings / Original diff**, and settings have their own search and popup count. Direct `res://` values link to files and support image previews; autoload singleton markers remain visible. Unresolved `uid://` values and unfamiliar expressions stay as source text. Text `.godot` configurations are supported; `.tres`, binary resources, and GDScript remain native diffs.
 - Compare property values before and after in compact, read-only inspector rows. Common 2D/3D node properties use collapsible Transform, Visibility, and Collision groups. Property names are readable labels, with their serialized names on hover; source links and change markers remain available beside them.
 - Inspect simple numeric vectors as labeled x/y/z/w components and normalized RGBA colors as swatches with exact channel values. Hover a formatted value for its original expression. Unsupported expressions, HDR colors, and missing values retain their source or missing-value presentation. Before/After headings appear once per file, and familiar node classes have distinct icons.
 - See referenced nodes, scenes, scripts, textures, and embedded resources by name instead of serialized IDs. Relative node paths resolve within the file, and references inside arrays and dictionaries resolve too. Hover a name for its target and original expression; both sides keep their own targets. Search also matches the resolved names and paths.
@@ -20,9 +21,9 @@ The inline review follows GitHub’s active color theme, with Godot-inspired sce
 - Hover or keyboard-focus an image filename for a preview, with transparency shown against a checkerboard and the image dimensions below it. Previews load from GitHub only when opened and use the corresponding before/after revision. Clicking the filename still navigates to the file. Unavailable previews show a fallback message.
 - Filter nodes, resources, or signals, and search names, properties, and values.
 - Expand resources and inspect the original patch text when you need more detail.
-- Switch between **Scene** and **Original diff** independently for each file using the control in GitHub’s file header, between Copilot and Viewed. The scene body starts with filters and search on one compact row, wrapping on narrow screens. It has no extra brand, counts, or context-explanation row. Use the original view for GitHub line comments; source-line links reveal that view automatically.
+- Switch between **Scene** (or **Settings**) and **Original diff** independently for each file using the control in GitHub’s file header, between Copilot and Viewed. The scene body starts with filters and search on one compact row; project settings start with search. Both wrap on narrow screens and omit extra brand, counts, or context-explanation rows. Use the original view for GitHub line comments; source-line links reveal that view automatically.
 - Each inline view shows the scene’s own settings, nodes, properties, embedded resources, and signals. Referenced script, image, and scene files are not displayed as separate cards. References remain readable as property values, and their declarations remain in **Original diff**. When GitHub reuses a diff table for another file, SceneSleuth replaces the old view rather than carrying its values over.
-- Keep GitHub’s file navigation, Viewed checkboxes, and review controls. Non-scene files keep their original diffs, and SceneSleuth never submits reviews.
+- Keep GitHub’s file navigation, Viewed checkboxes, and review controls. Other file types keep their original diffs, and SceneSleuth never submits reviews.
 
 Private repositories work through your existing GitHub sign-in. SceneSleuth reads the current page’s review data and rendered diff tables. There is no backend, API token, analytics, or external scene upload.
 
@@ -32,11 +33,11 @@ The content script starts on GitHub pages so it can detect GitHub’s navigation
 
 This is an early development build, not a published extension.
 
-**A diff is not a complete scene.** Modified scene reviews contain diff context only; unchanged sections may be missing. A missing value means that value is absent from the available hunk, not necessarily absent from the scene. If a section header is outside the hunk, changes appear under **Unresolved scene context** rather than being assigned to a guessed node. Complete coverage is established only for complete added/deleted file patches.
+**A diff is not a complete file.** Modified reviews contain diff context only; unchanged sections may be missing. A missing value means that value is absent from the available hunk, not necessarily absent from the scene or configuration. If a section header is outside the hunk, changes appear under **Unresolved scene context** or **Unresolved settings context** rather than being assigned to a guessed owner. Complete coverage is established only for complete added/deleted file patches. Configuration defaults are not inferred or evaluated.
 
-GitHub loads some file diffs lazily. Those scenes appear as waiting for text in the toolbar popup. Select the file in GitHub and use its load control if needed. SceneSleuth replaces the diff body once its table and scene text are available, and retains loaded results within the current review. Summary counts for nodes/resources/signals cover parsed text only. If parsing is unavailable, GitHub’s original diff stays visible.
+GitHub loads some file diffs lazily. Those files appear as waiting for text in the toolbar popup. Select the file in GitHub and use its load control if needed. SceneSleuth replaces the diff body once its table and text are available, and retains loaded results within the current review. Summary counts for nodes/resources/signals/settings cover parsed text only. If parsing is unavailable, GitHub’s original diff stays visible.
 
-During navigation without a page reload, GitHub can retain the initial page’s embedded data. SceneSleuth rejects data from a different route and reads the current rendered tables instead. In that case the popup labels its results as **loaded scenes**, since more files may appear as you browse. Those tables provide diff context only; they do not establish complete scene contents or file creation/rename metadata.
+During navigation without a page reload, GitHub can retain the initial page’s embedded data. SceneSleuth rejects data from a different route and reads the current rendered tables instead. In that case the popup labels its results as **loaded Godot files**, since more files may appear as you browse. Those tables provide diff context only; they do not establish complete file contents or file creation/rename metadata.
 
 The adapter targets GitHub’s modern **Files changed** layout. GitHub’s markup and embedded data are not a stable public API; unsupported layouts produce a recoverable message. Very large or GitHub-limited diffs may remain partial. There is no full scene preview, inherited-scene expansion, Godot execution, or speculative matching of renamed nodes/resource identifiers. References resolve only from declarations available in that file’s diff context. Missing targets, absolute/unique node paths, and node paths inside animation resources retain their original text. Other constructors remain source text; no values are evaluated.
 
@@ -60,7 +61,7 @@ In Chrome:
 1. Open `chrome://extensions` and enable **Developer mode**.
 2. Choose **Load unpacked** and select this project’s `dist/` folder.
 3. Open a GitHub PR, visit **Files changed**, and reload the page if it was already open.
-4. Select a `.tscn` file in GitHub’s file list. Its diff body shows the scene review; **Original diff** restores GitHub’s text view.
+4. Select a `.tscn` or `project.godot` file in GitHub’s file list. Its diff body shows the structured review; **Original diff** restores GitHub’s text view.
 
 After editing code, rebuild, reload the extension in `chrome://extensions`, and reload the GitHub page. Chrome can keep an older registered content script even while the popup reads newer files from `dist/`. If the popup reports an unexpected response, reload **the extension first**, then reload the PR tab; refreshing the page alone may keep running the old script.
 

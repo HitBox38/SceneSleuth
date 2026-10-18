@@ -7,6 +7,7 @@ import type {
   PropertyChange,
 } from "../../shared/model.ts";
 import { sceneReferenceResolver } from "./sceneReferences.ts";
+import type { GodotFileKind } from "../../shared/fileTypes.ts";
 
 // A lexical pass is enough to preserve values without evaluating Godot expressions.
 export function canonicalValue(text: string): string {
@@ -92,32 +93,68 @@ function attributes(text: string, line: SourceLine): Map<string, SceneValue> {
 export function parseScene(
   lines: SourceLine[],
   scope = "scene",
+  options: { format?: GodotFileKind; startsAtFileBeginning?: boolean } = {},
 ): { sections: SceneSection[]; diagnostics: string[] } {
   const sections: SceneSection[] = [];
   const diagnostics: string[] = [];
   let current: SceneSection | undefined;
+  const project = options.format === "project";
+  let preamble = project && options.startsAtFileBeginning;
+  const projectHeader = (text: string) =>
+    text.trim().match(/^\[((?:\\.|[^\]\\\n])+)\](?:\s*;[^\n]*)?$/);
   for (let index = 0; index < lines.length; index++) {
     const first = lines[index];
     if (!first.text.trim() || first.text.trimStart().startsWith(";")) continue;
     let raw = first.text;
     let changed = first.changed;
-    while (!balanced(raw) && index + 1 < lines.length) {
+    const settingsHeader = project ? projectHeader(raw) : undefined;
+    let recovery: { index: number; raw: string; changed: boolean } | undefined;
+    while (!settingsHeader && !balanced(raw) && index + 1 < lines.length) {
       const next = lines[index + 1];
       // A new section cannot finish a truncated value from another hunk.
-      if (/^\[(?:node|ext_resource|sub_resource|connection|gd_scene)\b/.test(next.text.trim()))
+      if (project && projectHeader(next.text) && !recovery)
+        recovery = { index: index + 1, raw, changed };
+      if (
+        !project &&
+        /^\[(?:node|ext_resource|sub_resource|connection|gd_scene)\b/.test(next.text.trim())
+      )
         break;
       index++;
       raw += `\n${next.text}`;
       changed ||= next.changed;
     }
-    if (!balanced(raw))
+    // A line such as ["value"] can be a nested array, not a section. Recover at
+    // a possible settings header only when the value never closes in this hunk.
+    if (project && !balanced(raw) && recovery) {
+      index = recovery.index - 1;
+      raw = recovery.raw;
+      changed = recovery.changed;
+    }
+    if (!settingsHeader && !balanced(raw))
       diagnostics.push(`Incomplete value near line ${first.line}; inspect the original diff.`);
+    if (settingsHeader) {
+      const name = settingsHeader[1].replaceAll("\\]", "]");
+      current = {
+        id: `project:section:${JSON.stringify(name)}`,
+        kind: "project",
+        label: name,
+        className: "ProjectSettings",
+        path: name,
+        line: first.line,
+        headerChanged: changed,
+        attributes: new Map(),
+        properties: new Map(),
+      };
+      sections.push(current);
+      preamble = false;
+      continue;
+    }
     const header = raw
       .trim()
       .match(
         /^\[(gd_scene|node|ext_resource|sub_resource|connection)\b([\s\S]*)\](?:\s*;[^\n]*)?$/,
       );
-    if (header) {
+    if (header && !project) {
       const kind: SectionKind = header[1] === "gd_scene" ? "scene" : (header[1] as SectionKind);
       const attrs = attributes(header[2], { ...first, changed });
       const get = (name: string) => decode(attrs.get(name)?.raw);
@@ -162,22 +199,37 @@ export function parseScene(
     }
     if (raw.trimStart().startsWith("[")) {
       current = undefined;
+      preamble = false;
       diagnostics.push(`Unsupported section near line ${first.line}; inspect the original diff.`);
       continue;
     }
-    const assignment = raw.match(/^\s*([^=\n]+?)\s*=\s*([\s\S]*)$/);
+    const assignment = raw.match(/^\s*("(?:\\.|[^"\\])*"|[^=\n]+?)\s*=\s*([\s\S]*)$/);
     if (!assignment) {
       if (changed)
         diagnostics.push(
-          `Unrecognized scene text near line ${first.line}; preserved in the original diff.`,
+          `Unrecognized ${project ? "project settings" : "scene"} text near line ${first.line}; preserved in the original diff.`,
         );
       continue;
+    }
+    if (!current && preamble) {
+      current = {
+        id: "project:preamble",
+        kind: "project",
+        label: "File settings",
+        className: "ProjectSettings",
+        path: "",
+        line: first.line,
+        headerChanged: false,
+        attributes: new Map(),
+        properties: new Map(),
+      };
+      sections.push(current);
     }
     if (!current) {
       current = {
         id: `unknown:${scope}`,
         kind: "unknown",
-        label: "Unresolved scene context",
+        label: project ? "Unresolved settings context" : "Unresolved scene context",
         className: "",
         path: "Owning section is outside this hunk",
         line: first.line,
@@ -188,7 +240,7 @@ export function parseScene(
       sections.push(current);
     }
     const value = assignment[2].trim();
-    current.properties.set(assignment[1].trim(), {
+    current.properties.set(project ? decode(assignment[1].trim()) : assignment[1].trim(), {
       raw: value,
       canonical: canonicalValue(value),
       line: first.line,

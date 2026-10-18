@@ -4,6 +4,7 @@ export type SectionKind =
   | "sub_resource"
   | "connection"
   | "scene"
+  | "project"
   | "unknown";
 export type Operation = "added" | "removed" | "modified";
 export interface SourceLine {

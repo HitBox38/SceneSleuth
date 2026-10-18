@@ -78,6 +78,26 @@ export function sceneReferenceResolver(sections: SceneSection[]) {
 
   return (raw: string | undefined, owner?: SceneSection): ValueReference[] => {
     if (!raw) return [];
+    if (owner?.kind === "project") {
+      // Project settings store file paths directly as quoted strings. Keep UID
+      // references and expressions opaque; the autoload '*' marker is significant.
+      const match = /^\s*("(?:\\.|[^"\\])*")\s*(?:;[^\n]*)?$/.exec(raw);
+      const value = match ? quotedString(match[1]) : undefined;
+      const singleton = owner.path === "autoload" && value?.startsWith("*res://");
+      const path = singleton ? value?.slice(1) : value;
+      if (!match || !path?.startsWith("res://")) return [];
+      const start = raw.indexOf(match[1]);
+      return [
+        {
+          start,
+          end: start + match[1].length,
+          label: `${singleton ? "*" : ""}${path.split("/").pop() || path}`,
+          target: path,
+          resourcePath: path,
+          className: singleton ? "Autoload singleton" : "File",
+        },
+      ];
+    }
     const references: ValueReference[] = [];
     let quoted = false,
       escaped = false,

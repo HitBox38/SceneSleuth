@@ -2,6 +2,7 @@ import type { SceneReview } from "../../shared/model.ts";
 import { reviewDiff } from "./diffParser.ts";
 import { embeddedRouteMatches, header, reviewGithubData } from "./githubReview.ts";
 import { navigationContext } from "../../shared/referenceLinks.ts";
+import { godotFileKind } from "../../shared/fileTypes.ts";
 
 export function observeGithubDiffs(root: Node, onChange: () => void) {
   const observer = new MutationObserver((records) => {
@@ -30,7 +31,7 @@ export function observeGithubDiffs(root: Node, onChange: () => void) {
 // clicking controls, changing review preferences, or requesting private API tokens.
 export function reviewGithubTable(table: Element, previous?: SceneReview): SceneReview | undefined {
   const path = table.getAttribute("aria-label")?.replace(/^Diff for: /, "");
-  if (!path?.endsWith(".tscn")) return;
+  if (!path || (!godotFileKind(path) && !godotFileKind(previous?.previousPath))) return;
   const lines: string[] = [];
   for (const row of table.querySelectorAll("tr")) {
     const hunk = row.querySelector(".diff-hunk-cell");

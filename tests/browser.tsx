@@ -11,6 +11,7 @@ import type { ReviewSnapshot } from "../shared/model.ts";
 import { Button } from "../popup/src/components/ui/button.tsx";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
 import { reviewDiff } from "../content_script/scripts/diffParser.ts";
+import { projectPath, projectLines, projectReview } from "./fixtures/project-settings.ts";
 import {
   referencedScenePath,
   referencedSceneSource,
@@ -247,6 +248,17 @@ function verifyNullableLineKeys() {
       throw new Error("Nullable GitHub source-line identities lost scene values");
   }
 }
+function verifyProjectDom() {
+  const table = makeTable(false, projectLines, projectPath, "diff-project");
+  const review = reviewGithubTable(table, projectReview);
+  if (JSON.stringify(review?.changes) !== JSON.stringify(projectReview.changes))
+    throw new Error("Project DOM extraction lost settings or source lines");
+  const doc = document.implementation.createHTMLDocument("Project fixture");
+  doc.body.append(table);
+  const fallback = readGithubReview(doc, "https://github.com/example/game/pull/12/changes");
+  if (!fallback?.partialListing || fallback.files[0]?.changes[0]?.kind !== "project")
+    throw new Error("Project DOM fallback did not discover settings");
+}
 let domResult =
   "DOM checks passed: unified and split rows produce identical changes and source lines.";
 try {
@@ -254,6 +266,7 @@ try {
   verifyDom(true);
   verifyRouteFallback();
   verifyNullableLineKeys();
+  verifyProjectDom();
 } catch (error) {
   domResult = String(error);
 }
@@ -376,6 +389,41 @@ function Fixture() {
           </Button>
           <Button className="ss-button" onPress={() => inlineReviews.open()}>
             Go to inline review
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
+              const current = diffBody.querySelector("table")!;
+              const next = makeTable(false, projectLines, projectPath, "diff-project");
+              current.replaceChildren(...next.childNodes);
+              current.setAttribute("aria-label", next.getAttribute("aria-label")!);
+              current.setAttribute("data-diff-anchor", "diff-project");
+              name.textContent = projectPath;
+              inlineSnapshot = {
+                ...ready,
+                files: [
+                  {
+                    ...projectReview,
+                    reviewUrl: `${location.origin}${location.pathname}#diff-project`,
+                  },
+                ],
+                navigation: {
+                  ...ready.navigation!,
+                  files: [
+                    { path: projectPath, status: "modified" },
+                    {
+                      path: "Demos/coop/Scripts/light_controller.gd",
+                      status: "modified",
+                      reviewUrl: `${location.origin}${location.pathname}#diff-reference-script`,
+                    },
+                  ],
+                },
+              };
+              inlineReviews.update(inlineSnapshot);
+              setSnapshot(inlineSnapshot);
+            }}
+          >
+            Project settings
           </Button>
           <Button
             className="ss-button"

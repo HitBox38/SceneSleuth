@@ -60,7 +60,7 @@ function start() {
         title: "SceneSleuth",
         status: "error",
         files: [],
-        error: "Open a GitHub pull request to review its scenes.",
+        error: "Open a GitHub pull request to review its Godot files.",
       };
       inlineReviews.update(snapshot);
       return;
@@ -71,7 +71,7 @@ function start() {
         title: context.title,
         status: "error",
         files: [],
-        error: "Open this pull request's Files changed tab to read its scene diffs.",
+        error: "Open this pull request's Files changed tab to read its Godot diffs.",
         changesUrl: context.changesUrl,
       };
       publish();

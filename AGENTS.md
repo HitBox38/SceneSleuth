@@ -2,7 +2,7 @@
 
 ## Purpose and product boundaries
 
-SceneSleuth helps Godot developers understand `.tscn` scene changes in GitHub pull requests. The intended experience is a structured scene review inside the browser. Read [README.md](README.md) for the current state and known limitations before promising behavior.
+SceneSleuth helps Godot developers understand `.tscn` scene changes and `.godot` project settings in GitHub pull requests. The intended experience is a structured review inside the browser. Read [README.md](README.md) for the current state and known limitations before promising behavior.
 
 This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tailwind CSS, and React Aria components. Oxlint and Oxfmt handle linting and formatting. There is no backend. Focused regression tests use Node’s built-in test runner and TypeScript stripping. Keep changes focused on this architecture unless the task calls for changing it.
 
@@ -27,8 +27,8 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 - Preserve file paths and old/new source line references where available so structured changes can lead back to the original review.
 - Treat scene text and GitHub HTML as untrusted input. Use React text rendering or DOM text APIs; escape values when generating HTML strings.
 - Make DOM processing repeatable without duplicate results or observer loops. Account for GitHub navigation and delayed rendering.
-- Mount inline scene reviews in the scene file’s diff body. Keep the original table in place for extraction and GitHub line comments, preserve its display style when restoring it, and preserve native file-header controls and non-scene diffs. Put the view switch immediately before Viewed in the file header; remove it with its body mount and reconcile it when GitHub replaces the header. Reconcile mounts even when parsed data has not changed.
-- A table element can be reused for a different file. Recheck its current file label before retaining a mount, remove stale scene UI for non-scene files, and observe identity attributes as well as row/text changes. Test with files that have distinct values.
+- Mount inline reviews in the supported file’s diff body. Keep the original table in place for extraction and GitHub line comments, preserve its display style when restoring it, and preserve native file-header controls and unsupported diffs. Put the view switch immediately before Viewed in the file header; remove it with its body mount and reconcile it when GitHub replaces the header. Reconcile mounts even when parsed data has not changed. Use Scene for `.tscn` and Settings for `.godot`.
+- A table element can be reused for a different file. Recheck its current file label before retaining a mount, remove stale UI for unsupported files, and observe identity attributes as well as row/text changes. Test scene/configuration switches with distinct values.
 - Check the owning `react-app` element’s `initial-path` before consuming embedded GitHub data. SPA navigation can retain another route’s payload. A rendered-table fallback must label its file listing as incomplete and retain partial scene coverage.
 - Keep the GitHub startup match broad enough to detect navigation from non-PR pages into a PR. Gate scene extraction and inspector creation behind `reviewContext`; do not read scene payloads or render a panel on other pages.
 - Enable React Aria's shadow-DOM support through `@react-stately/flags` before mounting the in-page inspector. Verify press, focus, and keyboard interactions in the actual shadow root, not only a standalone React page.
@@ -41,6 +41,8 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 ## Working with scene diffs
 
 Changed lines are not a complete scene. Do not infer that an unchanged property was deleted or invent a resource's contents when the diff omits them. Preserve uncertainty in partial parses and show a raw-text fallback for unsupported constructs.
+
+The same parser/comparison pipeline supports text `.godot` project configurations through `parseScene`'s project mode. Keep settings sections distinct from scene objects. Global settings require file-start context; never infer a missing section from a setting name or a previous hunk. Preserve multiline input definitions, direct file references, autoload singleton markers, and unresolved UIDs without evaluation. `.tres` and binary resource files remain unsupported. Use `shared/fileTypes.ts` for discovery and file-appropriate presentation labels.
 
 The active path is GitHub data/DOM adapters → unified hunks → scene sections → comparisons → inspector/popup. Preserve hunk boundaries and cached results only within the same PR and comparison. GitHub-lazy files must remain explicitly pending until their text loads. Do not replace GitHub’s diff controls or add a competing parser.
 

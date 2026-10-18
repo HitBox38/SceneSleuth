@@ -5,6 +5,7 @@ import { LinkButton } from "./components/ui/button.tsx";
 import { isReviewSnapshot, reviewContext } from "../../shared/protocol.ts";
 import type { ReviewSnapshot } from "../../shared/model.ts";
 import { sceneStats } from "../../ui/SceneReview.tsx";
+import { reviewFileKind } from "../../shared/fileTypes.ts";
 import "../../ui/review.css";
 
 type State =
@@ -123,6 +124,8 @@ export default function App() {
   }
   const snapshot = state.kind === "review" ? state.snapshot : undefined;
   const stats = snapshot ? sceneStats(snapshot.files) : undefined;
+  const hasScenes = snapshot?.files.some((file) => reviewFileKind(file) === "scene");
+  const hasProjects = snapshot?.files.some((file) => reviewFileKind(file) === "project");
   return (
     <main className="ss ss-popup">
       <header className="ss-header">
@@ -142,7 +145,7 @@ export default function App() {
         )}
         {state.kind === "unsupported" && (
           <>
-            <h1>Ready for a scene review</h1>
+            <h1>Ready for a Godot review</h1>
             <p className="ss-muted">{state.message}</p>
           </>
         )}
@@ -161,7 +164,7 @@ export default function App() {
           </div>
         )}
         {snapshot?.status === "loading" && (
-          <output className="ss-muted">Reading scene changes…</output>
+          <output className="ss-muted">Reading Godot changes…</output>
         )}
         {snapshot?.status === "ready" && (
           <>
@@ -169,24 +172,33 @@ export default function App() {
             {snapshot.files.length ? (
               <>
                 <p className="ss-muted" style={{ marginBottom: 16 }}>
-                  {snapshot.files.length} {snapshot.partialListing ? "loaded scene" : "scene"}{" "}
+                  {snapshot.files.length} {snapshot.partialListing ? "loaded Godot" : "Godot"}{" "}
                   {snapshot.files.length === 1 ? "file" : "files"} changed
                 </p>
                 {snapshot.partialListing && (
                   <p className="ss-muted" style={{ marginBottom: 16 }}>
-                    Showing scenes loaded by GitHub. More files may appear as you browse.
+                    Showing Godot files loaded by GitHub. More files may appear as you browse.
                   </p>
                 )}
                 <div className="ss-stats">
-                  <span>
-                    <strong>{stats?.nodes}</strong> nodes
-                  </span>
-                  <span>
-                    <strong>{stats?.resources}</strong> resources
-                  </span>
-                  <span>
-                    <strong>{stats?.signals}</strong> signals
-                  </span>
+                  {hasScenes && (
+                    <>
+                      <span>
+                        <strong>{stats?.nodes}</strong> nodes
+                      </span>
+                      <span>
+                        <strong>{stats?.resources}</strong> resources
+                      </span>
+                      <span>
+                        <strong>{stats?.signals}</strong> signals
+                      </span>
+                    </>
+                  )}
+                  {hasProjects && (
+                    <span>
+                      <strong>{stats?.settings}</strong> settings
+                    </span>
+                  )}
                 </div>
                 {snapshot.files.map((file) => (
                   <div key={file.filePath} className="ss-popup-file">
@@ -204,14 +216,14 @@ export default function App() {
                     void openReview();
                   }}
                 >
-                  Go to scene changes <ArrowUpRight size={14} />
+                  Go to Godot changes <ArrowUpRight size={14} />
                 </Button>
               </>
             ) : (
               <p className="ss-muted">
                 {snapshot.partialListing
-                  ? "No loaded .tscn diffs found. GitHub may load more files as you browse."
-                  : "No .tscn files changed in this pull request."}
+                  ? "No loaded .tscn or .godot diffs found. GitHub may load more files as you browse."
+                  : "No .tscn or .godot files changed in this pull request."}
               </p>
             )}
           </>
