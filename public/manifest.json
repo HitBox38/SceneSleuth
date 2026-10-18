@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SceneSleuth",
-  "description": "Review Godot scenes and project settings in GitHub pull requests: nodes, resources, properties, signals, and configuration.",
+  "description": "Review Godot scenes, text resources, and project settings in GitHub pull requests: nodes, properties, signals, and configuration.",
   "version": "0.1.0",
   "permissions": ["activeTab"],
   "action": {

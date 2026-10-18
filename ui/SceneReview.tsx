@@ -47,6 +47,8 @@ const labels: Record<SectionKind, string> = {
   node: "Node",
   ext_resource: "External resource",
   sub_resource: "Resource",
+  resource_header: "Resource file",
+  resource: "Resource",
   connection: "Signal",
   scene: "Scene",
   project: "Settings",
@@ -56,6 +58,8 @@ const kindIcons = {
   node: Box,
   ext_resource: Diamond,
   sub_resource: Diamond,
+  resource_header: FileBox,
+  resource: Diamond,
   connection: Zap,
   scene: FileBox,
   project: Settings2,
@@ -105,7 +109,7 @@ function matchesKind(change: SectionChange, filter: Filter) {
   return (
     filter === "all" ||
     (filter === "resource"
-      ? ["ext_resource", "sub_resource"].includes(change.kind)
+      ? ["ext_resource", "sub_resource", "resource"].includes(change.kind)
       : change.kind === filter)
   );
 }
@@ -113,7 +117,9 @@ export function sceneStats(files: SceneReview[]) {
   const changes = files.flatMap((file) => file.changes);
   return {
     nodes: changes.filter((item) => item.kind === "node").length,
-    resources: changes.filter((item) => item.kind.includes("resource")).length,
+    resources: changes.filter((item) =>
+      ["ext_resource", "sub_resource", "resource"].includes(item.kind),
+    ).length,
     signals: changes.filter((item) => item.kind === "connection").length,
     properties: changes.reduce((sum, item) => sum + item.properties.length, 0),
     settings: files
@@ -336,7 +342,12 @@ function ChangedSection({
   return (
     <details
       className="ss-section"
-      open={change.kind === "node" || change.kind === "unknown" || change.kind === "project"}
+      open={
+        change.kind === "node" ||
+        change.kind === "unknown" ||
+        change.kind === "project" ||
+        change.kind === "resource"
+      }
     >
       <summary>
         <ChevronDown className="ss-chevron" size={12} aria-hidden="true" />
@@ -431,6 +442,8 @@ export function FileReview({
   navigation?: ReferenceNavigation;
 }) {
   const project = reviewFileKind(file) === "project";
+  const resource = reviewFileKind(file) === "resource";
+  const subject = project ? "project settings" : resource ? "resource" : "scene";
   const changes = file.changes.filter(
     (change) =>
       matchesKind(change, filter) &&
@@ -443,7 +456,7 @@ export function FileReview({
       className="ss-file"
       aria-label={
         embedded
-          ? `${file.coverage === "partial" ? (project ? "Partial project settings diff" : "Partial scene diff") : project ? "Project settings diff" : "Scene diff"} for ${file.filePath}`
+          ? `${file.coverage === "partial" ? `Partial ${subject}` : subject[0].toUpperCase() + subject.slice(1)} diff for ${file.filePath}`
           : undefined
       }
     >
@@ -462,7 +475,7 @@ export function FileReview({
         <p className="ss-context">
           {file.coverage === "partial"
             ? "Diff context only. Unchanged sections are omitted; — means no value is present in this hunk."
-            : `Complete ${file.status === "removed" ? "removed" : "new"} ${project ? "project configuration" : "scene"} from the patch.`}
+            : `Complete ${file.status === "removed" ? "removed" : "new"} ${project ? "project configuration" : resource ? "resource" : "scene"} from the patch.`}
         </p>
       )}
       {file.diagnostics.length > 0 && (
@@ -474,7 +487,7 @@ export function FileReview({
       )}
       {file.pending && file.reviewUrl && (
         <LinkButton className="ss-button" href={file.reviewUrl}>
-          Load original {project ? "settings" : "scene"} diff <ArrowUpRight size={14} />
+          Load original {subject} diff <ArrowUpRight size={14} />
         </LinkButton>
       )}
       {embedded && changes.length > 0 && (
@@ -559,11 +572,12 @@ export function InlineSceneReview({
   const [search, setSearch] = useState("");
   const contents = inlineFileContents(file);
   const project = reviewFileKind(file) === "project";
+  const resource = reviewFileKind(file) === "resource";
   if (original) return null;
   return (
     <section className="ss ss-inline" aria-label={`SceneSleuth review for ${file.filePath}`}>
       <div className="ss-toolbar">
-        {!project && (
+        {!project && !resource && (
           <div className="ss-filters" aria-label="Filter scene changes">
             {Object.entries(kindGroups)
               .filter(([key]) => key !== "project")
@@ -583,20 +597,25 @@ export function InlineSceneReview({
         <label className="ss-search">
           <Search size={14} />
           <span className="ss-sr-only">
-            {project ? "Search project settings" : "Search nodes and properties"}
+            {project
+              ? "Search project settings"
+              : resource
+                ? "Search resources and properties"
+                : "Search nodes and properties"}
           </span>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder={project ? "Search project settings…" : "Search scene…"}
+            placeholder={
+              project ? "Search project settings…" : resource ? "Search resource…" : "Search scene…"
+            }
           />
         </label>
       </div>
       <div className="ss-files">
         {!contents.changes.length && file.changes.length ? (
           <p className="ss-empty">
-            No scene-local changes in this file. Select Original diff to inspect its file
-            references.
+            No local changes in this file. Select Original diff to inspect its file references.
           </p>
         ) : (
           <FileReview
@@ -623,6 +642,8 @@ export function Inspector({
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const stats = sceneStats(snapshot.files);
+  const hasScenes = snapshot.files.some((file) => reviewFileKind(file) === "scene");
+  const hasResources = snapshot.files.some((file) => reviewFileKind(file) !== "project");
   return (
     <section className="ss ss-inspector" aria-label="SceneSleuth Godot review">
       <header className="ss-header">
@@ -690,15 +711,21 @@ export function Inspector({
                 <strong>{snapshot.files.length}</strong>{" "}
                 {snapshot.files.length === 1 ? "file" : "files"}
               </span>
-              <span>
-                <strong>{stats.nodes}</strong> nodes
-              </span>
-              <span>
-                <strong>{stats.resources}</strong> resources
-              </span>
-              <span>
-                <strong>{stats.signals}</strong> signals
-              </span>
+              {hasScenes && (
+                <span>
+                  <strong>{stats.nodes}</strong> nodes
+                </span>
+              )}
+              {hasResources && (
+                <span>
+                  <strong>{stats.resources}</strong> resources
+                </span>
+              )}
+              {hasScenes && (
+                <span>
+                  <strong>{stats.signals}</strong> signals
+                </span>
+              )}
               {snapshot.files.some((file) => reviewFileKind(file) === "project") && (
                 <span>
                   <strong>{stats.settings}</strong> settings
@@ -745,7 +772,7 @@ export function Inspector({
           <div className="ss-empty">
             <Layers size={28} />
             <h2>No Godot files changed</h2>
-            <p>This pull request has no .tscn or .godot file changes.</p>
+            <p>This pull request has no .tscn, .tres, or .godot file changes.</p>
           </div>
         ))}
       <footer className="ss-footer">

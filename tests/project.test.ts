@@ -143,7 +143,7 @@ test("project file references retain singleton markers, side targets, and unreso
   assert.equal(unresolved.changes[0].properties[1].after, '"res://file" + process.exit()');
 });
 
-test("GitHub discovers lazy projects and mixed Godot files while leaving scripts and tres files alone", () => {
+test("GitHub discovers lazy projects and mixed Godot files while leaving scripts alone", () => {
   const route = {
     diffSummaries: [
       { path: "scene.tscn", changeType: "ADDED", linesAdded: 2 },
@@ -170,7 +170,7 @@ test("GitHub discovers lazy projects and mixed Godot files while leaving scripts
     )!;
   assert.deepEqual(
     read().files.map((file) => file.filePath),
-    ["scene.tscn", "project.godot"],
+    ["scene.tscn", "project.godot", "material.tres"],
   );
   assert.equal(read().files[1].changes[0].properties[0].before, '"A"');
   assert.equal(read().files[1].changes[0].properties[0].after, '"B"');

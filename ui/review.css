@@ -273,6 +273,8 @@
   color: var(--ss-node);
 }
 .ss-kind-sub_resource,
+.ss-kind-resource,
+.ss-kind-resource_header,
 .ss-kind-ext_resource {
   color: var(--ss-resource);
 }

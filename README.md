@@ -2,18 +2,19 @@
 
 **See the scene behind the diff.**
 
-SceneSleuth helps Godot developers review `.tscn` scenes and `.godot` project configurations in GitHub pull requests. Instead of reconstructing changes from serialized lines, you can inspect nodes, resources, properties, signal connections, and project settings directly in each file’s diff area.
+SceneSleuth helps Godot developers review `.tscn` scenes, `.tres` text resources, and `.godot` project configurations in GitHub pull requests. Instead of reconstructing changes from serialized lines, you can inspect nodes, resources, properties, signal connections, and project settings directly in each file’s diff area.
 
 The goal is to answer **“What changed in this scene?”** without opening the project in Godot.
 
 ## What you can do
 
-Open a pull request’s **Files changed** tab. SceneSleuth automatically replaces each loaded `.tscn` or `.godot` diff body with a structured review. GitHub’s file header and review controls stay in place. The toolbar popup summarizes the current tab; **Go to Godot changes** scrolls to an inline review.
+Open a pull request’s **Files changed** tab. SceneSleuth automatically replaces each loaded `.tscn`, `.tres`, or `.godot` diff body with a structured review. GitHub’s file header and review controls stay in place. The toolbar popup summarizes the current tab; **Go to Godot changes** scrolls to an inline review.
 
 The inline review follows GitHub’s active color theme, with Godot-inspired scene-type icons, left-hand disclosure arrows, and compact inspector rows. Nodes, resources, and signals have distinct icon colors; before/after values use GitHub’s diff colors. The header switch and image previews share the same theme. The standalone toolbar popup uses a matching dark palette.
 
 - Browse scene files and their changed sections, with node paths and Godot classes.
-- Review `project.godot` settings under their own sections, including Application, Autoload, Input, and Rendering. Global file settings, slash-separated keys, multiline descriptions, and input-event dictionaries retain their original values. The header uses **Settings / Original diff**, and settings have their own search and popup count. Direct `res://` values link to files and support image previews; autoload singleton markers remain visible. Unresolved `uid://` values and unfamiliar expressions stay as source text. Text `.godot` configurations are supported; `.tres`, binary resources, and GDScript remain native diffs.
+- Review `project.godot` settings under their own sections, including Application, Autoload, Input, and Rendering. Global file settings, slash-separated keys, multiline descriptions, and input-event dictionaries retain their original values. The header uses **Settings / Original diff**, and settings have their own search and popup count. Direct `res://` values link to files and support image previews; autoload singleton markers remain visible. Unresolved `uid://` values and unfamiliar expressions stay as source text. Text `.godot` configurations are supported; Binary `.res` resources and GDScript remain native diffs.
+- Inspect `.tres` text resources such as materials, TileSets, animations, and custom resources. The **Resource / Original diff** switch shows the main `[resource]` properties separately from embedded resources and file metadata. Resource references, image previews, numeric value formatting, and expandable collection values use the same review controls as scenes.
 - Compare property values before and after in compact, read-only inspector rows. Common 2D/3D node properties use collapsible Transform, Visibility, and Collision groups. Property names are readable labels, with their serialized names on hover; source links and change markers remain available beside them.
 - Expand JSON-like Godot dictionaries, arrays, and serialized objects as compact trees. Input actions expose their deadzone, event list, and individual event fields; replication dictionaries expose nested keys and values. Both sides keep their own tree, collection counts, and **Serialized value** disclosure with exact source text. Nested scene references retain their links and image previews. Truncated, commented, oversized, and unsupported collections keep the raw-text view; typed and packed array constructors remain source text.
 - Inspect simple numeric vectors as labeled x/y/z/w components and normalized RGBA colors as swatches with exact channel values. Hover a formatted value for its original expression. Unsupported expressions, HDR colors, and missing values retain their source or missing-value presentation. Before/After headings appear once per file, and familiar node classes have distinct icons.
@@ -22,7 +23,7 @@ The inline review follows GitHub’s active color theme, with Godot-inspired sce
 - Hover or keyboard-focus an image filename for a preview, with transparency shown against a checkerboard and the image dimensions below it. Previews load from GitHub only when opened and use the corresponding before/after revision. Clicking the filename still navigates to the file. Unavailable previews show a fallback message.
 - Filter nodes, resources, or signals, and search names, properties, and values.
 - Expand resources and inspect the original patch text when you need more detail.
-- Switch between **Scene** (or **Settings**) and **Original diff** independently for each file using the control in GitHub’s file header, between Copilot and Viewed. The scene body starts with filters and search on one compact row; project settings start with search. Both wrap on narrow screens and omit extra brand, counts, or context-explanation rows. Use the original view for GitHub line comments; source-line links reveal that view automatically.
+- Switch between **Scene**, **Resource**, or **Settings** and **Original diff** independently for each file using the control in GitHub’s file header, between Copilot and Viewed. The scene body starts with filters and search on one compact row; project settings and text resources start with search. Both wrap on narrow screens and omit extra brand, counts, or context-explanation rows. Use the original view for GitHub line comments; source-line links reveal that view automatically.
 - Each inline view shows the scene’s own settings, nodes, properties, embedded resources, and signals. Referenced script, image, and scene files are not displayed as separate cards. References remain readable as property values, and their declarations remain in **Original diff**. When GitHub reuses a diff table for another file, SceneSleuth replaces the old view rather than carrying its values over.
 - Keep GitHub’s file navigation, Viewed checkboxes, and review controls. Other file types keep their original diffs, and SceneSleuth never submits reviews.
 
@@ -62,7 +63,7 @@ In Chrome:
 1. Open `chrome://extensions` and enable **Developer mode**.
 2. Choose **Load unpacked** and select this project’s `dist/` folder.
 3. Open a GitHub PR, visit **Files changed**, and reload the page if it was already open.
-4. Select a `.tscn` or `project.godot` file in GitHub’s file list. Its diff body shows the structured review; **Original diff** restores GitHub’s text view.
+4. Select a `.tscn`, `.tres`, or `project.godot` file in GitHub’s file list. Its diff body shows the structured review; **Original diff** restores GitHub’s text view.
 
 After editing code, rebuild, reload the extension in `chrome://extensions`, and reload the GitHub page. Chrome can keep an older registered content script even while the popup reads newer files from `dist/`. If the popup reports an unexpected response, reload **the extension first**, then reload the PR tab; refreshing the page alone may keep running the old script.
 

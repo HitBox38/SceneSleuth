@@ -125,6 +125,7 @@ export default function App() {
   const snapshot = state.kind === "review" ? state.snapshot : undefined;
   const stats = snapshot ? sceneStats(snapshot.files) : undefined;
   const hasScenes = snapshot?.files.some((file) => reviewFileKind(file) === "scene");
+  const hasResources = snapshot?.files.some((file) => reviewFileKind(file) !== "project");
   const hasProjects = snapshot?.files.some((file) => reviewFileKind(file) === "project");
   return (
     <main className="ss ss-popup">
@@ -182,17 +183,19 @@ export default function App() {
                 )}
                 <div className="ss-stats">
                   {hasScenes && (
-                    <>
-                      <span>
-                        <strong>{stats?.nodes}</strong> nodes
-                      </span>
-                      <span>
-                        <strong>{stats?.resources}</strong> resources
-                      </span>
-                      <span>
-                        <strong>{stats?.signals}</strong> signals
-                      </span>
-                    </>
+                    <span>
+                      <strong>{stats?.nodes}</strong> nodes
+                    </span>
+                  )}
+                  {hasResources && (
+                    <span>
+                      <strong>{stats?.resources}</strong> resources
+                    </span>
+                  )}
+                  {hasScenes && (
+                    <span>
+                      <strong>{stats?.signals}</strong> signals
+                    </span>
                   )}
                   {hasProjects && (
                     <span>
@@ -222,8 +225,8 @@ export default function App() {
             ) : (
               <p className="ss-muted">
                 {snapshot.partialListing
-                  ? "No loaded .tscn or .godot diffs found. GitHub may load more files as you browse."
-                  : "No .tscn or .godot files changed in this pull request."}
+                  ? "No loaded .tscn, .tres, or .godot diffs found. GitHub may load more files as you browse."
+                  : "No .tscn, .tres, or .godot files changed in this pull request."}
               </p>
             )}
           </>

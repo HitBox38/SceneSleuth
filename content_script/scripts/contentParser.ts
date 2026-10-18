@@ -99,6 +99,8 @@ export function parseScene(
   const diagnostics: string[] = [];
   let current: SceneSection | undefined;
   const project = options.format === "project";
+  const resource = options.format === "resource";
+  let resourceType = "";
   let preamble = project && options.startsAtFileBeginning;
   const projectHeader = (text: string) =>
     text.trim().match(/^\[((?:\\.|[^\]\\\n])+)\](?:\s*;[^\n]*)?$/);
@@ -116,7 +118,9 @@ export function parseScene(
         recovery = { index: index + 1, raw, changed };
       if (
         !project &&
-        /^\[(?:node|ext_resource|sub_resource|connection|gd_scene)\b/.test(next.text.trim())
+        /^\[(?:node|ext_resource|sub_resource|connection|gd_scene|gd_resource|resource)\b/.test(
+          next.text.trim(),
+        )
       )
         break;
       index++;
@@ -152,12 +156,23 @@ export function parseScene(
     const header = raw
       .trim()
       .match(
-        /^\[(gd_scene|node|ext_resource|sub_resource|connection)\b([\s\S]*)\](?:\s*;[^\n]*)?$/,
+        /^\[(gd_scene|gd_resource|resource|node|ext_resource|sub_resource|connection)\b([\s\S]*)\](?:\s*;[^\n]*)?$/,
       );
-    if (header && !project) {
-      const kind: SectionKind = header[1] === "gd_scene" ? "scene" : (header[1] as SectionKind);
+    const allowed =
+      header &&
+      (resource
+        ? ["gd_resource", "resource", "ext_resource", "sub_resource"].includes(header[1])
+        : !["gd_resource", "resource"].includes(header[1]));
+    if (header && !project && allowed) {
+      const kind: SectionKind =
+        header[1] === "gd_scene"
+          ? "scene"
+          : header[1] === "gd_resource"
+            ? "resource_header"
+            : (header[1] as SectionKind);
       const attrs = attributes(header[2], { ...first, changed });
       const get = (name: string) => decode(attrs.get(name)?.raw);
+      if (kind === "resource_header") resourceType = get("type");
       const parent = get("parent");
       const name = get("name");
       const path =
@@ -173,9 +188,11 @@ export function parseScene(
           ? JSON.stringify([parent, name])
           : kind === "connection"
             ? JSON.stringify([get("signal"), get("from"), get("to"), get("method")])
-            : kind === "scene"
+            : kind === "scene" || kind === "resource_header"
               ? "header"
-              : get("id");
+              : kind === "resource"
+                ? "main"
+                : get("id");
       current = {
         id: `${kind}:${identity || scope + ":" + first.line}`,
         kind,
@@ -186,8 +203,14 @@ export function parseScene(
               ? `${get("signal")} → ${get("method")}`
               : kind === "scene"
                 ? "Scene settings"
-                : get("path")?.split("/").pop() || get("id") || "Unnamed resource",
-        className: get("type") || (get("instance") ? "Scene instance" : ""),
+                : kind === "resource_header"
+                  ? "Resource settings"
+                  : kind === "resource"
+                    ? "Resource"
+                    : get("path")?.split("/").pop() || get("id") || "Unnamed resource",
+        className:
+          (kind === "resource" ? resourceType : get("type")) ||
+          (get("instance") ? "Scene instance" : ""),
         path: kind === "connection" ? `${get("from")} → ${get("to")}` : path,
         line: first.line,
         headerChanged: changed,
@@ -207,7 +230,7 @@ export function parseScene(
     if (!assignment) {
       if (changed)
         diagnostics.push(
-          `Unrecognized ${project ? "project settings" : "scene"} text near line ${first.line}; preserved in the original diff.`,
+          `Unrecognized ${project ? "project settings" : resource ? "resource" : "scene"} text near line ${first.line}; preserved in the original diff.`,
         );
       continue;
     }
@@ -229,7 +252,11 @@ export function parseScene(
       current = {
         id: `unknown:${scope}`,
         kind: "unknown",
-        label: project ? "Unresolved settings context" : "Unresolved scene context",
+        label: project
+          ? "Unresolved settings context"
+          : resource
+            ? "Unresolved resource context"
+            : "Unresolved scene context",
         className: "",
         path: "Owning section is outside this hunk",
         line: first.line,

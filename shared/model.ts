@@ -2,6 +2,8 @@ export type SectionKind =
   | "node"
   | "ext_resource"
   | "sub_resource"
+  | "resource_header"
+  | "resource"
   | "connection"
   | "scene"
   | "project"

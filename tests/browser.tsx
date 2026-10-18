@@ -12,6 +12,7 @@ import { Button } from "../popup/src/components/ui/button.tsx";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
 import { reviewDiff } from "../content_script/scripts/diffParser.ts";
 import { projectPath, projectLines, projectReview } from "./fixtures/project-settings.ts";
+import { resourcePath, resourceLines, resourceReview } from "./fixtures/resource.ts";
 import {
   referencedScenePath,
   referencedSceneSource,
@@ -259,6 +260,17 @@ function verifyProjectDom() {
   if (!fallback?.partialListing || fallback.files[0]?.changes[0]?.kind !== "project")
     throw new Error("Project DOM fallback did not discover settings");
 }
+function verifyResourceDom() {
+  const table = makeTable(false, resourceLines, resourcePath, "diff-resource");
+  const review = reviewGithubTable(table, resourceReview);
+  if (JSON.stringify(review?.changes) !== JSON.stringify(resourceReview.changes))
+    throw new Error("Resource DOM extraction lost properties or source lines");
+  const doc = document.implementation.createHTMLDocument("Resource fixture");
+  doc.body.append(table);
+  const fallback = readGithubReview(doc, "https://github.com/example/game/pull/12/changes");
+  if (!fallback?.partialListing || fallback.files[0]?.changes.at(-1)?.kind !== "resource")
+    throw new Error("Resource DOM fallback did not discover the main resource");
+}
 let domResult =
   "DOM checks passed: unified and split rows produce identical changes and source lines.";
 try {
@@ -267,6 +279,7 @@ try {
   verifyRouteFallback();
   verifyNullableLineKeys();
   verifyProjectDom();
+  verifyResourceDom();
 } catch (error) {
   domResult = String(error);
 }
@@ -424,6 +437,37 @@ function Fixture() {
             }}
           >
             Project settings
+          </Button>
+          <Button
+            className="ss-button"
+            onPress={() => {
+              const current = diffBody.querySelector("table")!;
+              const next = makeTable(false, resourceLines, resourcePath, "diff-resource");
+              current.replaceChildren(...next.childNodes);
+              current.setAttribute("aria-label", next.getAttribute("aria-label")!);
+              current.setAttribute("data-diff-anchor", "diff-resource");
+              name.textContent = resourcePath;
+              inlineSnapshot = {
+                ...ready,
+                files: [
+                  {
+                    ...resourceReview,
+                    reviewUrl: `${location.origin}${location.pathname}#diff-resource`,
+                  },
+                ],
+                navigation: {
+                  ...ready.navigation!,
+                  files: [
+                    { path: "Demos/coop/project.godot", status: "modified" },
+                    { path: resourcePath, status: "added" },
+                  ],
+                },
+              };
+              inlineReviews.update(inlineSnapshot);
+              setSnapshot(inlineSnapshot);
+            }}
+          >
+            Text resource
           </Button>
           <Button
             className="ss-button"
