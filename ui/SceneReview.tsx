@@ -41,6 +41,7 @@ import { referenceLink, referenceImageSource } from "../shared/referenceLinks.ts
 import { ReferenceFileLink } from "./ReferenceFileLink.tsx";
 import { inspectorValue, propertyGroups, propertyLabel } from "./propertyPresentation.ts";
 import { reviewFileKind } from "../shared/fileTypes.ts";
+import { StructuredValue } from "./StructuredValue.tsx";
 
 const labels: Record<SectionKind, string> = {
   node: "Node",
@@ -124,7 +125,7 @@ export function sceneStats(files: SceneReview[]) {
       ),
   };
 }
-function ReferenceValue({
+function LiteralValue({
   raw,
   references,
   file,
@@ -195,6 +196,26 @@ function ReferenceValue({
     </>
   );
 }
+function ReferenceValue(props: Parameters<typeof LiteralValue>[0]) {
+  if (props.raw === undefined) return "—";
+  const raw = props.raw;
+  return (
+    <StructuredValue
+      raw={raw}
+      renderLiteral={({ start, end }, keyLabel) => {
+        const references = props.references
+          ?.filter((reference) => reference.start >= start && reference.end <= end)
+          .map((reference) => ({
+            ...reference,
+            start: reference.start - start,
+            end: reference.end - start,
+          }));
+        if (keyLabel !== undefined && !references?.length) return keyLabel;
+        return <LiteralValue {...props} raw={raw.slice(start, end)} references={references} />;
+      }}
+    />
+  );
+}
 function SourceLinks({ change, reviewUrl }: { change: SectionChange; reviewUrl?: string }) {
   return (
     <span className="ss-source-links">
@@ -262,7 +283,11 @@ function PropertyRows({
         </small>
       </span>
       {(["before", "after"] as const).map((side) => (
-        <code key={side} className={`ss-${side}`} data-empty={property[side] === undefined}>
+        <div
+          key={side}
+          className={`ss-value-cell ss-${side}`}
+          data-empty={property[side] === undefined}
+        >
           <span className="ss-sr-only">{side === "before" ? "Before: " : "After: "}</span>
           <ReferenceValue
             raw={property[side]}
@@ -272,7 +297,7 @@ function PropertyRows({
             navigation={navigation}
             compact={compact}
           />
-        </code>
+        </div>
       ))}
     </div>
   ));

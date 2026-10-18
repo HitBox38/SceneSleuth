@@ -21,6 +21,9 @@ const body = [
   " [rendering]",
   '-renderer/rendering_method="gl_compatibility"',
   '+renderer/rendering_method="mobile"',
+  " [replication]",
+  '-config={"uid://fixture": {"replicated": false, "sync_properties": [&":position"]}}',
+  '+config={"uid://fixture": {"replicated": true, "sync_properties": [&":position", &":velocity"], "note": "<img src=x onerror=alert(1)>"}}',
 ];
 export const projectLines = [
   `@@ -1,${body.filter((line) => !line.startsWith("+")).length} +1,${body.filter((line) => !line.startsWith("-")).length} @@`,
