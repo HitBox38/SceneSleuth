@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
 import { enableShadowDOM } from "@react-stately/flags";
 import { InlineSceneReview, InlineViewSwitch } from "./SceneReview.tsx";
 import styles from "./review.css?inline";
@@ -88,7 +89,7 @@ export function createInlineReviews(doc: Document = document) {
     }
     function setOriginal(original: boolean) {
       originalFiles.set(file.filePath, original);
-      render();
+      flushSync(render);
     }
     function render() {
       if (!originalFiles.has(file.filePath))
@@ -196,37 +197,58 @@ export function createInlineReviews(doc: Document = document) {
         originalFiles.clear();
         reviewKey = snapshot.reviewKey;
       }
-      const files = new Map(
-        snapshot.status === "ready"
-          ? snapshot.files.filter((file) => !file.pending).map((file) => [file.filePath, file])
-          : [],
-      );
-      for (const [table, entry] of entries) {
-        if (
-          !table.isConnected ||
-          table.getAttribute("aria-label") !== `Diff for: ${entry.file.filePath}` ||
-          !entry.host.isConnected ||
-          entry.host.parentElement !== table.parentElement ||
-          entry.host.nextElementSibling !== table ||
-          !entry.switchHost.isConnected ||
-          entry.switchHost.nextElementSibling !== switchAnchor(table) ||
-          !files.has(entry.file.filePath)
-        ) {
-          entry.dispose();
-          entries.delete(table);
+      const win = doc.defaultView;
+      const anchor = [...doc.querySelectorAll('table[aria-label^="Diff for: "]')]
+        .map((table) => table.closest('[role="region"]'))
+        .find((region) => {
+          const rect = region?.getBoundingClientRect();
+          return (
+            rect &&
+            rect.bottom > Math.min(200, (win?.innerHeight ?? 0) / 3) &&
+            rect.top < (win?.innerHeight ?? 0)
+          );
+        });
+      const top = anchor?.getBoundingClientRect().top;
+      const scrolled = (win?.scrollY ?? 0) > 0;
+      // GitHub's virtualizer must see one complete replacement, never an empty
+      // frame between hiding its table and React committing the inspector.
+      flushSync(() => {
+        const files = new Map(
+          snapshot.status === "ready"
+            ? snapshot.files.filter((file) => !file.pending).map((file) => [file.filePath, file])
+            : [],
+        );
+        for (const [table, entry] of entries) {
+          if (
+            !table.isConnected ||
+            table.getAttribute("aria-label") !== `Diff for: ${entry.file.filePath}` ||
+            !entry.host.isConnected ||
+            entry.host.parentElement !== table.parentElement ||
+            entry.host.nextElementSibling !== table ||
+            !entry.switchHost.isConnected ||
+            entry.switchHost.nextElementSibling !== switchAnchor(table) ||
+            !files.has(entry.file.filePath)
+          ) {
+            entry.dispose();
+            entries.delete(table);
+          }
         }
-      }
-      for (const table of doc.querySelectorAll<HTMLTableElement>(
-        'table[aria-label^="Diff for: "]',
-      )) {
-        const file = files.get(table.getAttribute("aria-label")?.slice(10) ?? "");
-        if (!file) continue;
-        const entry = entries.get(table);
-        if (entry) entry.update(file);
-        else {
-          const anchor = switchAnchor(table);
-          if (anchor) entries.set(table, mount(table, file, anchor));
+        for (const table of doc.querySelectorAll<HTMLTableElement>(
+          'table[aria-label^="Diff for: "]',
+        )) {
+          const file = files.get(table.getAttribute("aria-label")?.slice(10) ?? "");
+          if (!file) continue;
+          const entry = entries.get(table);
+          if (entry) entry.update(file);
+          else {
+            const anchor = switchAnchor(table);
+            if (anchor) entries.set(table, mount(table, file, anchor));
+          }
         }
+      });
+      if (scrolled && anchor?.isConnected && top !== undefined && win) {
+        const delta = anchor.getBoundingClientRect().top - top;
+        if (Math.abs(delta) > 1) win.scrollBy({ top: delta, behavior: "instant" });
       }
     },
     open() {

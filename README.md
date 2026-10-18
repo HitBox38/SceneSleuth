@@ -38,7 +38,7 @@ The inline review follows GitHub’s active color theme, with Godot-inspired sce
 - Each inline view shows only its own file’s objects, settings, properties, embedded resources, and signals. Referenced script, image, and scene files are not displayed as separate cards. References remain readable as property values, and their declarations remain in **Original diff**. When GitHub reuses a diff table for another file, SceneSleuth replaces the old view rather than carrying its values over.
 - Keep GitHub’s file navigation, Viewed checkboxes, and review controls. Other file types keep their original diffs, and SceneSleuth never submits reviews.
 
-Private repositories work through your existing GitHub sign-in. SceneSleuth reads the current page’s review data and rendered diff tables. There is no backend, API token, analytics, or external scene upload.
+Private repositories work through your existing GitHub sign-in. SceneSleuth reads the current page’s review data and rendered diff tables, and preloads available text through GitHub’s own comparison endpoint using the same signed-in session. There is no backend, API token, analytics, or external scene upload.
 
 The content script starts on GitHub pages so it can detect GitHub’s navigation into a PR without a full reload. It reads scene review data and displays its UI only on PR pages.
 
@@ -48,9 +48,11 @@ This is an early development build, not a published extension.
 
 **A diff is not a complete file.** Modified reviews contain diff context only; unchanged sections may be missing. A missing value means that value is absent from the available hunk, not necessarily absent from the scene, resource, or configuration. If a section header is outside the hunk, changes appear under **Unresolved scene context**, **Unresolved resource context**, **Unresolved settings context**, or **Unresolved Unity context** rather than being assigned to a guessed owner. Complete coverage is established only for complete added/deleted file patches. Configuration defaults are not inferred or evaluated.
 
-GitHub loads some file diffs lazily. Those files appear as waiting for text in the toolbar popup. Select the file in GitHub and use its load control if needed. SceneSleuth replaces the diff body once its table and text are available, and retains loaded results within the current review. Summary counts cover changed objects and properties in parsed text only. If parsing is unavailable, GitHub’s original diff stays visible.
+GitHub creates and removes diff bodies as they enter and leave view. SceneSleuth preloads available supported-file patches for the selected comparison, so counts and reference names can be ready before you scroll to those files. Requests run in batches of four, with two requests at a time, a 15-second timeout, and an 8 MB response limit. The popup shows loading progress and recoverable failures; Refresh retries. Loaded reviews, renamed paths, and GUID evidence remain cached for that comparison when their tables leave view. Inline replacements commit together and preserve the visible file’s position when earlier reviews change height.
 
-During navigation without a page reload, GitHub can retain the initial page’s embedded data. SceneSleuth rejects data from a different route and reads the current rendered tables instead. In that case the popup labels its results as **loaded Godot files**, **loaded Unity files**, or both, since more files may appear as you browse. Those tables provide diff context only; they do not establish complete file contents or file creation/rename metadata.
+Generated files and GitHub-limited diffs can still require the native **Load Diff** control. SceneSleuth leaves those controls in place and labels the files as pending; it does not automatically expand files GitHub deliberately withholds. Summary counts cover parsed text only. If automatic loading is unavailable, diffs can still load normally as you browse, and unparseable files retain GitHub’s original view.
+
+During navigation without a page reload, GitHub can retain the initial page’s embedded data. SceneSleuth rejects data from a different route and attempts to read the current PR page for its own comparison metadata. If that is unavailable, it reads the current rendered tables and discovered file links instead. In that case the popup labels its results as **loaded Godot files**, **loaded Unity files**, or both, since more files may appear as you browse. Those tables provide diff context only; they do not establish complete file contents or file creation/rename metadata.
 
 The adapter targets GitHub’s modern **Files changed** layout. GitHub’s markup and embedded data are not a stable public API; unsupported layouts produce a recoverable message. Very large or GitHub-limited diffs may remain partial. There is no full scene preview, inherited-scene expansion, Godot/Unity execution, or speculative matching of renamed nodes/resource identifiers. References resolve only from declarations available in that file’s diff context. Missing targets, absolute/unique node paths, and node paths inside animation resources retain their original text. Other constructors remain source text; no values are evaluated.
 
@@ -102,6 +104,8 @@ The standalone popup displays setup guidance when extension APIs are absent. It 
 
 For repeatable UI checks, open `/tests/browser.html` on the Vite development server. The synthetic inline fixture mounts the actual shadow-root review beside a preserved source table and file header. Exercise the view toggle, keyboard controls, filters, search, repeated processing, table remounts, delayed files, and cleanup with its controls. A standalone inspector below it covers loading, empty, and error states. The fixture is excluded from the production build and does not establish installed-extension integration.
 
+The `/tests/virtualized.html` fixture preloads synthetic patch responses while mounting and removing native tables on scroll. It checks that counts stay available without rendering every file. **Verify scroll anchor** compares a visible file’s position before and after replacing earlier native diffs; the transport is mocked, while the production loader, data adapters, cache, and renderer run unchanged.
+
 The additional `/tests/formats.html` gallery covers all ten extended formats with synthetic sources. Its file selector reuses one native diff table, validating DOM extraction and file isolation on each change. Use its Reconcile, Replace header, Unsupported file, and theme controls to check mounting and cleanup.
 
 The fixture’s **Image preview states** control covers before/after graphics and failed image loads. A service worker scoped to `/tests/` serves synthetic images for `example/game` URLs only; it is never registered or included by the extension.
@@ -111,6 +115,8 @@ The fixture’s **Image preview states** control covers before/after graphics an
 - `content_script/content-script.ts`: page lifecycle, review cache, and popup messaging.
 - `content_script/scripts/githubReview.ts`: normalize GitHub’s embedded review data.
 - `content_script/scripts/githubDom.ts`: collect additionally rendered diff tables.
+- `content_script/scripts/githubLoader.ts`: bounded native GitHub patch loading, cancellation, and retry scope.
+- `content_script/scripts/reviewState.ts`: comparison-scoped review and reference evidence independent of visible tables.
 - `content_script/scripts/diffParser.ts`: unified patches, hunk boundaries, and source lines.
 - `content_script/scripts/contentParser.ts`: Godot sections, lexical values, identities, and shared comparisons.
 - `content_script/scripts/unityParser.ts`: Unity document identities, properties, and local references.

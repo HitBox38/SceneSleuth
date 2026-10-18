@@ -190,6 +190,15 @@ export default function App() {
                     Showing supported files loaded by GitHub. More files may appear as you browse.
                   </p>
                 )}
+                {snapshot.preloading ? (
+                  <output className="ss-muted">
+                    Loading review text… {snapshot.files.filter((file) => !file.pending).length} of{" "}
+                    {snapshot.files.length} files ready.
+                  </output>
+                ) : null}
+                {snapshot.preloadError ? (
+                  <output className="ss-muted">{snapshot.preloadError}</output>
+                ) : null}
                 <div className="ss-stats">
                   {hasScenes && (
                     <span>
@@ -230,7 +239,13 @@ export default function App() {
                     {file.filePath}
                     <span>
                       {file.pending
-                        ? "Waiting for GitHub to load this diff"
+                        ? file.pendingReason === "generated"
+                          ? "Generated file · use GitHub’s Load Diff"
+                          : file.pendingReason === "limited"
+                            ? "Diff limited by GitHub"
+                            : snapshot.preloading
+                              ? "Loading review text…"
+                              : "Waiting for GitHub to load this diff"
                         : `${file.changes.length} changed sections · +${file.additions} −${file.deletions}`}
                     </span>
                   </div>

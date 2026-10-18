@@ -94,6 +94,7 @@ export interface SceneReview {
   diagnostics: string[];
   rawDiff: string;
   pending?: boolean;
+  pendingReason?: "generated" | "limited";
   reviewUrl?: string;
 }
 export interface ReviewSnapshot {
@@ -104,5 +105,7 @@ export interface ReviewSnapshot {
   error?: string;
   changesUrl?: string;
   partialListing?: boolean;
+  preloading?: number;
+  preloadError?: string;
   navigation?: ReferenceNavigation;
 }

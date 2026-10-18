@@ -33,6 +33,7 @@
     "shared",
     "ui",
     "tests/browser.tsx",
-    "tests/formats.ts"
+    "tests/formats.ts",
+    "tests/virtualized.ts"
   ]
 }

@@ -8,11 +8,23 @@ import type { GithubParseCache } from "./githubReview.ts";
 export function observeGithubDiffs(root: Node, onChange: () => void) {
   const observer = new MutationObserver((records) => {
     if (
-      records.some(
-        (record) =>
-          record.type !== "attributes" ||
-          (record.target instanceof Element && record.target.matches("table")),
-      )
+      records.some((record) => {
+        if (record.type === "attributes")
+          return record.target instanceof Element && record.target.matches("table, react-app");
+        if (record.type === "childList") {
+          const changed = [...record.addedNodes, ...record.removedNodes];
+          if (
+            changed.length &&
+            changed.every(
+              (node) =>
+                node instanceof Element &&
+                node.matches("[data-scenesleuth-inline], [data-scenesleuth-switch]"),
+            )
+          )
+            return false;
+        }
+        return true;
+      })
     )
       onChange();
   });
@@ -23,7 +35,7 @@ export function observeGithubDiffs(root: Node, onChange: () => void) {
     subtree: true,
     characterData: true,
     attributes: true,
-    attributeFilter: ["aria-label", "data-diff-anchor"],
+    attributeFilter: ["aria-label", "data-diff-anchor", "initial-path"],
   });
   return observer;
 }
@@ -97,7 +109,8 @@ export function readGithubReview(document: Document, changesUrl: string, cache?:
     }
   }
   const tables = document.querySelectorAll('table[aria-label^="Diff for: "]');
-  if (!data && !tables.length) return;
+  if (!data && !tables.length && !document.querySelector('[role="treeitem"][id] a[href^="#diff-"]'))
+    return;
   if (!data && cache && cache.key !== `rendered:${changesUrl}`) {
     cache.files.clear();
     cache.key = `rendered:${changesUrl}`;
@@ -140,11 +153,27 @@ export function readGithubReview(document: Document, changesUrl: string, cache?:
     )
       files.set(review.filePath, review);
   }
+  for (const target of targets.values()) {
+    if (files.has(target.path) || !supportedFileKind(target.path)) continue;
+    const file = cachedReview(
+      header(target.path, target.previousPath ?? target.path, target.status),
+      JSON.stringify(["pending", target.path]),
+      cache,
+    );
+    if (file)
+      files.set(target.path, {
+        ...file,
+        pending: true,
+        reviewUrl: target.reviewUrl,
+        diagnostics: ["GitHub has not loaded this file's text yet."],
+      });
+  }
   if (navigation) navigation.files = [...targets.values()];
   return {
     comparisonKey: data?.comparisonKey ?? `rendered:${changesUrl}`,
     files: [...files.values()],
     partialListing: !data,
+    loadSource: data?.loadSource,
     navigation,
   };
 }

@@ -5,6 +5,15 @@ import { unityMetaGuids } from "../../shared/unityMeta.ts";
 import { supportedFileKind } from "../../shared/fileTypes.ts";
 
 type RecordValue = Record<string, unknown>;
+export interface GithubLoadSource {
+  changesUrl: string;
+  comparisonKey: string;
+  baseOid: string;
+  headOid: string;
+  fullBaseOid: string;
+  hideWhitespace: boolean;
+  summaries: RecordValue[];
+}
 // GitHub's repo SPA can retain the initial page's script after navigating to
 // another PR. Its react-app initial-path identifies which URL owns that data.
 export function embeddedRouteMatches(initialPath: string | null | undefined, changesUrl: string) {
@@ -165,8 +174,20 @@ export function reviewGithubData(value: unknown, changesUrl: string, cache?: Git
         review.pending = true;
         review.additions = Number(summary.linesAdded) || 0;
         review.deletions = Number(summary.linesDeleted) || 0;
+        const generated =
+          record(content?.newTreeEntry).isGenerated === true ||
+          record(content?.oldTreeEntry).isGenerated === true;
+        review.pendingReason = generated
+          ? "generated"
+          : content?.isTooBig || content?.truncatedReason
+            ? "limited"
+            : undefined;
         review.diagnostics = [
-          "GitHub has not loaded this file's text. Open its original diff; SceneSleuth updates as it loads.",
+          generated
+            ? "GitHub hides this generated file. Use its native Load Diff control to include it."
+            : review.pendingReason === "limited"
+              ? "GitHub limited this diff. Use its original view to inspect the available text."
+              : "GitHub has not loaded this file's text. SceneSleuth will preload it when the comparison is available.",
         ];
       } else if (content?.isTooBig || content?.truncatedReason) {
         review.coverage = "partial";
@@ -176,5 +197,24 @@ export function reviewGithubData(value: unknown, changesUrl: string, cache?: Git
       }
       return review;
     });
-  return { comparisonKey, files, navigation };
+  const comparison = record(route.comparison);
+  const selected = record(comparison.selectedRange);
+  const full = record(comparison.fullDiff);
+  const baseOid = selected.baseOid ?? full.baseOid;
+  const headOid = selected.headOid ?? full.headOid;
+  const validOid = (value: unknown): value is string =>
+    typeof value === "string" && /^[a-f\d]{40}$/i.test(value);
+  const loadSource: GithubLoadSource | undefined =
+    validOid(baseOid) && validOid(headOid) && validOid(full.baseOid)
+      ? {
+          changesUrl,
+          comparisonKey,
+          baseOid,
+          headOid,
+          fullBaseOid: full.baseOid,
+          hideWhitespace: new URL(changesUrl).searchParams.get("w") === "1",
+          summaries: route.diffSummaries.map(record),
+        }
+      : undefined;
+  return { comparisonKey, files, navigation, loadSource };
 }

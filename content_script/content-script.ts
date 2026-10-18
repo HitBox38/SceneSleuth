@@ -1,8 +1,10 @@
 import { observeGithubDiffs, readGithubReview } from "./scripts/githubDom.ts";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
 import { isReviewRequest, reviewContext } from "../shared/protocol.ts";
-import type { ReviewSnapshot, SceneReview, ReferenceNavigation } from "../shared/model.ts";
+import type { ReviewSnapshot } from "../shared/model.ts";
 import type { GithubParseCache } from "./scripts/githubReview.ts";
+import { createGithubLoader, githubResponseText } from "./scripts/githubLoader.ts";
+import { createReviewState, type GithubReviewData } from "./scripts/reviewState.ts";
 
 function start() {
   if (document.documentElement.hasAttribute("data-scenesleuth-active")) return;
@@ -15,18 +17,72 @@ function start() {
   };
   const inlineReviews = createInlineReviews();
   let contextKey: string | undefined;
-  let comparisonKey: string | undefined;
   let signature = "";
   let deadline = Date.now() + 10000;
-  const cached = new Map<string, SceneReview>();
+  const reviewState = createReviewState();
   const parseCache: GithubParseCache = { files: new Map() };
-  let cachedNavigation: ReferenceNavigation | undefined;
   const runtime =
     typeof browser !== "undefined"
       ? browser.runtime
       : typeof chrome !== "undefined"
         ? chrome.runtime
         : undefined;
+  const loader = createGithubLoader({
+    onData(data) {
+      const context = reviewContext(location.href);
+      if (
+        !context?.isChangesPage ||
+        `${context.key}:${location.pathname}:${location.search}` !== contextKey
+      )
+        return;
+      accept(data, context);
+      publish();
+    },
+    onProgress(remaining) {
+      const context = reviewContext(location.href);
+      if (
+        snapshot.status === "ready" &&
+        context?.isChangesPage &&
+        `${context.key}:${location.pathname}:${location.search}` === contextKey
+      ) {
+        snapshot = {
+          ...snapshot,
+          preloading: remaining || undefined,
+          preloadError: loader.failed
+            ? "Some diffs could not be preloaded. They can still load as you browse; Refresh retries."
+            : undefined,
+        };
+        publish();
+      }
+    },
+    async bootstrap(changesUrl, signal) {
+      const timeout = AbortSignal.timeout(15_000);
+      const response = await fetch(changesUrl, {
+        credentials: "same-origin",
+        redirect: "error",
+        signal: AbortSignal.any([signal, timeout]),
+      });
+      const html = await githubResponseText(response);
+      const page = new DOMParser().parseFromString(html, "text/html");
+      return readGithubReview(page, changesUrl);
+    },
+  });
+  function accept(data: GithubReviewData, context: NonNullable<ReturnType<typeof reviewContext>>) {
+    const current = reviewState.merge(data);
+    snapshot = {
+      reviewKey: `${context.key}:${current.comparisonKey}`,
+      title: context.title,
+      status: "ready",
+      files: current.files,
+      partialListing: current.partialListing,
+      navigation: current.navigation,
+      preloading: loader.remaining || undefined,
+      preloadError: loader.failed
+        ? "Some diffs could not be preloaded. They can still load as you browse; Refresh retries."
+        : undefined,
+    };
+    loader.update(current, context.changesUrl);
+  }
   function publish() {
     // GitHub may replace a table without changing its scene data.
     inlineReviews.update(snapshot);
@@ -39,9 +95,9 @@ function start() {
       });
   }
   function refresh() {
-    cached.clear();
+    loader.clear();
+    reviewState.clear();
     parseCache.files.clear();
-    cachedNavigation = undefined;
     signature = "";
     deadline = Date.now() + 10000;
     checkPage();
@@ -51,11 +107,10 @@ function start() {
     const pageKey = context ? `${context.key}:${location.pathname}:${location.search}` : undefined;
     if (pageKey !== contextKey) {
       contextKey = pageKey;
-      comparisonKey = undefined;
-      cached.clear();
+      loader.clear();
+      reviewState.clear();
       parseCache.files.clear();
       parseCache.key = undefined;
-      cachedNavigation = undefined;
       signature = "";
       deadline = Date.now() + 10000;
     }
@@ -84,7 +139,8 @@ function start() {
       return;
     }
     try {
-      const data = readGithubReview(document, context.changesUrl, parseCache);
+      const data =
+        readGithubReview(document, context.changesUrl, parseCache) ?? reviewState.current;
       if (!data) {
         snapshot = {
           reviewKey: context.key,
@@ -95,38 +151,7 @@ function start() {
             "GitHub's diff data is unavailable or this layout is unsupported. Wait for Files changed to load, then refresh SceneSleuth.",
         };
       } else {
-        if (comparisonKey !== data.comparisonKey) {
-          cached.clear();
-          cachedNavigation = undefined;
-          comparisonKey = data.comparisonKey;
-        }
-        for (const file of data.files) {
-          const previous = cached.get(file.filePath);
-          if (
-            !previous ||
-            previous.pending ||
-            (!file.pending && file.rawDiff.length >= previous.rawDiff.length)
-          )
-            cached.set(file.filePath, file);
-        }
-        if (data.navigation) {
-          const targets = new Map(
-            (data.partialListing ? cachedNavigation?.files : [])?.map((file) => [file.path, file]),
-          );
-          for (const target of data.navigation.files)
-            targets.set(target.path, { ...targets.get(target.path), ...target });
-          cachedNavigation = { ...data.navigation, files: [...targets.values()] };
-        }
-        snapshot = {
-          reviewKey: `${context.key}:${comparisonKey}`,
-          title: context.title,
-          status: "ready",
-          files: data.partialListing
-            ? [...cached.values()]
-            : data.files.map((file) => cached.get(file.filePath) ?? file),
-          partialListing: data.partialListing,
-          navigation: cachedNavigation,
-        };
+        accept(data, context);
       }
     } catch (error) {
       snapshot = {
@@ -149,10 +174,10 @@ function start() {
   let pending: number | undefined;
   observeGithubDiffs(document.documentElement, () => {
     if (pending !== undefined) return;
-    pending = window.setTimeout(() => {
+    pending = window.requestAnimationFrame(() => {
       pending = undefined;
       checkPage();
-    }, 150);
+    });
   });
   window.addEventListener("popstate", checkPage);
   document.addEventListener("turbo:load", checkPage);
