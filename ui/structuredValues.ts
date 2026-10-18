@@ -13,6 +13,7 @@ export interface StructuredValue extends ValueSlice {
   kind: "literal" | "dictionary" | "array" | "object";
   label?: string;
   entries?: ValueEntry[];
+  expanded?: boolean;
 }
 
 function separators(raw: string, start: number, end: number, delimiter: string) {

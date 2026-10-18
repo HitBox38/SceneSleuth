@@ -543,6 +543,14 @@ export function FileReview({
           ))}
         </div>
       )}
+      {file.sourceContext === "loading" && (
+        <output className="ss-notes">Loading Unity Inspector context…</output>
+      )}
+      {file.sourceContext === "unavailable" && (
+        <p className="ss-notes">
+          Full file context is unavailable. Showing the available diff; Refresh retries.
+        </p>
+      )}
       {file.pending && file.reviewUrl && (
         <LinkButton className="ss-button" href={file.reviewUrl}>
           Load original {subject} diff <ArrowUpRight size={14} />

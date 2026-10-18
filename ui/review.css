@@ -620,6 +620,13 @@
   margin-top: 0;
   white-space: nowrap;
 }
+.ss-inline .ss-value-cell:has(> .ss-structured-value[data-expanded-inspector="true"]) {
+  max-height: none;
+}
+.ss-structured-value[data-expanded-inspector="true"] .ss-value-source > code {
+  max-height: 240px;
+  overflow: auto;
+}
 .ss-inline .ss-property-head > span {
   padding-top: 3px;
   padding-bottom: 3px;

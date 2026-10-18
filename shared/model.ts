@@ -95,6 +95,7 @@ export interface SceneReview {
   rawDiff: string;
   pending?: boolean;
   pendingReason?: "generated" | "limited";
+  sourceContext?: "loading" | "loaded" | "unavailable";
   reviewUrl?: string;
 }
 export interface ReviewSnapshot {

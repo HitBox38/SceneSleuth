@@ -14,13 +14,14 @@ function ValueTree({
   value: Value;
   renderLiteral: (slice: ValueSlice, keyLabel?: string) => ReactNode;
 }) {
-  if (!value.entries) return <span className="ss-tree-literal">{renderLiteral(value)}</span>;
+  if (!value.entries)
+    return <span className="ss-tree-literal">{value.label ?? renderLiteral(value)}</span>;
   const count = value.entries.length;
   const name =
     value.kind === "object" ? value.label : value.kind === "array" ? "Array" : "Dictionary";
   const unit = value.kind === "array" ? "item" : "field";
   return (
-    <details className="ss-value-tree">
+    <details className="ss-value-tree" open={value.expanded}>
       <summary>
         <ChevronDown className="ss-chevron" size={11} aria-hidden="true" />
         <span>{name}</span>
@@ -56,7 +57,7 @@ export function StructuredValue({
   const value = unity ? unityStructuredValue(raw) : structuredValue(raw);
   if (!value) return renderLiteral({ start: 0, end: raw.length });
   return (
-    <div className="ss-structured-value">
+    <div className="ss-structured-value" data-expanded-inspector={value.expanded || undefined}>
       <ValueTree value={value} renderLiteral={renderLiteral} />
       <details className="ss-value-source">
         <summary>Serialized value</summary>

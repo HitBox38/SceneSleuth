@@ -5,6 +5,7 @@ import type { ReviewSnapshot } from "../shared/model.ts";
 import type { GithubParseCache } from "./scripts/githubReview.ts";
 import { createGithubLoader, githubResponseText } from "./scripts/githubLoader.ts";
 import { createReviewState, type GithubReviewData } from "./scripts/reviewState.ts";
+import { createUnityContextLoader } from "./scripts/githubUnityContext.ts";
 
 function start() {
   if (document.documentElement.hasAttribute("data-scenesleuth-active")) return;
@@ -27,6 +28,31 @@ function start() {
       : typeof chrome !== "undefined"
         ? chrome.runtime
         : undefined;
+  const unityContext = createUnityContextLoader({
+    onFile(file) {
+      const current = reviewState.current;
+      const context = reviewContext(location.href);
+      if (
+        !current ||
+        !context?.isChangesPage ||
+        `${context.key}:${location.pathname}:${location.search}` !== contextKey
+      )
+        return;
+      if (current.files.find((item) => item.filePath === file.filePath)?.rawDiff !== file.rawDiff)
+        return;
+      const merged = reviewState.merge({ ...current, files: [file], partialListing: true });
+      snapshot = { ...snapshot, files: merged.files };
+      publish();
+    },
+    readBlob(html) {
+      const page = new DOMParser().parseFromString(html, "text/html");
+      const data = page.querySelector(
+        'script[type="application/json"][data-target="react-app.embeddedData"]',
+      );
+      if (!data?.textContent) throw new Error("GitHub source data is unavailable.");
+      return JSON.parse(data.textContent) as unknown;
+    },
+  });
   const loader = createGithubLoader({
     onData(data) {
       const context = reviewContext(location.href);
@@ -86,6 +112,16 @@ function start() {
   function publish() {
     // GitHub may replace a table without changing its scene data.
     inlineReviews.update(snapshot);
+    unityContext.update(
+      snapshot.reviewKey,
+      snapshot.files,
+      snapshot.navigation,
+      new Set(
+        [...document.querySelectorAll("[data-scenesleuth-inline]")].map((host) =>
+          host.getAttribute("data-scenesleuth-inline")!,
+        ),
+      ),
+    );
     const next = JSON.stringify(snapshot);
     if (next === signature) return;
     signature = next;
@@ -96,6 +132,7 @@ function start() {
   }
   function refresh() {
     loader.clear();
+    unityContext.clear();
     reviewState.clear();
     parseCache.files.clear();
     signature = "";
@@ -108,6 +145,7 @@ function start() {
     if (pageKey !== contextKey) {
       contextKey = pageKey;
       loader.clear();
+      unityContext.clear();
       reviewState.clear();
       parseCache.files.clear();
       parseCache.key = undefined;

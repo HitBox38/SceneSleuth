@@ -4,7 +4,10 @@ import type { ReviewFileKind } from "../../shared/fileTypes.ts";
 import { unityYaml, unityPointer as pointer } from "../../shared/unityYaml.ts";
 
 const objectHeader = /^--- !u!(\d+) &(-?\d+)( stripped)?\s*$/;
-const propertyHeader = /^  ([A-Za-z_]\w*):(?:[ \t]*(.*))?$/;
+const propertyHeader = /^  ([A-Za-z_][\w ]*):(?:[ \t]*(.*))?$/;
+// Stable package script identity, verified against Unity's published source:
+// https://github.com/Unity-Technologies/InputSystem/blob/4e169d9b2343f3104ce58c9fda499e721acfc2e8/Packages/com.unity.inputsystem/InputSystem/Runtime/Plugins/XR/TrackedPoseDriver.cs.meta
+const packageScripts = new Map([["c2fadf230d1919748a9aa21d40f74619", "TrackedPoseDriver"]]);
 function scalar(raw?: string): string | undefined {
   if (raw === undefined) return;
   const node = unityYaml(raw);
@@ -128,7 +131,12 @@ export function parseUnity(lines: SourceLine[], scope: string, complete: boolean
       diagnostics.add(
         `Unity value near line ${line.line} may be incomplete or unsupported; inspect the original diff.`,
       );
-    (current ?? unresolved()).properties.set(property[1], {
+    const target = current ?? unresolved();
+    if (target.properties.has(property[1]))
+      diagnostics.add(
+        `Duplicate Unity property near line ${line.line}; inspect the original diff.`,
+      );
+    target.properties.set(property[1], {
       raw,
       canonical: raw.trimEnd(),
       line: line.line,
@@ -161,6 +169,50 @@ export function describeUnitySections(sections: SceneSection[], format: ReviewFi
     ) {
       section.kind = "component";
       if (gameObject?.kind === "gameobject") section.label = gameObject.label;
+    }
+  }
+  // Use the Transform chain as hierarchy evidence, without inventing parents
+  // for stripped prefab objects or incomplete hunks.
+  const transforms = new Map<string, SceneSection | null>();
+  for (const section of byId.values()) {
+    if (!["Transform", "RectTransform"].includes(section.className)) continue;
+    const owner = pointer(unityYaml(section.properties.get("m_GameObject")?.raw ?? ""));
+    if (owner && !owner.guid)
+      transforms.set(owner.fileID, transforms.has(owner.fileID) ? null : section);
+  }
+  function hierarchy(gameObject: SceneSection, seen = new Set<string>()): string | undefined {
+    if (seen.size >= 64 || seen.has(gameObject.id)) return;
+    seen.add(gameObject.id);
+    const transform = transforms.get(gameObject.attributes.get("fileID")!.raw);
+    const father = pointer(unityYaml(transform?.properties.get("m_Father")?.raw ?? ""));
+    if (!father || father.guid) return;
+    if (father.fileID === "0") return gameObject.label;
+    const parentTransform = byId.get(father.fileID);
+    const parentRef = pointer(
+      unityYaml(parentTransform?.properties.get("m_GameObject")?.raw ?? ""),
+    );
+    const parent = parentRef && !parentRef.guid ? byId.get(parentRef.fileID) : undefined;
+    if (parent?.kind !== "gameobject") return;
+    const prefix = hierarchy(parent, seen);
+    return prefix ? `${prefix}/${gameObject.label}` : undefined;
+  }
+  for (const section of byId.values()) {
+    const owner = pointer(unityYaml(section.properties.get("m_GameObject")?.raw ?? ""));
+    const gameObject =
+      section.kind === "gameobject"
+        ? section
+        : owner && !owner.guid
+          ? byId.get(owner.fileID)
+          : undefined;
+    if (gameObject?.kind === "gameobject") section.path = hierarchy(gameObject) ?? section.path;
+    if (section.className === "MonoBehaviour") {
+      const identifier = scalar(section.properties.get("m_EditorClassIdentifier")?.raw);
+      if (identifier?.includes("::"))
+        section.className = identifier.split("::").pop()!.split(".").pop() || section.className;
+      else {
+        const script = pointer(unityYaml(section.properties.get("m_Script")?.raw ?? ""));
+        if (script?.guid) section.className = packageScripts.get(script.guid) ?? section.className;
+      }
     }
   }
 }

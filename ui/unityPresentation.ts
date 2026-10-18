@@ -1,6 +1,6 @@
 import { isMap, isNode, isScalar, isSeq, type Node } from "yaml";
 import { unityYaml, unityPointer } from "../shared/unityYaml.ts";
-import type { InspectorValue } from "./propertyPresentation.ts";
+import { propertyLabel, type InspectorValue } from "./propertyPresentation.ts";
 import type { StructuredValue } from "./structuredValues.ts";
 
 export function unityInspectorValue(raw: string): InspectorValue | undefined {
@@ -55,18 +55,102 @@ export function unityStructuredValue(raw: string): StructuredValue | undefined {
     const literal: StructuredValue = { kind: "literal", start, end };
     if (unityPointer(node) || unityInspectorValue(raw.slice(start, end))) return literal;
     if (isMap(node)) {
-      const entries = node.items.map((pair) => {
-        if (!isScalar(pair.key) || !pair.key.range || !isNode(pair.value)) {
-          invalid = true;
-          return { label: "", value: literal };
+      const fields = new Map(
+        node.items
+          .filter((pair) => isScalar(pair.key))
+          .map((pair) => [String((pair.key as { value: unknown }).value), pair.value]),
+      );
+      const text = (key: string) => {
+        const value = fields.get(key);
+        return isScalar(value) && typeof value.value === "string" ? value.value : undefined;
+      };
+      // InputActionProperty's normal Inspector exposes an embedded action or
+      // an asset reference. Keep internal IDs/flags in Serialized value.
+      if (
+        fields.size === 3 &&
+        ["m_UseReference", "m_Action", "m_Reference"].every((key) => fields.has(key)) &&
+        ["0", "1"].includes(text("m_UseReference") ?? "")
+      ) {
+        const action = fields.get(text("m_UseReference") === "1" ? "m_Reference" : "m_Action");
+        if (isNode(action)) {
+          const value = convert(action, depth + 1);
+          return text("m_UseReference") === "1"
+            ? {
+                kind: "object",
+                label: "Input Action Reference",
+                start,
+                end,
+                entries: [{ label: "Reference", value }],
+              }
+            : value;
         }
-        return {
-          label: String(pair.key.value),
-          key: { start: pair.key.range[0], end: pair.key.range[1] },
-          value: convert(pair.value, depth + 1),
-        };
-      });
-      return { kind: "dictionary", start, end, entries };
+      }
+      const actionKeys = [
+        "m_Name",
+        "m_Type",
+        "m_ExpectedControlType",
+        "m_Id",
+        "m_Processors",
+        "m_Interactions",
+        "m_SingletonActionBindings",
+        "m_Flags",
+      ];
+      const isAction =
+        fields.size === actionKeys.length &&
+        actionKeys.every((key) => fields.has(key)) &&
+        isSeq(fields.get("m_SingletonActionBindings")) &&
+        ["0", "1", "2"].includes(text("m_Type") ?? "");
+      const bindingKeys = [
+        "m_Name",
+        "m_Id",
+        "m_Path",
+        "m_Interactions",
+        "m_Processors",
+        "m_Groups",
+        "m_Action",
+        "m_Flags",
+      ];
+      const isBinding =
+        fields.size === bindingKeys.length &&
+        bindingKeys.every((key) => fields.has(key)) &&
+        !!text("m_Path");
+      const entries = node.items
+        .map((pair) => {
+          if (!isScalar(pair.key) || !pair.key.range || !isNode(pair.value)) {
+            invalid = true;
+            return { label: "", value: literal };
+          }
+          const key = String(pair.key.value);
+          const value = convert(pair.value, depth + 1);
+          if (isAction && key === "m_SingletonActionBindings") value.expanded = true;
+          if (isAction && key === "m_Type")
+            value.label = ["Value", "Button", "Pass Through"][Number(text(key))];
+          return {
+            label:
+              isAction && key === "m_SingletonActionBindings"
+                ? "Bindings"
+                : isAction && key === "m_Type"
+                  ? "Action Type"
+                  : propertyLabel(key, true),
+            key: { start: pair.key.range[0], end: pair.key.range[1] },
+            value,
+            serializedKey: key,
+          };
+        })
+        .filter(
+          (entry) =>
+            !(isAction || isBinding) ||
+            (entry.serializedKey !== "m_Id" &&
+              (entry.serializedKey !== "m_Flags" || text("m_Flags") !== "0")),
+        );
+      return {
+        kind: isAction || isBinding ? "object" : "dictionary",
+        expanded: isAction,
+        label: isAction ? text("m_Name") || "Input Action" : isBinding ? text("m_Path") : undefined,
+        start,
+        end,
+        entries,
+      };
     }
     if (isSeq(node))
       return {

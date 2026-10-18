@@ -47,6 +47,8 @@ export function createReviewState() {
       loadSource = data.loadSource ?? loadSource;
       for (const file of data.files) {
         const previous = files.get(file.filePath);
+        if (previous?.sourceContext && !file.sourceContext && previous.rawDiff === file.rawDiff)
+          continue;
         if (previous?.coverage === "complete" && file.coverage === "partial") continue;
         if (
           !previous ||
