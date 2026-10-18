@@ -1,0 +1,3667 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SceneSleuth · Context-aware SVG icons</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-sans, system-ui, sans-serif);
+        color: var(--foreground, #d1d7e0);
+      }
+      .intro {
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--muted-foreground, #9198a1);
+        margin: 0 0 16px;
+        max-width: 62ch;
+      }
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 0 0 16px;
+      }
+      .controls span {
+        font-size: 12px;
+        margin-right: 8px;
+        color: var(--muted-foreground, #9198a1);
+      }
+      button {
+        font: inherit;
+        font-size: 12px;
+        cursor: pointer;
+        background: transparent;
+        border: 1px solid var(--border, #3d444d);
+        border-radius: 6px;
+        color: inherit;
+        padding: 7px 11px;
+      }
+      button[aria-pressed="true"] {
+        background: var(--accent-surface, #388bfd26);
+        border-color: var(--accent, #78b6e8);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--ring, #78b6e8);
+        outline-offset: 2px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      article {
+        border: 1px solid var(--border, #30363d);
+        background: var(--card, #161b22);
+        border-radius: 12px;
+        padding: 20px;
+        min-width: 0;
+      }
+      article:last-child {
+        grid-column: 1/-1;
+      }
+      .name {
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+      }
+      .number {
+        font: 11px var(--font-mono, monospace);
+        color: var(--muted-foreground, #9198a1);
+      }
+      h2 {
+        font-size: 17px;
+        letter-spacing: -0.025em;
+        margin: 0;
+      }
+      p {
+        font-size: 12px;
+        color: var(--muted-foreground, #9198a1);
+        margin: 4px 0 0;
+      }
+      .pair {
+        display: flex;
+        justify-content: space-around;
+        gap: 16px;
+        padding: 20px 0 16px;
+      }
+      .pair > div {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .large {
+        width: 64px;
+        height: 64px;
+      }
+      svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .palette-label {
+        font-size: 11px;
+        color: var(--muted-foreground, #9198a1);
+      }
+      .small {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .small svg {
+        width: 16px;
+        height: 16px;
+      }
+      .small svg + svg {
+        width: 24px;
+        height: 24px;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        min-height: 44px;
+      }
+      .toolbar + .toolbar {
+        margin-top: 6px;
+      }
+      .toolbar span {
+        flex: 1;
+        font-size: 10px;
+      }
+      .light {
+        background: #f0f2f5;
+        color: #57606a;
+      }
+      .dark {
+        background: #0d1117;
+        color: #9198a1;
+      }
+      .live {
+        width: 16px;
+        height: 16px;
+        display: block;
+      }
+      .live.medium {
+        width: 24px;
+        height: 24px;
+      }
+      .hint {
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--muted-foreground, #9198a1);
+        margin: 16px 0 0;
+      }
+      @media (max-width: 520px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        article:last-child {
+          grid-column: auto;
+        }
+        article {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <p class="intro">
+      Same icon, different PR context. Godot uses blue + mint; Unity uses off-white + selection
+      blue. The shape stays consistent.
+    </p>
+    <nav class="controls" aria-label="Preview PR context">
+      <span>Toolbar preview:</span
+      ><button type="button" data-theme="godot" aria-pressed="true">Godot PR</button
+      ><button type="button" data-theme="unity" aria-pressed="false">Unity PR</button
+      ><button type="button" data-theme="github" aria-pressed="false">Mixed / unknown</button>
+    </nav>
+    <main class="grid">
+      <article>
+        <div class="name">
+          <span class="number">01</span>
+          <div>
+            <h2>Node Lens</h2>
+            <p>Scene inspection</p>
+          </div>
+        </div>
+        <div class="pair">
+          <div>
+            <div class="large">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Node Lens"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <circle
+                  cx="29"
+                  cy="27"
+                  r="17"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                />
+                <path
+                  d="m42 40 12 12"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="m22 21 7 12 9-12"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <circle cx="22" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="38" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="29" cy="33" r="4" fill="var(--ss-icon-secondary)" />
+              </svg>
+            </div>
+            <span class="palette-label">Godot PR</span>
+            <div class="small">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Node Lens"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <circle
+                  cx="29"
+                  cy="27"
+                  r="17"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                />
+                <path
+                  d="m42 40 12 12"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="m22 21 7 12 9-12"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <circle cx="22" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="38" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="29" cy="33" r="4" fill="var(--ss-icon-secondary)" /></svg
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Node Lens"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <circle
+                  cx="29"
+                  cy="27"
+                  r="17"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                />
+                <path
+                  d="m42 40 12 12"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="m22 21 7 12 9-12"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <circle cx="22" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="38" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="29" cy="33" r="4" fill="var(--ss-icon-secondary)" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <div class="large">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Node Lens"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <circle
+                  cx="29"
+                  cy="27"
+                  r="17"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                />
+                <path
+                  d="m42 40 12 12"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="m22 21 7 12 9-12"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <circle cx="22" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="38" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="29" cy="33" r="4" fill="var(--ss-icon-secondary)" />
+              </svg>
+            </div>
+            <span class="palette-label">Unity PR</span>
+            <div class="small">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Node Lens"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <circle
+                  cx="29"
+                  cy="27"
+                  r="17"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                />
+                <path
+                  d="m42 40 12 12"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="m22 21 7 12 9-12"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <circle cx="22" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="38" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="29" cy="33" r="4" fill="var(--ss-icon-secondary)" /></svg
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Node Lens"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <circle
+                  cx="29"
+                  cy="27"
+                  r="17"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                />
+                <path
+                  d="m42 40 12 12"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="m22 21 7 12 9-12"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <circle cx="22" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="38" cy="21" r="4" fill="var(--ss-icon-primary)" />
+                <circle cx="29" cy="33" r="4" fill="var(--ss-icon-secondary)" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar light">
+          <span>Light toolbar</span
+          ><i class="live"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Node Lens"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <circle
+                cx="29"
+                cy="27"
+                r="17"
+                fill="var(--ss-icon-surface)"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+              />
+              <path
+                d="m42 40 12 12"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="6"
+                stroke-linecap="round"
+              />
+              <path
+                d="m22 21 7 12 9-12"
+                fill="none"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="22" cy="21" r="4" fill="var(--ss-icon-primary)" />
+              <circle cx="38" cy="21" r="4" fill="var(--ss-icon-primary)" />
+              <circle cx="29" cy="33" r="4" fill="var(--ss-icon-secondary)" /></svg></i
+          ><i class="live medium"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Node Lens"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <circle
+                cx="29"
+                cy="27"
+                r="17"
+                fill="var(--ss-icon-surface)"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+              />
+              <path
+                d="m42 40 12 12"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="6"
+                stroke-linecap="round"
+              />
+              <path
+                d="m22 21 7 12 9-12"
+                fill="none"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="22" cy="21" r="4" fill="var(--ss-icon-primary)" />
+              <circle cx="38" cy="21" r="4" fill="var(--ss-icon-primary)" />
+              <circle cx="29" cy="33" r="4" fill="var(--ss-icon-secondary)" /></svg
+          ></i>
+        </div>
+        <div class="toolbar dark">
+          <span>Dark toolbar</span
+          ><i class="live"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Node Lens"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <circle
+                cx="29"
+                cy="27"
+                r="17"
+                fill="var(--ss-icon-surface)"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+              />
+              <path
+                d="m42 40 12 12"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="6"
+                stroke-linecap="round"
+              />
+              <path
+                d="m22 21 7 12 9-12"
+                fill="none"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="22" cy="21" r="4" fill="var(--ss-icon-primary)" />
+              <circle cx="38" cy="21" r="4" fill="var(--ss-icon-primary)" />
+              <circle cx="29" cy="33" r="4" fill="var(--ss-icon-secondary)" /></svg></i
+          ><i class="live medium"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Node Lens"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <circle
+                cx="29"
+                cy="27"
+                r="17"
+                fill="var(--ss-icon-surface)"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+              />
+              <path
+                d="m42 40 12 12"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="6"
+                stroke-linecap="round"
+              />
+              <path
+                d="m22 21 7 12 9-12"
+                fill="none"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="22" cy="21" r="4" fill="var(--ss-icon-primary)" />
+              <circle cx="38" cy="21" r="4" fill="var(--ss-icon-primary)" />
+              <circle cx="29" cy="33" r="4" fill="var(--ss-icon-secondary)" /></svg
+          ></i>
+        </div>
+      </article>
+      <article>
+        <div class="name">
+          <span class="number">02</span>
+          <div>
+            <h2>Scene Eye</h2>
+            <p>See the scene structure</p>
+          </div>
+        </div>
+        <div class="pair">
+          <div>
+            <div class="large">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Scene Eye"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="m32 9 22 13v24L32 58 10 46V22Z"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m11 22 21 12 21-12M32 34v23"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M13 32q19-22 38 0-19 22-38 0Z"
+                  fill="var(--ss-icon-primary)"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <circle cx="32" cy="32" r="6" fill="var(--ss-icon-bg)" />
+              </svg>
+            </div>
+            <span class="palette-label">Godot PR</span>
+            <div class="small">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Scene Eye"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="m32 9 22 13v24L32 58 10 46V22Z"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m11 22 21 12 21-12M32 34v23"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M13 32q19-22 38 0-19 22-38 0Z"
+                  fill="var(--ss-icon-primary)"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <circle cx="32" cy="32" r="6" fill="var(--ss-icon-bg)" /></svg
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Scene Eye"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="m32 9 22 13v24L32 58 10 46V22Z"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m11 22 21 12 21-12M32 34v23"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M13 32q19-22 38 0-19 22-38 0Z"
+                  fill="var(--ss-icon-primary)"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <circle cx="32" cy="32" r="6" fill="var(--ss-icon-bg)" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <div class="large">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Scene Eye"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="m32 9 22 13v24L32 58 10 46V22Z"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m11 22 21 12 21-12M32 34v23"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M13 32q19-22 38 0-19 22-38 0Z"
+                  fill="var(--ss-icon-primary)"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <circle cx="32" cy="32" r="6" fill="var(--ss-icon-bg)" />
+              </svg>
+            </div>
+            <span class="palette-label">Unity PR</span>
+            <div class="small">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Scene Eye"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="m32 9 22 13v24L32 58 10 46V22Z"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m11 22 21 12 21-12M32 34v23"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M13 32q19-22 38 0-19 22-38 0Z"
+                  fill="var(--ss-icon-primary)"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <circle cx="32" cy="32" r="6" fill="var(--ss-icon-bg)" /></svg
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Scene Eye"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="m32 9 22 13v24L32 58 10 46V22Z"
+                  fill="var(--ss-icon-surface)"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m11 22 21 12 21-12M32 34v23"
+                  fill="none"
+                  stroke="var(--ss-icon-secondary)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M13 32q19-22 38 0-19 22-38 0Z"
+                  fill="var(--ss-icon-primary)"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <circle cx="32" cy="32" r="6" fill="var(--ss-icon-bg)" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar light">
+          <span>Light toolbar</span
+          ><i class="live"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Eye"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="m32 9 22 13v24L32 58 10 46V22Z"
+                fill="var(--ss-icon-surface)"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <path
+                d="m11 22 21 12 21-12M32 34v23"
+                fill="none"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M13 32q19-22 38 0-19 22-38 0Z"
+                fill="var(--ss-icon-primary)"
+                stroke="var(--ss-icon-bg)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <circle cx="32" cy="32" r="6" fill="var(--ss-icon-bg)" /></svg></i
+          ><i class="live medium"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Eye"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="m32 9 22 13v24L32 58 10 46V22Z"
+                fill="var(--ss-icon-surface)"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <path
+                d="m11 22 21 12 21-12M32 34v23"
+                fill="none"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M13 32q19-22 38 0-19 22-38 0Z"
+                fill="var(--ss-icon-primary)"
+                stroke="var(--ss-icon-bg)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <circle cx="32" cy="32" r="6" fill="var(--ss-icon-bg)" /></svg
+          ></i>
+        </div>
+        <div class="toolbar dark">
+          <span>Dark toolbar</span
+          ><i class="live"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Eye"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="m32 9 22 13v24L32 58 10 46V22Z"
+                fill="var(--ss-icon-surface)"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <path
+                d="m11 22 21 12 21-12M32 34v23"
+                fill="none"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M13 32q19-22 38 0-19 22-38 0Z"
+                fill="var(--ss-icon-primary)"
+                stroke="var(--ss-icon-bg)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <circle cx="32" cy="32" r="6" fill="var(--ss-icon-bg)" /></svg></i
+          ><i class="live medium"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Eye"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="m32 9 22 13v24L32 58 10 46V22Z"
+                fill="var(--ss-icon-surface)"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <path
+                d="m11 22 21 12 21-12M32 34v23"
+                fill="none"
+                stroke="var(--ss-icon-secondary)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M13 32q19-22 38 0-19 22-38 0Z"
+                fill="var(--ss-icon-primary)"
+                stroke="var(--ss-icon-bg)"
+                stroke-width="3"
+                stroke-linejoin="round"
+              />
+              <circle cx="32" cy="32" r="6" fill="var(--ss-icon-bg)" /></svg
+          ></i>
+        </div>
+      </article>
+      <article>
+        <div class="name">
+          <span class="number">03</span>
+          <div>
+            <h2>Scene Delta</h2>
+            <p>Review scene changes</p>
+          </div>
+        </div>
+        <div class="pair">
+          <div>
+            <div class="large">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Scene Delta"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path d="m32 10 21 12v25L32 59 11 47V22Z" fill="var(--ss-icon-surface)" />
+                <path
+                  d="m28 12-17 10v25l17 10M12 23l16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-before)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m36 12 17 10v25L36 57M52 23l-16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M18 37h7M40 36h9m-4.5-4.5v9"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke="var(--ss-icon-detail)"
+                />
+              </svg>
+            </div>
+            <span class="palette-label">Godot PR</span>
+            <div class="small">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Scene Delta"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path d="m32 10 21 12v25L32 59 11 47V22Z" fill="var(--ss-icon-surface)" />
+                <path
+                  d="m28 12-17 10v25l17 10M12 23l16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-before)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m36 12 17 10v25L36 57M52 23l-16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M18 37h7M40 36h9m-4.5-4.5v9"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke="var(--ss-icon-detail)"
+                /></svg
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Scene Delta"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path d="m32 10 21 12v25L32 59 11 47V22Z" fill="var(--ss-icon-surface)" />
+                <path
+                  d="m28 12-17 10v25l17 10M12 23l16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-before)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m36 12 17 10v25L36 57M52 23l-16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M18 37h7M40 36h9m-4.5-4.5v9"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke="var(--ss-icon-detail)"
+                />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <div class="large">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Scene Delta"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path d="m32 10 21 12v25L32 59 11 47V22Z" fill="var(--ss-icon-surface)" />
+                <path
+                  d="m28 12-17 10v25l17 10M12 23l16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-before)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m36 12 17 10v25L36 57M52 23l-16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M18 37h7M40 36h9m-4.5-4.5v9"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke="var(--ss-icon-detail)"
+                />
+              </svg>
+            </div>
+            <span class="palette-label">Unity PR</span>
+            <div class="small">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Scene Delta"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path d="m32 10 21 12v25L32 59 11 47V22Z" fill="var(--ss-icon-surface)" />
+                <path
+                  d="m28 12-17 10v25l17 10M12 23l16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-before)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m36 12 17 10v25L36 57M52 23l-16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M18 37h7M40 36h9m-4.5-4.5v9"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke="var(--ss-icon-detail)"
+                /></svg
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Scene Delta"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path d="m32 10 21 12v25L32 59 11 47V22Z" fill="var(--ss-icon-surface)" />
+                <path
+                  d="m28 12-17 10v25l17 10M12 23l16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-before)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="m36 12 17 10v25L36 57M52 23l-16 9v24"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M18 37h7M40 36h9m-4.5-4.5v9"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke="var(--ss-icon-detail)"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar light">
+          <span>Light toolbar</span
+          ><i class="live"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Delta"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path d="m32 10 21 12v25L32 59 11 47V22Z" fill="var(--ss-icon-surface)" />
+              <path
+                d="m28 12-17 10v25l17 10M12 23l16 9v24"
+                fill="none"
+                stroke="var(--ss-icon-before)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="m36 12 17 10v25L36 57M52 23l-16 9v24"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M18 37h7M40 36h9m-4.5-4.5v9"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke="var(--ss-icon-detail)"
+              /></svg></i
+          ><i class="live medium"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Delta"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path d="m32 10 21 12v25L32 59 11 47V22Z" fill="var(--ss-icon-surface)" />
+              <path
+                d="m28 12-17 10v25l17 10M12 23l16 9v24"
+                fill="none"
+                stroke="var(--ss-icon-before)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="m36 12 17 10v25L36 57M52 23l-16 9v24"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M18 37h7M40 36h9m-4.5-4.5v9"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke="var(--ss-icon-detail)"
+              /></svg
+          ></i>
+        </div>
+        <div class="toolbar dark">
+          <span>Dark toolbar</span
+          ><i class="live"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Delta"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path d="m32 10 21 12v25L32 59 11 47V22Z" fill="var(--ss-icon-surface)" />
+              <path
+                d="m28 12-17 10v25l17 10M12 23l16 9v24"
+                fill="none"
+                stroke="var(--ss-icon-before)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="m36 12 17 10v25L36 57M52 23l-16 9v24"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M18 37h7M40 36h9m-4.5-4.5v9"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke="var(--ss-icon-detail)"
+              /></svg></i
+          ><i class="live medium"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Delta"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path d="m32 10 21 12v25L32 59 11 47V22Z" fill="var(--ss-icon-surface)" />
+              <path
+                d="m28 12-17 10v25l17 10M12 23l16 9v24"
+                fill="none"
+                stroke="var(--ss-icon-before)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="m36 12 17 10v25L36 57M52 23l-16 9v24"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M18 37h7M40 36h9m-4.5-4.5v9"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke="var(--ss-icon-detail)"
+              /></svg
+          ></i>
+        </div>
+      </article>
+      <article>
+        <div class="name">
+          <span class="number">04</span>
+          <div>
+            <h2>Inspector Frame</h2>
+            <p>Editor-style inspection</p>
+          </div>
+        </div>
+        <div class="pair">
+          <div>
+            <div class="large">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Inspector Frame"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M23 12H12v11m29-11h11v11M12 41v11h11m29-11v11H41"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect x="21" y="21" width="22" height="22" rx="5" fill="var(--ss-icon-secondary)" />
+                <path
+                  d="M27 28h10m-10 8h10"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
+                <circle cx="32" cy="12" r="3" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="52" r="3" fill="var(--ss-icon-secondary)" />
+              </svg>
+            </div>
+            <span class="palette-label">Godot PR</span>
+            <div class="small">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Inspector Frame"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M23 12H12v11m29-11h11v11M12 41v11h11m29-11v11H41"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect x="21" y="21" width="22" height="22" rx="5" fill="var(--ss-icon-secondary)" />
+                <path
+                  d="M27 28h10m-10 8h10"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
+                <circle cx="32" cy="12" r="3" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="52" r="3" fill="var(--ss-icon-secondary)" /></svg
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Inspector Frame"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M23 12H12v11m29-11h11v11M12 41v11h11m29-11v11H41"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect x="21" y="21" width="22" height="22" rx="5" fill="var(--ss-icon-secondary)" />
+                <path
+                  d="M27 28h10m-10 8h10"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
+                <circle cx="32" cy="12" r="3" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="52" r="3" fill="var(--ss-icon-secondary)" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <div class="large">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Inspector Frame"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M23 12H12v11m29-11h11v11M12 41v11h11m29-11v11H41"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect x="21" y="21" width="22" height="22" rx="5" fill="var(--ss-icon-secondary)" />
+                <path
+                  d="M27 28h10m-10 8h10"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
+                <circle cx="32" cy="12" r="3" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="52" r="3" fill="var(--ss-icon-secondary)" />
+              </svg>
+            </div>
+            <span class="palette-label">Unity PR</span>
+            <div class="small">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Inspector Frame"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M23 12H12v11m29-11h11v11M12 41v11h11m29-11v11H41"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect x="21" y="21" width="22" height="22" rx="5" fill="var(--ss-icon-secondary)" />
+                <path
+                  d="M27 28h10m-10 8h10"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
+                <circle cx="32" cy="12" r="3" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="52" r="3" fill="var(--ss-icon-secondary)" /></svg
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Inspector Frame"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M23 12H12v11m29-11h11v11M12 41v11h11m29-11v11H41"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect x="21" y="21" width="22" height="22" rx="5" fill="var(--ss-icon-secondary)" />
+                <path
+                  d="M27 28h10m-10 8h10"
+                  stroke="var(--ss-icon-bg)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
+                <circle cx="32" cy="12" r="3" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="52" r="3" fill="var(--ss-icon-secondary)" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar light">
+          <span>Light toolbar</span
+          ><i class="live"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Inspector Frame"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="M23 12H12v11m29-11h11v11M12 41v11h11m29-11v11H41"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <rect x="21" y="21" width="22" height="22" rx="5" fill="var(--ss-icon-secondary)" />
+              <path
+                d="M27 28h10m-10 8h10"
+                stroke="var(--ss-icon-bg)"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+              <circle cx="32" cy="12" r="3" fill="var(--ss-icon-secondary)" />
+              <circle cx="32" cy="52" r="3" fill="var(--ss-icon-secondary)" /></svg></i
+          ><i class="live medium"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Inspector Frame"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="M23 12H12v11m29-11h11v11M12 41v11h11m29-11v11H41"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <rect x="21" y="21" width="22" height="22" rx="5" fill="var(--ss-icon-secondary)" />
+              <path
+                d="M27 28h10m-10 8h10"
+                stroke="var(--ss-icon-bg)"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+              <circle cx="32" cy="12" r="3" fill="var(--ss-icon-secondary)" />
+              <circle cx="32" cy="52" r="3" fill="var(--ss-icon-secondary)" /></svg
+          ></i>
+        </div>
+        <div class="toolbar dark">
+          <span>Dark toolbar</span
+          ><i class="live"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Inspector Frame"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="M23 12H12v11m29-11h11v11M12 41v11h11m29-11v11H41"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <rect x="21" y="21" width="22" height="22" rx="5" fill="var(--ss-icon-secondary)" />
+              <path
+                d="M27 28h10m-10 8h10"
+                stroke="var(--ss-icon-bg)"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+              <circle cx="32" cy="12" r="3" fill="var(--ss-icon-secondary)" />
+              <circle cx="32" cy="52" r="3" fill="var(--ss-icon-secondary)" /></svg></i
+          ><i class="live medium"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Inspector Frame"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="M23 12H12v11m29-11h11v11M12 41v11h11m29-11v11H41"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <rect x="21" y="21" width="22" height="22" rx="5" fill="var(--ss-icon-secondary)" />
+              <path
+                d="M27 28h10m-10 8h10"
+                stroke="var(--ss-icon-bg)"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+              <circle cx="32" cy="12" r="3" fill="var(--ss-icon-secondary)" />
+              <circle cx="32" cy="52" r="3" fill="var(--ss-icon-secondary)" /></svg
+          ></i>
+        </div>
+      </article>
+      <article>
+        <div class="name">
+          <span class="number">05</span>
+          <div>
+            <h2>Scene Path</h2>
+            <p>A scene graph shaped like an S</p>
+          </div>
+        </div>
+        <div class="pair">
+          <div>
+            <div class="large">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Scene Path"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M46 16H25a10 10 0 0 0 0 20h14a8 8 0 0 1 0 16H18"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <rect x="39" y="9" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <rect x="11" y="45" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="36" r="5" fill="var(--ss-icon-primary)" />
+              </svg>
+            </div>
+            <span class="palette-label">Godot PR</span>
+            <div class="small">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Scene Path"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M46 16H25a10 10 0 0 0 0 20h14a8 8 0 0 1 0 16H18"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <rect x="39" y="9" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <rect x="11" y="45" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="36" r="5" fill="var(--ss-icon-primary)" /></svg
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="godot"
+                role="img"
+                aria-label="SceneSleuth — Scene Path"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M46 16H25a10 10 0 0 0 0 20h14a8 8 0 0 1 0 16H18"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <rect x="39" y="9" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <rect x="11" y="45" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="36" r="5" fill="var(--ss-icon-primary)" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <div class="large">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Scene Path"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M46 16H25a10 10 0 0 0 0 20h14a8 8 0 0 1 0 16H18"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <rect x="39" y="9" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <rect x="11" y="45" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="36" r="5" fill="var(--ss-icon-primary)" />
+              </svg>
+            </div>
+            <span class="palette-label">Unity PR</span>
+            <div class="small">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Scene Path"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M46 16H25a10 10 0 0 0 0 20h14a8 8 0 0 1 0 16H18"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <rect x="39" y="9" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <rect x="11" y="45" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="36" r="5" fill="var(--ss-icon-primary)" /></svg
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 64 64"
+                class="ss-project-icon"
+                data-ss-engine="unity"
+                role="img"
+                aria-label="SceneSleuth — Scene Path"
+              >
+                <style>
+                  .ss-project-icon {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                  .ss-project-icon[data-ss-engine="godot"],
+                  [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #101820;
+                    --ss-icon-surface: #182d3c;
+                    --ss-icon-primary: #78b6e8;
+                    --ss-icon-secondary: #9ad9bd;
+                    --ss-icon-before: #e3a19c;
+                    --ss-icon-detail: #eaf4fd;
+                  }
+                  .ss-project-icon[data-ss-engine="unity"],
+                  [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #242c36;
+                    --ss-icon-primary: #e6edf3;
+                    --ss-icon-secondary: #7aace8;
+                    --ss-icon-before: #8f9cae;
+                    --ss-icon-detail: #7aace8;
+                  }
+                  .ss-project-icon[data-ss-engine="github"],
+                  [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                    --ss-icon-bg: #171c23;
+                    --ss-icon-surface: #252d38;
+                    --ss-icon-primary: #bdc6d0;
+                    --ss-icon-secondary: #8f9caa;
+                    --ss-icon-before: #788593;
+                    --ss-icon-detail: #e6edf3;
+                  }
+                </style>
+                <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+                <path
+                  d="M46 16H25a10 10 0 0 0 0 20h14a8 8 0 0 1 0 16H18"
+                  fill="none"
+                  stroke="var(--ss-icon-primary)"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <rect x="39" y="9" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <rect x="11" y="45" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+                <circle cx="32" cy="36" r="5" fill="var(--ss-icon-primary)" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar light">
+          <span>Light toolbar</span
+          ><i class="live"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Path"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="M46 16H25a10 10 0 0 0 0 20h14a8 8 0 0 1 0 16H18"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="5"
+                stroke-linecap="round"
+              />
+              <rect x="39" y="9" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+              <rect x="11" y="45" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+              <circle cx="32" cy="36" r="5" fill="var(--ss-icon-primary)" /></svg></i
+          ><i class="live medium"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Path"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="M46 16H25a10 10 0 0 0 0 20h14a8 8 0 0 1 0 16H18"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="5"
+                stroke-linecap="round"
+              />
+              <rect x="39" y="9" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+              <rect x="11" y="45" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+              <circle cx="32" cy="36" r="5" fill="var(--ss-icon-primary)" /></svg
+          ></i>
+        </div>
+        <div class="toolbar dark">
+          <span>Dark toolbar</span
+          ><i class="live"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Path"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="M46 16H25a10 10 0 0 0 0 20h14a8 8 0 0 1 0 16H18"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="5"
+                stroke-linecap="round"
+              />
+              <rect x="39" y="9" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+              <rect x="11" y="45" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+              <circle cx="32" cy="36" r="5" fill="var(--ss-icon-primary)" /></svg></i
+          ><i class="live medium"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              class="ss-project-icon"
+              role="img"
+              aria-label="SceneSleuth — Scene Path"
+            >
+              <style>
+                .ss-project-icon {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+                .ss-project-icon[data-ss-engine="godot"],
+                [data-ss-engine="godot"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #101820;
+                  --ss-icon-surface: #182d3c;
+                  --ss-icon-primary: #78b6e8;
+                  --ss-icon-secondary: #9ad9bd;
+                  --ss-icon-before: #e3a19c;
+                  --ss-icon-detail: #eaf4fd;
+                }
+                .ss-project-icon[data-ss-engine="unity"],
+                [data-ss-engine="unity"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #242c36;
+                  --ss-icon-primary: #e6edf3;
+                  --ss-icon-secondary: #7aace8;
+                  --ss-icon-before: #8f9cae;
+                  --ss-icon-detail: #7aace8;
+                }
+                .ss-project-icon[data-ss-engine="github"],
+                [data-ss-engine="github"] .ss-project-icon:not([data-ss-engine]) {
+                  --ss-icon-bg: #171c23;
+                  --ss-icon-surface: #252d38;
+                  --ss-icon-primary: #bdc6d0;
+                  --ss-icon-secondary: #8f9caa;
+                  --ss-icon-before: #788593;
+                  --ss-icon-detail: #e6edf3;
+                }
+              </style>
+              <rect width="64" height="64" rx="14" fill="var(--ss-icon-bg)" />
+              <path
+                d="M46 16H25a10 10 0 0 0 0 20h14a8 8 0 0 1 0 16H18"
+                fill="none"
+                stroke="var(--ss-icon-primary)"
+                stroke-width="5"
+                stroke-linecap="round"
+              />
+              <rect x="39" y="9" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+              <rect x="11" y="45" width="14" height="14" rx="4" fill="var(--ss-icon-secondary)" />
+              <circle cx="32" cy="36" r="5" fill="var(--ss-icon-primary)" /></svg
+          ></i>
+        </div>
+      </article>
+    </main>
+    <p class="hint">
+      SVG concepts only. Once a shape is selected, its palette will use SceneSleuth’s existing PR
+      theme detection.
+    </p>
+    <script>
+      function setContext(theme) {
+        document
+          .querySelectorAll(".live svg")
+          .forEach((svg) => svg.setAttribute("data-ss-engine", theme));
+        document
+          .querySelectorAll("button[data-theme]")
+          .forEach((button) =>
+            button.setAttribute("aria-pressed", String(button.dataset.theme === theme)),
+          );
+      }
+      document
+        .querySelectorAll("button[data-theme]")
+        .forEach((button) =>
+          button.addEventListener("click", () => setContext(button.dataset.theme)),
+        );
+      setContext("godot");
+    </script>
+  </body>
+</html>
