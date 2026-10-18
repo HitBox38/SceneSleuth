@@ -44,7 +44,12 @@ import {
 } from "../shared/referenceLinks.ts";
 import { ReferenceFileLink } from "./ReferenceFileLink.tsx";
 import { inspectorValue, propertyGroups, propertyLabel } from "./propertyPresentation.ts";
-import { reviewFileKind, reviewEngine, reviewEngines } from "../shared/fileTypes.ts";
+import {
+  reviewFileKind,
+  reviewEngine,
+  reviewEngines,
+  isSettingsFile,
+} from "../shared/fileTypes.ts";
 import { StructuredValue } from "./StructuredValue.tsx";
 import { unityInspectorValue } from "./unityPresentation.ts";
 
@@ -113,7 +118,7 @@ const kindGroups = {
   node: "Nodes",
   resource: "Resources",
   connection: "Signals",
-  project: "Project settings",
+  project: "Settings",
   gameobject: "GameObjects",
   component: "Components",
   unity_object: "Other objects",
@@ -137,7 +142,7 @@ export function sceneStats(files: SceneReview[]) {
     signals: changes.filter((item) => item.kind === "connection").length,
     properties: changes.reduce((sum, item) => sum + item.properties.length, 0),
     settings: files
-      .filter((file) => reviewFileKind(file) === "project")
+      .filter((file) => isSettingsFile(file))
       .reduce(
         (sum, file) =>
           sum + file.changes.reduce((count, change) => count + change.properties.length, 0),
@@ -481,13 +486,13 @@ export function FileReview({
   embedded?: boolean;
   navigation?: ReferenceNavigation;
 }) {
-  const project = reviewFileKind(file) === "project";
+  const project = isSettingsFile(file);
   const resource = reviewFileKind(file) === "resource";
   const unity = reviewEngine(file) === "unity";
   const subject = unity
     ? `Unity ${reviewFileKind(file).slice(6)}`
     : project
-      ? "project settings"
+      ? "settings"
       : resource
         ? "resource"
         : "scene";
@@ -528,7 +533,7 @@ export function FileReview({
         <p className="ss-context">
           {file.coverage === "partial"
             ? "Diff context only. Unchanged sections are omitted; — means no value is present in this hunk."
-            : `Complete ${file.status === "removed" ? "removed" : "new"} ${project ? "project configuration" : resource ? "resource" : "scene"} from the patch.`}
+            : `Complete ${file.status === "removed" ? "removed" : "new"} ${project ? "configuration" : resource ? "resource" : "scene"} from the patch.`}
         </p>
       )}
       {file.diagnostics.length > 0 && (
@@ -624,7 +629,7 @@ export function InlineSceneReview({
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const contents = inlineFileContents(file);
-  const project = reviewFileKind(file) === "project";
+  const project = isSettingsFile(file);
   const resource = reviewFileKind(file) === "resource";
   const unity = reviewEngine(file) === "unity";
   if (original) return null;
@@ -660,7 +665,7 @@ export function InlineSceneReview({
             {unity
               ? "Search Unity objects and properties"
               : project
-                ? "Search project settings"
+                ? "Search settings"
                 : resource
                   ? "Search resources and properties"
                   : "Search nodes and properties"}
@@ -672,7 +677,7 @@ export function InlineSceneReview({
               unity
                 ? "Search Unity…"
                 : project
-                  ? "Search project settings…"
+                  ? "Search settings…"
                   : resource
                     ? "Search resource…"
                     : "Search scene…"
@@ -712,7 +717,7 @@ export function Inspector({
   const stats = sceneStats(snapshot.files);
   const hasScenes = snapshot.files.some((file) => reviewFileKind(file) === "scene");
   const hasResources = snapshot.files.some(
-    (file) => reviewEngine(file) === "godot" && reviewFileKind(file) !== "project",
+    (file) => reviewEngine(file) === "godot" && !isSettingsFile(file),
   );
   const hasUnity = snapshot.files.some((file) => reviewEngine(file) === "unity");
   const engines = reviewEngines(snapshot.files);
@@ -811,7 +816,7 @@ export function Inspector({
                   </span>
                 </>
               )}
-              {snapshot.files.some((file) => reviewFileKind(file) === "project") && (
+              {snapshot.files.some((file) => isSettingsFile(file)) && (
                 <span>
                   <strong>{stats.settings}</strong> settings
                 </span>

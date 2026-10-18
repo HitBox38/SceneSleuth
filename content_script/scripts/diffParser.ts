@@ -1,6 +1,11 @@
 import type { SceneReview, SourceLine, SceneSection } from "../../shared/model.ts";
 import { compareSections, parseScene } from "./contentParser.ts";
-import { supportedFileKind, reviewFileKind } from "../../shared/fileTypes.ts";
+import {
+  supportedFileKind,
+  reviewFileKind,
+  isSettingsFile,
+  type GodotFileKind,
+} from "../../shared/fileTypes.ts";
 import {
   parseUnity,
   parseUnityMetadata,
@@ -124,13 +129,13 @@ export function reviewPatch(file: PatchFile): SceneReview {
     const oldScene = unity
       ? unityParser(hunk.before, `hunk-${index}`, complete && hunk.before.length === hunk.oldCount)
       : parseScene(hunk.before, `hunk-${index}`, {
-          format: format as "scene" | "resource" | "project",
+          format: format as GodotFileKind,
           startsAtFileBeginning: hunk.oldStart <= 1,
         });
     const newScene = unity
       ? unityParser(hunk.after, `hunk-${index}`, complete && hunk.after.length === hunk.newCount)
       : parseScene(hunk.after, `hunk-${index}`, {
-          format: format as "scene" | "resource" | "project",
+          format: format as GodotFileKind,
           startsAtFileBeginning: hunk.newStart <= 1,
         });
     for (const note of [...oldScene.diagnostics, ...newScene.diagnostics]) diagnostics.add(note);
@@ -163,7 +168,7 @@ export function reviewPatch(file: PatchFile): SceneReview {
     diagnostics.add(
       unity
         ? "Some Unity objects or property owners are outside the diff. Their context remains unresolved."
-        : format === "project"
+        : isSettingsFile(file)
           ? "Some settings sections are outside the diff. Their changes are listed without guessing a section."
           : "Some owning sections are outside the diff. Their changes are listed without guessing a node or resource.",
     );

@@ -1,6 +1,6 @@
 import type { SceneReview } from "./model.ts";
 
-export type GodotFileKind = "scene" | "project" | "resource";
+export type GodotFileKind = "scene" | "project" | "resource" | "import";
 
 export type ReviewFileKind =
   | GodotFileKind
@@ -14,9 +14,11 @@ export type ReviewFileKind =
   | "unity_animation";
 
 export function supportedFileKind(path?: string): ReviewFileKind | undefined {
+  if (path?.split("/").includes(".godot")) return;
   if (path?.endsWith(".tscn")) return "scene";
   if (path?.endsWith(".godot")) return "project";
   if (path?.endsWith(".tres")) return "resource";
+  if (path?.endsWith(".import")) return "import";
   if (path?.endsWith(".unity")) return "unity_scene";
   if (path?.endsWith(".prefab")) return "unity_prefab";
   if (path?.endsWith(".asset")) return "unity_asset";
@@ -32,6 +34,7 @@ export function reviewViewLabel(file: Pick<SceneReview, "filePath" | "previousPa
     scene: "Scene",
     project: "Settings",
     resource: "Resource",
+    import: "Import settings",
     unity_scene: "Scene",
     unity_prefab: "Prefab",
     unity_asset: "Asset",
@@ -57,4 +60,12 @@ export function reviewEngine(
 export function reviewEngines(files: Pick<SceneReview, "filePath" | "previousPath">[]): string {
   const engines = new Set(files.map(reviewEngine));
   return engines.size === 1 ? (engines.has("unity") ? "Unity" : "Godot") : "Godot & Unity";
+}
+
+export function godotSettingsClass(kind: ReviewFileKind): string | undefined {
+  if (kind === "project") return "ProjectSettings";
+  if (kind === "import") return "ResourceImporter";
+}
+export function isSettingsFile(file: Pick<SceneReview, "filePath" | "previousPath">): boolean {
+  return godotSettingsClass(reviewFileKind(file)) !== undefined;
 }

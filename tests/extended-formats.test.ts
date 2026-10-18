@@ -2,7 +2,7 @@ import { extendedFormatSources } from "./fixtures/extended-formats.ts";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { reviewDiff } from "../content_script/scripts/diffParser.ts";
-import { reviewViewLabel } from "../shared/fileTypes.ts";
+import { reviewViewLabel, supportedFileKind, isSettingsFile } from "../shared/fileTypes.ts";
 import { unityStructuredValue, unityInspectorValue } from "../ui/unityPresentation.ts";
 import { propertyGroups } from "../ui/propertyPresentation.ts";
 import { unityPatch, imageGuid } from "./fixtures/unity.ts";
@@ -225,4 +225,38 @@ test("Unity animation clips expose tracks, exact keys, events and looping settin
     reviewDiff(unityPatch(example.path, example.source, true))[0].changes[0].operation,
     "removed",
   );
+});
+
+test("Godot import settings use sections, exact values, source links and file references", () => {
+  const example = extendedFormatSources.find((f) => f.path.endsWith(".import"))!;
+  const file = reviewDiff(unityPatch(example.path, example.source))[0];
+  assert.equal(reviewViewLabel(file), "Import settings");
+  assert.equal(isSettingsFile(file), true);
+  assert.deepEqual(file.diagnostics, []);
+  assert.deepEqual(
+    file.changes.map((c) => [c.label, c.className]),
+    [
+      ["remap", "ResourceImporter"],
+      ["deps", "ResourceImporter"],
+      ["params", "ResourceImporter"],
+    ],
+  );
+  const source = file.changes[1].properties[0];
+  assert.equal(source.afterReferences![0].resourcePath, "res://Textures/Water.png");
+  assert.equal(source.newLine, 5);
+  const changed = modified(
+    example.path,
+    ["[params]", "compress/mode=0", "mipmaps/generate=true"],
+    ["[params]", "compress/mode=2", "mipmaps/generate=true"],
+  );
+  assert.deepEqual(
+    changed.changes[0].properties.map((p) => [p.name, p.before, p.after]),
+    [["compress/mode", "0", "2"]],
+  );
+  assert.equal(
+    modified(example.path, ["compress/mode=0"], ["compress/mode=2"], 30).changes[0].kind,
+    "unknown",
+  );
+  assert.equal(supportedFileKind("Game/.godot/imported/generated.tscn"), undefined);
+  assert.equal(supportedFileKind("Game/.godot/imported/generated.import"), undefined);
 });

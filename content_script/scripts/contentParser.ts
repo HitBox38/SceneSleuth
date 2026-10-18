@@ -1,3 +1,4 @@
+import { godotSettingsClass } from "../../shared/fileTypes.ts";
 import type {
   SourceLine,
   SceneValue,
@@ -98,7 +99,8 @@ export function parseScene(
   const sections: SceneSection[] = [];
   const diagnostics: string[] = [];
   let current: SceneSection | undefined;
-  const project = options.format === "project";
+  const settingsClass = godotSettingsClass(options.format ?? "scene");
+  const project = settingsClass !== undefined;
   const resource = options.format === "resource";
   let resourceType = "";
   let preamble = project && options.startsAtFileBeginning;
@@ -142,7 +144,7 @@ export function parseScene(
         id: `project:section:${JSON.stringify(name)}`,
         kind: "project",
         label: name,
-        className: "ProjectSettings",
+        className: settingsClass!,
         path: name,
         line: first.line,
         headerChanged: changed,
@@ -239,7 +241,7 @@ export function parseScene(
         id: "project:preamble",
         kind: "project",
         label: "File settings",
-        className: "ProjectSettings",
+        className: settingsClass!,
         path: "",
         line: first.line,
         headerChanged: false,

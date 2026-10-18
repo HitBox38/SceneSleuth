@@ -93,5 +93,19 @@ export const extendedFormatSources: { path: string; source: string[] }[] = [
     ],
   },
 ];
+extendedFormatSources.push({
+  path: "Game/Textures/Water.png.import",
+  source: [
+    "[remap]",
+    'importer="texture"',
+    'type="CompressedTexture2D"',
+    "[deps]",
+    'source_file="res://Textures/Water.png"',
+    "[params]",
+    "compress/mode=0",
+    "mipmaps/generate=true",
+    'metadata={"vram_texture": false}',
+  ],
+});
 export const extendedFormatPatches = () =>
   extendedFormatSources.map(({ path, source }) => unityPatch(path, source));

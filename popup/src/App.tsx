@@ -5,7 +5,12 @@ import { LinkButton } from "./components/ui/button.tsx";
 import { isReviewSnapshot, reviewContext } from "../../shared/protocol.ts";
 import type { ReviewSnapshot } from "../../shared/model.ts";
 import { sceneStats } from "../../ui/SceneReview.tsx";
-import { reviewFileKind, reviewEngine, reviewEngines } from "../../shared/fileTypes.ts";
+import {
+  reviewFileKind,
+  reviewEngine,
+  reviewEngines,
+  isSettingsFile,
+} from "../../shared/fileTypes.ts";
 import "../../ui/review.css";
 
 type State =
@@ -126,11 +131,11 @@ export default function App() {
   const stats = snapshot ? sceneStats(snapshot.files) : undefined;
   const hasScenes = snapshot?.files.some((file) => reviewFileKind(file) === "scene");
   const hasResources = snapshot?.files.some(
-    (file) => reviewEngine(file) === "godot" && reviewFileKind(file) !== "project",
+    (file) => reviewEngine(file) === "godot" && !isSettingsFile(file),
   );
   const hasUnity = snapshot?.files.some((file) => reviewEngine(file) === "unity");
   const engines = reviewEngines(snapshot?.files ?? []);
-  const hasProjects = snapshot?.files.some((file) => reviewFileKind(file) === "project");
+  const hasProjects = snapshot?.files.some((file) => isSettingsFile(file));
   return (
     <main className="ss ss-popup">
       <header className="ss-header">
