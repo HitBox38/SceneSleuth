@@ -260,3 +260,30 @@ test("Godot import settings use sections, exact values, source links and file re
   assert.equal(supportedFileKind("Game/.godot/imported/generated.tscn"), undefined);
   assert.equal(supportedFileKind("Game/.godot/imported/generated.import"), undefined);
 });
+
+test("Godot export presets keep platform options and identical keys in separate presets", () => {
+  const example = extendedFormatSources.find((f) => f.path.endsWith("export_presets.cfg"))!;
+  const file = reviewDiff(unityPatch(example.path, example.source))[0];
+  assert.equal(reviewViewLabel(file), "Export");
+  assert.deepEqual(file.diagnostics, []);
+  assert.deepEqual(
+    file.changes.map((c) => c.label),
+    ["preset.0", "preset.0.options", "preset.1", "preset.1.options"],
+  );
+  assert.equal(file.changes[0].properties[0].after, '"Windows Desktop"');
+  assert.equal(file.changes[2].properties[0].after, '"Web"');
+  const changed = modified(
+    example.path,
+    ["[preset.0.options]", 'binary_format/architecture="x86_64"'],
+    ["[preset.0.options]", 'binary_format/architecture="arm64"'],
+  );
+  assert.equal(changed.changes[0].properties[0].before, '"x86_64"');
+  assert.equal(changed.changes[0].properties[0].after, '"arm64"');
+  assert.equal(
+    modified(example.path, ['name="Windows"'], ['name="Web"'], 40).changes[0].kind,
+    "unknown",
+  );
+  assert.equal(supportedFileKind("Game/other.cfg"), undefined);
+  assert.equal(supportedFileKind("Game/.godot/export_credentials.cfg"), undefined);
+  assert.equal(reviewDiff(unityPatch(example.path, example.source, true))[0].coverage, "complete");
+});

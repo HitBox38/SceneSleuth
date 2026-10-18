@@ -107,5 +107,24 @@ extendedFormatSources.push({
     'metadata={"vram_texture": false}',
   ],
 });
+extendedFormatSources.push({
+  path: "Game/export_presets.cfg",
+  source: [
+    "[preset.0]",
+    'name="Windows Desktop"',
+    'platform="Windows Desktop"',
+    'export_filter="all_resources"',
+    'include_filter="*.json"',
+    'exclude_filter="tests/*"',
+    "[preset.0.options]",
+    'binary_format/architecture="x86_64"',
+    "texture_format/s3tc_bptc=true",
+    "[preset.1]",
+    'name="Web"',
+    'platform="Web"',
+    "[preset.1.options]",
+    "html/canvas_resize_policy=2",
+  ],
+});
 export const extendedFormatPatches = () =>
   extendedFormatSources.map(({ path, source }) => unityPatch(path, source));

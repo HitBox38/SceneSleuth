@@ -1,6 +1,6 @@
 import type { SceneReview } from "./model.ts";
 
-export type GodotFileKind = "scene" | "project" | "resource" | "import";
+export type GodotFileKind = "scene" | "project" | "resource" | "import" | "export";
 
 export type ReviewFileKind =
   | GodotFileKind
@@ -19,6 +19,7 @@ export function supportedFileKind(path?: string): ReviewFileKind | undefined {
   if (path?.endsWith(".godot")) return "project";
   if (path?.endsWith(".tres")) return "resource";
   if (path?.endsWith(".import")) return "import";
+  if (path?.split("/").pop() === "export_presets.cfg") return "export";
   if (path?.endsWith(".unity")) return "unity_scene";
   if (path?.endsWith(".prefab")) return "unity_prefab";
   if (path?.endsWith(".asset")) return "unity_asset";
@@ -35,6 +36,7 @@ export function reviewViewLabel(file: Pick<SceneReview, "filePath" | "previousPa
     project: "Settings",
     resource: "Resource",
     import: "Import settings",
+    export: "Export",
     unity_scene: "Scene",
     unity_prefab: "Prefab",
     unity_asset: "Asset",
@@ -65,6 +67,7 @@ export function reviewEngines(files: Pick<SceneReview, "filePath" | "previousPat
 export function godotSettingsClass(kind: ReviewFileKind): string | undefined {
   if (kind === "project") return "ProjectSettings";
   if (kind === "import") return "ResourceImporter";
+  if (kind === "export") return "ExportPreset";
 }
 export function isSettingsFile(file: Pick<SceneReview, "filePath" | "previousPath">): boolean {
   return godotSettingsClass(reviewFileKind(file)) !== undefined;
