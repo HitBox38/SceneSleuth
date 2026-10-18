@@ -56,14 +56,17 @@ const snapshot: ReviewSnapshot = {
     changesUrl: `${location.origin}${location.pathname}`,
     beforeRevision: "a".repeat(40),
     afterRevision: "b".repeat(40),
-    files: files.map((file, index) => ({
-      path: file.filePath,
-      status: file.status,
-      reviewUrl: `${location.origin}${location.pathname}#diff-format-${index}`,
-      ...(file.filePath.endsWith(".meta")
-        ? unityMetaGuids(extendedFormatSources[index].source.map((s) => "+" + s))
-        : {}),
-    })),
+    files: [
+      { path: "Game/project.godot", status: "modified" },
+      ...files.map((file, index) => ({
+        path: file.filePath,
+        status: file.status,
+        reviewUrl: `${location.origin}${location.pathname}#diff-format-${index}`,
+        ...(file.filePath.endsWith(".meta")
+          ? unityMetaGuids(extendedFormatSources[index].source.map((s) => "+" + s))
+          : {}),
+      })),
+    ],
   },
 };
 function showFile() {

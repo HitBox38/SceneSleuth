@@ -322,3 +322,39 @@ test("GDExtension reviews preserve configuration, relative library links, depend
     "unknown",
   );
 });
+
+test("Godot plugin configurations expose metadata and resolve only the script field as a relative file", () => {
+  const example = extendedFormatSources.find((f) => f.path.endsWith("plugin.cfg"))!;
+  const file = reviewDiff(unityPatch(example.path, example.source))[0];
+  assert.equal(reviewViewLabel(file), "Plugin");
+  assert.deepEqual(file.diagnostics, []);
+  assert.equal(file.changes[0].className, "EditorPlugin");
+  const script = file.changes[0].properties.find((p) => p.name === "script")!;
+  assert.equal(script.afterReferences![0].resourcePath, "plugin.gd");
+  assert.equal(
+    referenceFilePath(script.afterReferences![0], file, "after", {
+      repositoryUrl: "https://github.com/example/game",
+      changesUrl: "https://github.com/example/game/pull/1/changes",
+      files: [],
+    }),
+    "Game/addons/inspector/plugin.gd",
+  );
+  const changed = modified(
+    example.path,
+    ["[plugin]", 'script="old.gd"', 'author="author.gd"'],
+    ["[plugin]", 'script="plugin.gd"', 'author="other.gd"'],
+  );
+  assert.equal(changed.changes[0].properties[0].beforeReferences![0].resourcePath, "old.gd");
+  assert.equal(changed.changes[0].properties[0].afterReferences![0].resourcePath, "plugin.gd");
+  assert.equal(changed.changes[0].properties[1].afterReferences, undefined);
+  assert.equal(
+    modified(example.path, ['script="old.gd"'], ['script="new.gd"'], 8).changes[0].kind,
+    "unknown",
+  );
+  const hostile = modified(
+    example.path,
+    ["[plugin]", 'script="plugin.gd"'],
+    ["[plugin]", 'script="javascript:alert(1)"'],
+  );
+  assert.equal(hostile.changes[0].properties[0].afterReferences, undefined);
+});

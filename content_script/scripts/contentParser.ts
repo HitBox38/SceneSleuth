@@ -309,8 +309,8 @@ export function compareSections(
           newValue = newValues.get(key);
         if (oldValue?.canonical === newValue?.canonical) continue;
         if (partial && !oldValue?.changed && !newValue?.changed) continue;
-        const beforeReferences = resolveBefore(oldValue?.raw, oldSection);
-        const afterReferences = resolveAfter(newValue?.raw, newSection);
+        const beforeReferences = resolveBefore(oldValue?.raw, oldSection, key);
+        const afterReferences = resolveAfter(newValue?.raw, newSection, key);
         properties.push({
           name: prefix + key,
           operation: !oldValue ? "added" : !newValue ? "removed" : "modified",

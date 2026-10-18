@@ -76,17 +76,24 @@ export function sceneReferenceResolver(sections: SceneSection[]) {
     };
   }
 
-  return (raw: string | undefined, owner?: SceneSection): ValueReference[] => {
+  return (
+    raw: string | undefined,
+    owner?: SceneSection,
+    propertyName?: string,
+  ): ValueReference[] => {
     if (!raw) return [];
     if (owner?.kind === "project") {
-      // Project settings store file paths directly as quoted strings. Keep UID
+      // Godot configurations store file paths directly as quoted strings. Keep UID
       // references and expressions opaque; the autoload '*' marker is significant.
       const match = /^\s*("(?:\\.|[^"\\])*")\s*(?:;[^\n]*)?$/.exec(raw);
       const value = match ? quotedString(match[1]) : undefined;
       const singleton = owner.path === "autoload" && value?.startsWith("*res://");
       const path = singleton ? value?.slice(1) : value;
       const relative =
-        owner.className === "GDExtension" && ["libraries", "icons"].includes(owner.path);
+        (owner.className === "GDExtension" && ["libraries", "icons"].includes(owner.path)) ||
+        (owner.className === "EditorPlugin" &&
+          owner.path === "plugin" &&
+          propertyName === "script");
       if (
         !match ||
         !path ||

@@ -142,5 +142,16 @@ extendedFormatSources.push({
     'linux.debug={"res://bin/helper.so": ""}',
   ],
 });
+extendedFormatSources.push({
+  path: "Game/addons/inspector/plugin.cfg",
+  source: [
+    "[plugin]",
+    'name="Scene Tools"',
+    'description="Inspect and compare scene settings"',
+    'author="Example"',
+    'version="1.2"',
+    'script="plugin.gd"',
+  ],
+});
 export const extendedFormatPatches = () =>
   extendedFormatSources.map(({ path, source }) => unityPatch(path, source));
