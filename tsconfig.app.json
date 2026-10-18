@@ -27,5 +27,12 @@
       "@/*": ["./popup/src/*"]
     }
   },
-  "include": ["popup/src", "content_script", "shared", "ui", "tests/browser.tsx"]
+  "include": [
+    "popup/src",
+    "content_script",
+    "shared",
+    "ui",
+    "tests/browser.tsx",
+    "tests/formats.ts"
+  ]
 }

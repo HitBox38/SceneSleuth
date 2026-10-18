@@ -1,3 +1,4 @@
+import { extendedFormatSources } from "./fixtures/extended-formats.ts";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { reviewDiff } from "../content_script/scripts/diffParser.ts";
@@ -194,5 +195,34 @@ test("Unity override controllers retain base-controller and original/replacement
       90,
     ).changes[0].kind,
     "unknown",
+  );
+});
+
+test("Unity animation clips expose tracks, exact keys, events and looping settings", () => {
+  const example = extendedFormatSources.find((f) => f.path.endsWith(".anim"))!;
+  const file = reviewDiff(unityPatch(example.path, example.source))[0];
+  assert.equal(reviewViewLabel(file), "Animation");
+  assert.deepEqual(file.diagnostics, []);
+  const tracks = file.changes[0].properties.find((p) => p.name === "m_FloatCurves")!;
+  assert.match(tracks.after!, /attribute: m_LocalPosition.x/);
+  assert.match(tracks.after!, /time: 1\n        value: 2/);
+  assert.equal(unityStructuredValue(tracks.after!)?.kind, "array");
+  assert.deepEqual(
+    propertyGroups(file.changes[0]).map((g) => g.label),
+    ["Properties", "Tracks and keyframes", "Clip settings", "Events"],
+  );
+  const changed = modified(
+    example.path,
+    ["--- !u!74 &7400000", "AnimationClip:", "  m_SampleRate: 30"],
+    ["--- !u!74 &7400000", "AnimationClip:", "  m_SampleRate: 60"],
+  );
+  assert.equal(changed.changes[0].properties[0].before, "30");
+  assert.equal(changed.changes[0].properties[0].after, "60");
+  const partial = modified(example.path, ["        value: 2"], ["        value: 3"], 60);
+  assert.equal(partial.changes[0].kind, "unknown");
+  assert.equal(partial.changes[0].properties[0].afterIncomplete, true);
+  assert.equal(
+    reviewDiff(unityPatch(example.path, example.source, true))[0].changes[0].operation,
+    "removed",
   );
 });

@@ -54,6 +54,21 @@ function propertyCategory(change: SectionChange, name: string): string {
   )
     return "Transform";
   if (change.kind === "unity_object") {
+    if (change.className === "AnimationClip") {
+      if (
+        /^m_(?:RotationCurves|CompressedRotationCurves|EulerCurves|PositionCurves|ScaleCurves|FloatCurves|PPtrCurves|EditorCurves|EulerEditorCurves)$/.test(
+          name,
+        )
+      )
+        return "Tracks and keyframes";
+      if (name === "m_Events") return "Events";
+      if (
+        /^m_(?:AnimationClipSettings|SampleRate|WrapMode|Legacy|Compressed|UseHighQualityCurve)$/.test(
+          name,
+        )
+      )
+        return "Clip settings";
+    }
     if (change.className === "AnimatorOverrideController" && name === "m_Clips")
       return "Clip replacements";
     if (change.className === "AnimatorController") {

@@ -2,7 +2,7 @@
 
 ## Purpose and product boundaries
 
-SceneSleuth helps Godot and Unity developers understand serialized scene and asset changes in GitHub pull requests. Godot supports `.tscn`, `.tres`, and `.godot`; Unity supports text `.unity`, `.prefab`, `.asset`, `.mat`, and `.meta` files. The intended experience is a structured review inside the browser. Read [README.md](README.md) for the current state and known limitations before promising behavior.
+SceneSleuth helps Godot and Unity developers understand serialized scene and asset changes in GitHub pull requests. Supported formats are listed in README.md and centralized in `shared/fileTypes.ts`. The intended experience is a structured review inside the browser. Read [README.md](README.md) for the current state and known limitations before promising behavior.
 
 This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tailwind CSS, and React Aria components. Oxlint and Oxfmt handle linting and formatting. There is no backend. Focused regression tests use Node’s built-in test runner and TypeScript stripping. Keep changes focused on this architecture unless the task calls for changing it.
 

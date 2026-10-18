@@ -10,7 +10,8 @@ export type ReviewFileKind =
   | "unity_material"
   | "unity_metadata"
   | "unity_controller"
-  | "unity_override";
+  | "unity_override"
+  | "unity_animation";
 
 export function supportedFileKind(path?: string): ReviewFileKind | undefined {
   if (path?.endsWith(".tscn")) return "scene";
@@ -23,6 +24,7 @@ export function supportedFileKind(path?: string): ReviewFileKind | undefined {
   if (path?.endsWith(".meta")) return "unity_metadata";
   if (path?.endsWith(".controller")) return "unity_controller";
   if (path?.endsWith(".overrideController")) return "unity_override";
+  if (path?.endsWith(".anim")) return "unity_animation";
 }
 
 export function reviewViewLabel(file: Pick<SceneReview, "filePath" | "previousPath">): string {
@@ -37,6 +39,7 @@ export function reviewViewLabel(file: Pick<SceneReview, "filePath" | "previousPa
     unity_metadata: "Import settings",
     unity_controller: "Controller",
     unity_override: "Overrides",
+    unity_animation: "Animation",
   }[reviewFileKind(file)];
 }
 
