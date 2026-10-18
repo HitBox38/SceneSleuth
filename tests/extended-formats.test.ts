@@ -159,3 +159,40 @@ test("Unity controllers show states, transitions, parameters and local motion re
     "unknown",
   );
 });
+
+test("Unity override controllers retain base-controller and original/replacement clip references", () => {
+  const source = [
+    "--- !u!221 &22100000",
+    "AnimatorOverrideController:",
+    "  m_Name: Armored movement",
+    `  m_Controller: {fileID: 9100000, guid: ${imageGuid}, type: 2}`,
+    "  m_Clips:",
+    "  - m_OriginalClip: {fileID: 7400000, guid: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, type: 2}",
+    "    m_OverrideClip: {fileID: 7400000, guid: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, type: 2}",
+  ];
+  const file = reviewDiff(unityPatch("Assets/Armored.overrideController", source))[0];
+  assert.equal(reviewViewLabel(file), "Overrides");
+  assert.deepEqual(file.diagnostics, []);
+  const clips = file.changes[0].properties.find((p) => p.name === "m_Clips")!;
+  assert.deepEqual(
+    clips.afterReferences?.map((r) => r.unityGuid),
+    ["a".repeat(32), "b".repeat(32)],
+  );
+  assert.equal(unityStructuredValue(clips.after!)?.kind, "array");
+  assert.ok(propertyGroups(file.changes[0]).some((g) => g.label === "Clip replacements"));
+  const before = source.slice(0, 4);
+  const after = [...before];
+  after[3] = "  m_Controller: {fileID: 0}";
+  const changed = modified("Assets/Armored.overrideController", before, after);
+  assert.equal(changed.changes[0].properties[0].beforeReferences![0].unityGuid, imageGuid);
+  assert.equal(changed.changes[0].properties[0].afterReferences![0].label, "None");
+  assert.equal(
+    modified(
+      "Assets/Armored.overrideController",
+      ["    m_OverrideClip: {fileID: 0}"],
+      ["    m_OverrideClip: {fileID: 123}"],
+      90,
+    ).changes[0].kind,
+    "unknown",
+  );
+});

@@ -54,6 +54,8 @@ function propertyCategory(change: SectionChange, name: string): string {
   )
     return "Transform";
   if (change.kind === "unity_object") {
+    if (change.className === "AnimatorOverrideController" && name === "m_Clips")
+      return "Clip replacements";
     if (change.className === "AnimatorController") {
       if (name === "m_AnimatorParameters") return "Parameters";
       if (name === "m_AnimatorLayers") return "Layers";
