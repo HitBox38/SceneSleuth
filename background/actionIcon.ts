@@ -5,7 +5,10 @@ interface IconActions {
   setIcon: (details: { tabId: number; path: Record<string, string> }) => Promise<void>;
   setTitle: (details: { tabId: number; title: string }) => Promise<void>;
 }
-export function createActionIconController(action: IconActions) {
+export function createActionIconController(
+  action: IconActions,
+  assetUrl: (path: string) => string,
+) {
   const tabs = new Map<
     number,
     { desired: EngineTheme; applied?: EngineTheme; pending?: Promise<void>; closed: boolean }
@@ -25,7 +28,11 @@ export function createActionIconController(action: IconActions) {
       .then(async () => {
         while (!current.closed && current.applied !== current.desired) {
           const next = current.desired;
-          await action.setIcon({ tabId, path: actionIconPaths(next) });
+          // setIcon resolves paths against the calling worker/document, which may be nested.
+          const path = Object.fromEntries(
+            Object.entries(actionIconPaths(next)).map(([size, file]) => [size, assetUrl(file)]),
+          );
+          await action.setIcon({ tabId, path });
           if (current.closed) return;
           await action.setTitle({ tabId, title: actionIconTitle(next) });
           current.applied = next;

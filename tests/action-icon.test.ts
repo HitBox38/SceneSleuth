@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createActionIconController } from "../background/actionIcon.ts";
 import { iconThemeRequest } from "../shared/iconProtocol.ts";
 import {
@@ -11,6 +11,34 @@ import {
   sceneEyeElements,
 } from "../shared/sceneEye.ts";
 const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
+const assetUrl = (path: string) => new URL(path, "moz-extension://example/").href;
+
+test("toolbar icons resolve from the extension root when the worker is inside assets", async () => {
+  const root = "chrome-extension://example/";
+  const workerUrl = `${root}assets/background.js`;
+  const applied: number[] = [];
+  const controller = createActionIconController(
+    {
+      async setIcon({ tabId, path }) {
+        for (const size of iconSizes) {
+          // Chrome's service-worker binding fetches each path relative to the worker URL.
+          const url = new URL(path[size], workerUrl);
+          assert.equal(
+            url.href,
+            `${root}icons/${tabId === 1 ? "godot" : "unity"}/icon-${size}.png`,
+          );
+          assert.ok(existsSync(`public${url.pathname}`), `Missing packaged icon: ${url.pathname}`);
+        }
+        applied.push(tabId);
+      },
+      async setTitle() {},
+    },
+    (path: string) => new URL(path, root).href,
+  );
+  await controller.update(1, "godot");
+  await controller.update(2, "unity");
+  assert.deepEqual(applied, [1, 2]);
+});
 
 test("Scene Eye exports share geometry and provide complete static SVG/PNG palettes", () => {
   const shape = (theme: (typeof iconThemes)[number]) =>
@@ -39,22 +67,31 @@ test("Scene Eye exports share geometry and provide complete static SVG/PNG palet
 test("toolbar themes are independent per tab and duplicate updates do not set icons again", async () => {
   const icons: { tabId: number; path: Record<string, string> }[] = [],
     titles: { tabId: number; title: string }[] = [];
-  const controller = createActionIconController({
-    async setIcon(details) {
-      icons.push(details);
+  const controller = createActionIconController(
+    {
+      async setIcon(details) {
+        icons.push(details);
+      },
+      async setTitle(details) {
+        titles.push(details);
+      },
     },
-    async setTitle(details) {
-      titles.push(details);
-    },
-  });
+    assetUrl,
+  );
   await Promise.all([controller.update(1, "unity"), controller.update(2, "godot")]);
   await controller.update(1, "unity");
   assert.equal(icons.length, 2);
-  assert.equal(icons.find((item) => item.tabId === 1)!.path[16], "icons/unity/icon-16.png");
-  assert.equal(icons.find((item) => item.tabId === 2)!.path[16], "icons/godot/icon-16.png");
+  assert.equal(
+    icons.find((item) => item.tabId === 1)!.path[16],
+    assetUrl("icons/unity/icon-16.png"),
+  );
+  assert.equal(
+    icons.find((item) => item.tabId === 2)!.path[16],
+    assetUrl("icons/godot/icon-16.png"),
+  );
   assert.equal(titles[0].title, "SceneSleuth · Unity review");
   await controller.update(1, "github");
-  assert.equal(icons.at(-1)!.path[16], "icons/github/icon-16.png");
+  assert.equal(icons.at(-1)!.path[16], assetUrl("icons/github/icon-16.png"));
   assert.equal(titles.at(-1)!.title, "SceneSleuth");
   controller.remove(1);
   await controller.update(1, "unity");
@@ -67,31 +104,40 @@ test("a newer navigation reset wins over an in-flight engine icon", async () => 
   const first = new Promise<void>((resolve) => {
     release = resolve;
   });
-  const controller = createActionIconController({
-    async setIcon(details) {
-      calls.push(details.path[16]);
-      if (calls.length === 1) await first;
+  const controller = createActionIconController(
+    {
+      async setIcon(details) {
+        calls.push(details.path[16]);
+        if (calls.length === 1) await first;
+      },
+      async setTitle() {},
     },
-    async setTitle() {},
-  });
+    assetUrl,
+  );
   const previous = controller.update(1, "unity");
   await tick();
   const reset = controller.update(1, "github");
   release();
   await Promise.all([previous, reset]);
-  assert.deepEqual(calls, ["icons/unity/icon-16.png", "icons/github/icon-16.png"]);
+  assert.deepEqual(calls, [
+    assetUrl("icons/unity/icon-16.png"),
+    assetUrl("icons/github/icon-16.png"),
+  ]);
 });
 
 test("closed tabs cancel queued work, and failed updates can be retried", async () => {
   const calls: string[] = [];
   let fail = true;
-  const controller = createActionIconController({
-    async setIcon(details) {
-      calls.push(details.path[16]);
-      if (fail) throw new Error("Unavailable");
+  const controller = createActionIconController(
+    {
+      async setIcon(details) {
+        calls.push(details.path[16]);
+        if (fail) throw new Error("Unavailable");
+      },
+      async setTitle() {},
     },
-    async setTitle() {},
-  });
+    assetUrl,
+  );
   await assert.rejects(controller.update(1, "godot"));
   fail = false;
   await controller.update(1, "godot");

@@ -3,14 +3,17 @@ import { iconThemeRequest } from "../shared/iconProtocol.ts";
 import { reviewContext } from "../shared/protocol.ts";
 
 const api = typeof browser !== "undefined" ? browser : chrome;
-const icons = createActionIconController({
-  async setIcon(details) {
-    await api.action.setIcon(details);
+const icons = createActionIconController(
+  {
+    async setIcon(details) {
+      await api.action.setIcon(details);
+    },
+    async setTitle(details) {
+      await api.action.setTitle(details);
+    },
   },
-  async setTitle(details) {
-    await api.action.setTitle(details);
-  },
-});
+  (path) => api.runtime.getURL(path),
+);
 api.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   const request = iconThemeRequest(message, sender, api.runtime.id);
   if (!request) return;
