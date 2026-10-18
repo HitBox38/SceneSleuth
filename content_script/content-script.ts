@@ -2,6 +2,7 @@ import { observeGithubDiffs, readGithubReview } from "./scripts/githubDom.ts";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
 import { isReviewRequest, reviewContext } from "../shared/protocol.ts";
 import type { ReviewSnapshot, SceneReview, ReferenceNavigation } from "../shared/model.ts";
+import type { GithubParseCache } from "./scripts/githubReview.ts";
 
 function start() {
   if (document.documentElement.hasAttribute("data-scenesleuth-active")) return;
@@ -18,6 +19,7 @@ function start() {
   let signature = "";
   let deadline = Date.now() + 10000;
   const cached = new Map<string, SceneReview>();
+  const parseCache: GithubParseCache = { files: new Map() };
   let cachedNavigation: ReferenceNavigation | undefined;
   const runtime =
     typeof browser !== "undefined"
@@ -38,6 +40,7 @@ function start() {
   }
   function refresh() {
     cached.clear();
+    parseCache.files.clear();
     cachedNavigation = undefined;
     signature = "";
     deadline = Date.now() + 10000;
@@ -50,6 +53,8 @@ function start() {
       contextKey = pageKey;
       comparisonKey = undefined;
       cached.clear();
+      parseCache.files.clear();
+      parseCache.key = undefined;
       cachedNavigation = undefined;
       signature = "";
       deadline = Date.now() + 10000;
@@ -60,7 +65,7 @@ function start() {
         title: "SceneSleuth",
         status: "error",
         files: [],
-        error: "Open a GitHub pull request to review its Godot files.",
+        error: "Open a GitHub pull request to review its Godot or Unity files.",
       };
       inlineReviews.update(snapshot);
       return;
@@ -71,14 +76,15 @@ function start() {
         title: context.title,
         status: "error",
         files: [],
-        error: "Open this pull request's Files changed tab to read its Godot diffs.",
+        error:
+          "Open this pull request's Files changed tab to read its supported scene and asset diffs.",
         changesUrl: context.changesUrl,
       };
       publish();
       return;
     }
     try {
-      const data = readGithubReview(document, context.changesUrl);
+      const data = readGithubReview(document, context.changesUrl, parseCache);
       if (!data) {
         snapshot = {
           reviewKey: context.key,
@@ -107,7 +113,8 @@ function start() {
           const targets = new Map(
             (data.partialListing ? cachedNavigation?.files : [])?.map((file) => [file.path, file]),
           );
-          for (const target of data.navigation.files) targets.set(target.path, target);
+          for (const target of data.navigation.files)
+            targets.set(target.path, { ...targets.get(target.path), ...target });
           cachedNavigation = { ...data.navigation, files: [...targets.values()] };
         }
         snapshot = {

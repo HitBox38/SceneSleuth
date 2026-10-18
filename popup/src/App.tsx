@@ -5,7 +5,7 @@ import { LinkButton } from "./components/ui/button.tsx";
 import { isReviewSnapshot, reviewContext } from "../../shared/protocol.ts";
 import type { ReviewSnapshot } from "../../shared/model.ts";
 import { sceneStats } from "../../ui/SceneReview.tsx";
-import { reviewFileKind } from "../../shared/fileTypes.ts";
+import { reviewFileKind, reviewEngine, reviewEngines } from "../../shared/fileTypes.ts";
 import "../../ui/review.css";
 
 type State =
@@ -77,7 +77,7 @@ export default function App() {
         if (!tab?.id || !tab.url || !reviewContext(tab.url)) {
           setState({
             kind: "unsupported",
-            message: "Open a GitHub pull request to see its Godot scene changes.",
+            message: "Open a GitHub pull request to see its Godot or Unity changes.",
           });
           return;
         }
@@ -125,7 +125,11 @@ export default function App() {
   const snapshot = state.kind === "review" ? state.snapshot : undefined;
   const stats = snapshot ? sceneStats(snapshot.files) : undefined;
   const hasScenes = snapshot?.files.some((file) => reviewFileKind(file) === "scene");
-  const hasResources = snapshot?.files.some((file) => reviewFileKind(file) !== "project");
+  const hasResources = snapshot?.files.some(
+    (file) => reviewEngine(file) === "godot" && reviewFileKind(file) !== "project",
+  );
+  const hasUnity = snapshot?.files.some((file) => reviewEngine(file) === "unity");
+  const engines = reviewEngines(snapshot?.files ?? []);
   const hasProjects = snapshot?.files.some((file) => reviewFileKind(file) === "project");
   return (
     <main className="ss ss-popup">
@@ -146,7 +150,7 @@ export default function App() {
         )}
         {state.kind === "unsupported" && (
           <>
-            <h1>Ready for a Godot review</h1>
+            <h1>Ready for Godot and Unity reviews</h1>
             <p className="ss-muted">{state.message}</p>
           </>
         )}
@@ -165,7 +169,7 @@ export default function App() {
           </div>
         )}
         {snapshot?.status === "loading" && (
-          <output className="ss-muted">Reading Godot changes…</output>
+          <output className="ss-muted">Reading scene and asset changes…</output>
         )}
         {snapshot?.status === "ready" && (
           <>
@@ -173,12 +177,12 @@ export default function App() {
             {snapshot.files.length ? (
               <>
                 <p className="ss-muted" style={{ marginBottom: 16 }}>
-                  {snapshot.files.length} {snapshot.partialListing ? "loaded Godot" : "Godot"}{" "}
+                  {snapshot.files.length} {snapshot.partialListing ? `loaded ${engines}` : engines}{" "}
                   {snapshot.files.length === 1 ? "file" : "files"} changed
                 </p>
                 {snapshot.partialListing && (
                   <p className="ss-muted" style={{ marginBottom: 16 }}>
-                    Showing Godot files loaded by GitHub. More files may appear as you browse.
+                    Showing supported files loaded by GitHub. More files may appear as you browse.
                   </p>
                 )}
                 <div className="ss-stats">
@@ -196,6 +200,19 @@ export default function App() {
                     <span>
                       <strong>{stats?.signals}</strong> signals
                     </span>
+                  )}
+                  {hasUnity && (
+                    <>
+                      <span>
+                        <strong>{stats?.gameObjects}</strong> GameObjects
+                      </span>
+                      <span>
+                        <strong>{stats?.components}</strong> components
+                      </span>
+                      <span>
+                        <strong>{stats?.unityObjects}</strong> other objects
+                      </span>
+                    </>
                   )}
                   {hasProjects && (
                     <span>
@@ -219,14 +236,14 @@ export default function App() {
                     void openReview();
                   }}
                 >
-                  Go to Godot changes <ArrowUpRight size={14} />
+                  Go to {engines} changes <ArrowUpRight size={14} />
                 </Button>
               </>
             ) : (
               <p className="ss-muted">
                 {snapshot.partialListing
-                  ? "No loaded .tscn, .tres, or .godot diffs found. GitHub may load more files as you browse."
-                  : "No .tscn, .tres, or .godot files changed in this pull request."}
+                  ? "No loaded Godot or Unity diffs found. GitHub may load more files as you browse."
+                  : "No supported Godot or Unity files changed in this pull request."}
               </p>
             )}
           </>

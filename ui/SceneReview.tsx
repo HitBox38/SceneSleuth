@@ -37,14 +37,22 @@ import type {
   PropertyChange,
 } from "../shared/model.ts";
 import { inlineFileContents } from "./fileContents.ts";
-import { referenceLink, referenceImageSource } from "../shared/referenceLinks.ts";
+import {
+  referenceLink,
+  referenceImageSource,
+  referenceFilePath,
+} from "../shared/referenceLinks.ts";
 import { ReferenceFileLink } from "./ReferenceFileLink.tsx";
 import { inspectorValue, propertyGroups, propertyLabel } from "./propertyPresentation.ts";
-import { reviewFileKind } from "../shared/fileTypes.ts";
+import { reviewFileKind, reviewEngine, reviewEngines } from "../shared/fileTypes.ts";
 import { StructuredValue } from "./StructuredValue.tsx";
+import { unityInspectorValue } from "./unityPresentation.ts";
 
 const labels: Record<SectionKind, string> = {
   node: "Node",
+  gameobject: "GameObject",
+  component: "Component",
+  unity_object: "Unity object",
   ext_resource: "External resource",
   sub_resource: "Resource",
   resource_header: "Resource file",
@@ -56,6 +64,9 @@ const labels: Record<SectionKind, string> = {
 };
 const kindIcons = {
   node: Box,
+  gameobject: Box,
+  component: Shapes,
+  unity_object: Diamond,
   ext_resource: Diamond,
   sub_resource: Diamond,
   resource_header: FileBox,
@@ -103,6 +114,9 @@ const kindGroups = {
   resource: "Resources",
   connection: "Signals",
   project: "Project settings",
+  gameobject: "GameObjects",
+  component: "Components",
+  unity_object: "Other objects",
 } as const;
 type Filter = keyof typeof kindGroups;
 function matchesKind(change: SectionChange, filter: Filter) {
@@ -129,6 +143,9 @@ export function sceneStats(files: SceneReview[]) {
           sum + file.changes.reduce((count, change) => count + change.properties.length, 0),
         0,
       ),
+    gameObjects: changes.filter((item) => item.kind === "gameobject").length,
+    components: changes.filter((item) => item.kind === "component").length,
+    unityObjects: changes.filter((item) => item.kind === "unity_object").length,
   };
 }
 function LiteralValue({
@@ -145,10 +162,15 @@ function LiteralValue({
   side: "before" | "after";
   navigation?: ReferenceNavigation;
   compact?: boolean;
+  incomplete?: boolean;
 }) {
   if (raw === undefined) return "—";
   if (!references?.length) {
-    const value = compact ? inspectorValue(raw) : undefined;
+    const value = compact
+      ? reviewEngine(file) === "unity"
+        ? unityInspectorValue(raw)
+        : inspectorValue(raw)
+      : undefined;
     if (!value) return raw;
     return (
       <span className={`ss-inspector-value ss-value-${value.kind}`} title={raw}>
@@ -176,6 +198,13 @@ function LiteralValue({
       {references.map((reference, index) => {
         const link = referenceLink(reference, file, side, navigation);
         const imageSrc = referenceImageSource(reference, file, side, navigation);
+        const unityPath =
+          reference.unityGuid && navigation
+            ? referenceFilePath(reference, file, side, navigation)
+            : undefined;
+        const label = reference.unityGuid
+          ? unityPath?.split("/").pop() || raw.slice(reference.start, reference.end)
+          : reference.label;
         const title = `${reference.className ? reference.className + " · " : ""}${reference.target}\n${raw.slice(reference.start, reference.end)}`;
         return (
           <span key={reference.start}>
@@ -184,15 +213,15 @@ function LiteralValue({
               <ReferenceFileLink
                 href={link.href}
                 inReview={link.inReview}
-                label={reference.label}
+                label={label}
                 side={side}
                 title={`${link.inReview ? "Jump to PR diff" : "Open repository file"}\n${title}`}
                 imageSrc={imageSrc}
-                path={reference.target}
+                path={unityPath || reference.target}
               />
             ) : (
               <span className="ss-reference" title={title}>
-                {reference.label}
+                {label}
               </span>
             )}
           </span>
@@ -205,9 +234,12 @@ function LiteralValue({
 function ReferenceValue(props: Parameters<typeof LiteralValue>[0]) {
   if (props.raw === undefined) return "—";
   const raw = props.raw;
+  const unity = reviewEngine(props.file) === "unity";
+  if (props.incomplete || (unity && unityInspectorValue(raw))) return <LiteralValue {...props} />;
   return (
     <StructuredValue
       raw={raw}
+      unity={unity}
       renderLiteral={({ start, end }, keyLabel) => {
         const references = props.references
           ?.filter((reference) => reference.start >= start && reference.end <= end)
@@ -255,7 +287,11 @@ function PropertyRows({
   return properties.map((property, index) => (
     <div className={`ss-property ss-${property.operation}`} key={`${property.name}:${index}`}>
       <span className="ss-property-name" title={property.name}>
-        <span>{compact ? propertyLabel(property.name) : property.name.replace(/^@/, "")}</span>
+        <span>
+          {compact
+            ? propertyLabel(property.name, reviewEngine(file) === "unity")
+            : property.name.replace(/^@/, "")}
+        </span>
         <small title={property.operation}>
           {compact ? (
             <>
@@ -302,6 +338,7 @@ function PropertyRows({
             side={side}
             navigation={navigation}
             compact={compact}
+            incomplete={property[`${side}Incomplete`]}
           />
         </div>
       ))}
@@ -346,7 +383,10 @@ function ChangedSection({
         change.kind === "node" ||
         change.kind === "unknown" ||
         change.kind === "project" ||
-        change.kind === "resource"
+        change.kind === "resource" ||
+        change.kind === "gameobject" ||
+        change.kind === "component" ||
+        change.kind === "unity_object"
       }
     >
       <summary>
@@ -443,13 +483,26 @@ export function FileReview({
 }) {
   const project = reviewFileKind(file) === "project";
   const resource = reviewFileKind(file) === "resource";
-  const subject = project ? "project settings" : resource ? "resource" : "scene";
+  const unity = reviewEngine(file) === "unity";
+  const subject = unity
+    ? `Unity ${reviewFileKind(file).slice(6)}`
+    : project
+      ? "project settings"
+      : resource
+        ? "resource"
+        : "scene";
   const changes = file.changes.filter(
     (change) =>
       matchesKind(change, filter) &&
-      `${change.label} ${change.path} ${change.className} ${change.properties.map((p) => `${p.name} ${propertyLabel(p.name)} ${p.before ?? ""} ${p.after ?? ""} ${[...(p.beforeReferences ?? []), ...(p.afterReferences ?? [])].map((reference) => `${reference.label} ${reference.target}`).join(" ")}`).join(" ")}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
+      (!search ||
+        `${change.label} ${change.path} ${change.className} ${change.properties
+          .map(
+            (p) =>
+              `${p.name} ${propertyLabel(p.name, unity)} ${p.before ?? ""} ${p.after ?? ""} ${(["before", "after"] as const).flatMap((side) => (p[`${side}References`] ?? []).map((reference) => `${reference.label} ${reference.target} ${navigation ? (referenceFilePath(reference, file, side, navigation) ?? "") : ""}`)).join(" ")}`,
+          )
+          .join(" ")}`
+          .toLowerCase()
+          .includes(search.toLowerCase())),
   );
   return (
     <article
@@ -573,6 +626,7 @@ export function InlineSceneReview({
   const contents = inlineFileContents(file);
   const project = reviewFileKind(file) === "project";
   const resource = reviewFileKind(file) === "resource";
+  const unity = reviewEngine(file) === "unity";
   if (original) return null;
   return (
     <section className="ss ss-inline" aria-label={`SceneSleuth review for ${file.filePath}`}>
@@ -580,7 +634,11 @@ export function InlineSceneReview({
         {!project && !resource && (
           <div className="ss-filters" aria-label="Filter scene changes">
             {Object.entries(kindGroups)
-              .filter(([key]) => key !== "project")
+              .filter(([key]) =>
+                unity
+                  ? ["all", "gameobject", "component", "unity_object"].includes(key)
+                  : !["project", "gameobject", "component", "unity_object"].includes(key),
+              )
               .map(([key, label]) => (
                 <Button
                   key={key}
@@ -597,17 +655,25 @@ export function InlineSceneReview({
         <label className="ss-search">
           <Search size={14} />
           <span className="ss-sr-only">
-            {project
-              ? "Search project settings"
-              : resource
-                ? "Search resources and properties"
-                : "Search nodes and properties"}
+            {unity
+              ? "Search Unity objects and properties"
+              : project
+                ? "Search project settings"
+                : resource
+                  ? "Search resources and properties"
+                  : "Search nodes and properties"}
           </span>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={
-              project ? "Search project settings…" : resource ? "Search resource…" : "Search scene…"
+              unity
+                ? "Search Unity…"
+                : project
+                  ? "Search project settings…"
+                  : resource
+                    ? "Search resource…"
+                    : "Search scene…"
             }
           />
         </label>
@@ -643,9 +709,13 @@ export function Inspector({
   const [search, setSearch] = useState("");
   const stats = sceneStats(snapshot.files);
   const hasScenes = snapshot.files.some((file) => reviewFileKind(file) === "scene");
-  const hasResources = snapshot.files.some((file) => reviewFileKind(file) !== "project");
+  const hasResources = snapshot.files.some(
+    (file) => reviewEngine(file) === "godot" && reviewFileKind(file) !== "project",
+  );
+  const hasUnity = snapshot.files.some((file) => reviewEngine(file) === "unity");
+  const engines = reviewEngines(snapshot.files);
   return (
-    <section className="ss ss-inspector" aria-label="SceneSleuth Godot review">
+    <section className="ss ss-inspector" aria-label={`SceneSleuth ${engines} review`}>
       <header className="ss-header">
         <div className="ss-brand">
           <span className="ss-logo">
@@ -681,11 +751,11 @@ export function Inspector({
         </div>
       </header>
       <div className="ss-review-title">
-        <span className="ss-eyebrow">GODOT REVIEW</span>
+        <span className="ss-eyebrow">{engines.toUpperCase()} REVIEW</span>
         <p>{snapshot.title}</p>
       </div>
       {snapshot.status === "loading" && (
-        <output className="ss-empty">Reading Godot changes…</output>
+        <output className="ss-empty">Reading scene and asset changes…</output>
       )}
       {snapshot.status === "error" && (
         <div className="ss-empty" role="alert">
@@ -726,6 +796,19 @@ export function Inspector({
                   <strong>{stats.signals}</strong> signals
                 </span>
               )}
+              {hasUnity && (
+                <>
+                  <span>
+                    <strong>{stats.gameObjects}</strong> GameObjects
+                  </span>
+                  <span>
+                    <strong>{stats.components}</strong> components
+                  </span>
+                  <span>
+                    <strong>{stats.unityObjects}</strong> other objects
+                  </span>
+                </>
+              )}
               {snapshot.files.some((file) => reviewFileKind(file) === "project") && (
                 <span>
                   <strong>{stats.settings}</strong> settings
@@ -734,17 +817,22 @@ export function Inspector({
             </div>
             <div className="ss-toolbar">
               <div className="ss-filters" aria-label="Filter scene changes">
-                {Object.entries(kindGroups).map(([key, label]) => (
-                  <Button
-                    key={key}
-                    className="ss-filter"
-                    variant="ghost"
-                    onPress={() => setFilter(key as Filter)}
-                    aria-pressed={filter === key}
-                  >
-                    {label}
-                  </Button>
-                ))}
+                {Object.entries(kindGroups)
+                  .filter(
+                    ([key]) =>
+                      hasUnity || !["gameobject", "component", "unity_object"].includes(key),
+                  )
+                  .map(([key, label]) => (
+                    <Button
+                      key={key}
+                      className="ss-filter"
+                      variant="ghost"
+                      onPress={() => setFilter(key as Filter)}
+                      aria-pressed={filter === key}
+                    >
+                      {label}
+                    </Button>
+                  ))}
               </div>
               <label className="ss-search">
                 <Search size={14} />
@@ -771,8 +859,8 @@ export function Inspector({
         ) : (
           <div className="ss-empty">
             <Layers size={28} />
-            <h2>No Godot files changed</h2>
-            <p>This pull request has no .tscn, .tres, or .godot file changes.</p>
+            <h2>No supported files changed</h2>
+            <p>This pull request has no supported Godot or Unity file changes.</p>
           </div>
         ))}
       <footer className="ss-footer">

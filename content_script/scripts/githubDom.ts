@@ -1,8 +1,9 @@
 import type { SceneReview } from "../../shared/model.ts";
-import { reviewDiff } from "./diffParser.ts";
-import { embeddedRouteMatches, header, reviewGithubData } from "./githubReview.ts";
+import { embeddedRouteMatches, header, reviewGithubData, cachedReview } from "./githubReview.ts";
 import { navigationContext } from "../../shared/referenceLinks.ts";
-import { godotFileKind } from "../../shared/fileTypes.ts";
+import { unityMetaGuids } from "../../shared/unityMeta.ts";
+import { supportedFileKind } from "../../shared/fileTypes.ts";
+import type { GithubParseCache } from "./githubReview.ts";
 
 export function observeGithubDiffs(root: Node, onChange: () => void) {
   const observer = new MutationObserver((records) => {
@@ -27,11 +28,7 @@ export function observeGithubDiffs(root: Node, onChange: () => void) {
   return observer;
 }
 
-// Modern GitHub renders additional files on demand. Read those tables without
-// clicking controls, changing review preferences, or requesting private API tokens.
-export function reviewGithubTable(table: Element, previous?: SceneReview): SceneReview | undefined {
-  const path = table.getAttribute("aria-label")?.replace(/^Diff for: /, "");
-  if (!path || (!godotFileKind(path) && !godotFileKind(previous?.previousPath))) return;
+export function githubTableLines(table: Element): string[] {
   const lines: string[] = [];
   for (const row of table.querySelectorAll("tr")) {
     const hunk = row.querySelector(".diff-hunk-cell");
@@ -54,10 +51,25 @@ export function reviewGithubTable(table: Element, previous?: SceneReview): Scene
       );
     }
   }
+  return lines;
+}
+
+// Modern GitHub renders additional files on demand. Read those tables without
+// clicking controls, changing review preferences, or requesting private API tokens.
+export function reviewGithubTable(
+  table: Element,
+  previous?: SceneReview,
+  cache?: GithubParseCache,
+): SceneReview | undefined {
+  const path = table.getAttribute("aria-label")?.replace(/^Diff for: /, "");
+  if (!path || (!supportedFileKind(path) && !supportedFileKind(previous?.previousPath))) return;
+  const lines = githubTableLines(table);
   if (!lines.length) return;
-  const review = reviewDiff(
+  const review = cachedReview(
     header(path, previous?.previousPath ?? path, previous?.status ?? "modified") + lines.join("\n"),
-  )[0];
+    JSON.stringify(["dom", path]),
+    cache,
+  );
   if (review) {
     review.reviewUrl = previous?.reviewUrl;
     review.status = previous?.status ?? review.status;
@@ -65,7 +77,7 @@ export function reviewGithubTable(table: Element, previous?: SceneReview): Scene
   return review;
 }
 
-export function readGithubReview(document: Document, changesUrl: string) {
+export function readGithubReview(document: Document, changesUrl: string, cache?: GithubParseCache) {
   let data: ReturnType<typeof reviewGithubData>;
   for (const script of document.querySelectorAll('script[data-target="react-app.embeddedData"]')) {
     if (
@@ -78,7 +90,7 @@ export function readGithubReview(document: Document, changesUrl: string) {
         "This GitHub review exceeds the current 8 MB page-data limit. Use GitHub's file filters to narrow the review, then refresh SceneSleuth.",
       );
     try {
-      data = reviewGithubData(JSON.parse(script.textContent), changesUrl);
+      data = reviewGithubData(JSON.parse(script.textContent), changesUrl, cache);
       if (data) break;
     } catch {
       /* A loading page may not yet have a complete data payload. */
@@ -86,6 +98,10 @@ export function readGithubReview(document: Document, changesUrl: string) {
   }
   const tables = document.querySelectorAll('table[aria-label^="Diff for: "]');
   if (!data && !tables.length) return;
+  if (!data && cache && cache.key !== `rendered:${changesUrl}`) {
+    cache.files.clear();
+    cache.key = `rendered:${changesUrl}`;
+  }
   const files = new Map(data?.files.map((file) => [file.filePath, file]));
   const navigation = data?.navigation ?? navigationContext(changesUrl);
   const targets = new Map(navigation?.files.map((file) => [file.path, file]));
@@ -105,7 +121,7 @@ export function readGithubReview(document: Document, changesUrl: string) {
     const previous = files.get(path);
     // Page tables can be virtualized. Prefer the embedded patch unless the table
     // contains more source lines (for example after expanding context).
-    const review = reviewGithubTable(table, previous);
+    const review = reviewGithubTable(table, previous, cache);
     const anchor = table.getAttribute("data-diff-anchor");
     if (path && anchor && !targets.has(path))
       targets.set(path, {
@@ -113,6 +129,9 @@ export function readGithubReview(document: Document, changesUrl: string) {
         status: "modified",
         reviewUrl: `${changesUrl}#${encodeURIComponent(anchor)}`,
       });
+    if (path.endsWith(".meta") && targets.has(path)) {
+      targets.set(path, { ...targets.get(path)!, ...unityMetaGuids(githubTableLines(table)) });
+    }
     if (review && !review.reviewUrl && anchor)
       review.reviewUrl = `${changesUrl}#${encodeURIComponent(anchor)}`;
     if (

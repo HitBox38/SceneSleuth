@@ -1,7 +1,8 @@
 import type { SceneReview } from "../../shared/model.ts";
 import { reviewDiff } from "./diffParser.ts";
 import { navigationContext } from "../../shared/referenceLinks.ts";
-import { godotFileKind } from "../../shared/fileTypes.ts";
+import { unityMetaGuids } from "../../shared/unityMeta.ts";
+import { supportedFileKind } from "../../shared/fileTypes.ts";
 
 type RecordValue = Record<string, unknown>;
 // GitHub's repo SPA can retain the initial page's script after navigating to
@@ -39,12 +40,32 @@ function status(value: unknown): SceneReview["status"] {
 export function header(path: string, previous: string, operation: SceneReview["status"]) {
   return `diff --git ${JSON.stringify(`a/${previous}`)} ${JSON.stringify(`b/${path}`)}\n--- ${operation === "added" ? "/dev/null" : JSON.stringify(`a/${previous}`)}\n+++ ${operation === "removed" ? "/dev/null" : JSON.stringify(`b/${path}`)}\n`;
 }
-export function reviewGithubData(value: unknown, changesUrl: string) {
+export interface GithubParseCache {
+  key?: string;
+  files: Map<string, { patch: string; review: SceneReview }>;
+}
+export function cachedReview(
+  patch: string,
+  key: string,
+  cache?: GithubParseCache,
+): SceneReview | undefined {
+  const previous = cache?.files.get(key);
+  const parsed = previous?.patch === patch ? previous.review : reviewDiff(patch)[0];
+  if (cache && parsed && previous?.patch !== patch) cache.files.set(key, { patch, review: parsed });
+  return parsed ? { ...parsed, diagnostics: [...parsed.diagnostics] } : undefined;
+}
+export function reviewGithubData(value: unknown, changesUrl: string, cache?: GithubParseCache) {
   const payload = record(record(value).payload);
   const route = record(
     payload.pullRequestsChangesRoute ?? payload.pullRequestsChangesWithRangeRoute,
   );
   if (!Array.isArray(route.diffSummaries)) return undefined;
+  const comparisonKey = JSON.stringify(route.comparison);
+  const cacheKey = `${changesUrl}:${comparisonKey}`;
+  if (cache && cache.key !== cacheKey) {
+    cache.files.clear();
+    cache.key = cacheKey;
+  }
   const contents = Array.isArray(route.diffContents) ? route.diffContents.map(record) : [];
   const navigation = navigationContext(changesUrl);
   if (navigation) {
@@ -72,6 +93,20 @@ export function reviewGithubData(value: unknown, changesUrl: string) {
           path: String(summary.path),
           previousPath: typeof previous === "string" ? previous : undefined,
           status: status(summary.changeType),
+          ...(String(summary.path).endsWith(".meta") && Array.isArray(content?.diffLines)
+            ? unityMetaGuids(
+                content.diffLines.map(record).flatMap((line) => {
+                  if (typeof line.text !== "string") return [];
+                  if (line.type === "CONTEXT")
+                    return [line.text.startsWith(" ") ? line.text : ` ${line.text}`];
+                  if (line.type === "ADDITION" || line.type === "DELETION") {
+                    const prefix = line.type === "ADDITION" ? "+" : "-";
+                    return [line.text.startsWith(prefix) ? line.text : prefix + line.text];
+                  }
+                  return [];
+                }),
+              )
+            : {}),
           reviewUrl:
             typeof summary.pathDigest === "string" && summary.pathDigest
               ? `${changesUrl}#diff-${encodeURIComponent(summary.pathDigest)}`
@@ -84,8 +119,8 @@ export function reviewGithubData(value: unknown, changesUrl: string) {
     .filter(
       (file) =>
         typeof file.path === "string" &&
-        (godotFileKind(file.path) ||
-          godotFileKind(
+        (supportedFileKind(file.path) ||
+          supportedFileKind(
             String(
               record(contents.find((content) => content.path === file.path)?.oldTreeEntry).path ??
                 "",
@@ -116,8 +151,8 @@ export function reviewGithubData(value: unknown, changesUrl: string) {
               : line.text,
           )
           .join("\n");
-      const review = reviewDiff(patch)[0];
-      if (!review) throw new Error("GitHub returned an unreadable Godot file path.");
+      const review = cachedReview(patch, JSON.stringify(["data", path]), cache);
+      if (!review) throw new Error("GitHub returned an unreadable supported file path.");
       review.status = operation;
       review.reviewUrl = `${changesUrl}#diff-${encodeURIComponent(String(summary.pathDigest ?? ""))}`;
       if (
@@ -141,5 +176,5 @@ export function reviewGithubData(value: unknown, changesUrl: string) {
       }
       return review;
     });
-  return { comparisonKey: JSON.stringify(route.comparison), files, navigation };
+  return { comparisonKey, files, navigation };
 }

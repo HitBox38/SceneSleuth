@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SceneSleuth",
-  "description": "Review Godot scenes, text resources, and project settings in GitHub pull requests: nodes, properties, signals, and configuration.",
+  "description": "Review Godot and Unity scene and asset changes in GitHub pull requests: objects, components, properties, resources, and settings.",
   "version": "0.1.0",
   "permissions": ["activeTab"],
   "action": {

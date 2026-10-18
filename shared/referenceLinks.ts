@@ -48,12 +48,34 @@ export function referencedFilePath(
   return parts.length > boundary ? parts.join("/") : undefined;
 }
 
-function referencePath(
-  resourcePath: string,
+export function referenceFilePath(
+  reference: ValueReference,
   file: SceneReview,
   side: "before" | "after",
   navigation: ReferenceNavigation,
 ) {
+  if (reference.unityGuid) {
+    if (!/^[a-f\d]{32}$/i.test(reference.unityGuid)) return;
+    const paths = new Set(
+      navigation.files
+        .filter((target) => {
+          if (side === "before" ? target.status === "added" : target.status === "removed")
+            return false;
+          return (
+            (side === "before" ? target.unityGuidBefore : target.unityGuidAfter) ===
+            reference.unityGuid
+          );
+        })
+        .flatMap((target) => {
+          const path = side === "before" ? (target.previousPath ?? target.path) : target.path;
+          return path.endsWith(".meta") ? [referencedFilePath(path.slice(0, -5), "")] : [];
+        })
+        .filter((path): path is string => !!path),
+    );
+    return paths.size === 1 ? [...paths][0] : undefined;
+  }
+  const resourcePath = reference.resourcePath;
+  if (!resourcePath) return;
   const scenePath = side === "before" ? (file.previousPath ?? file.filePath) : file.filePath;
   let projectRoot = "";
   // The PR's file listing is evidence of project boundaries. Do not guess a
@@ -75,8 +97,8 @@ export function referenceLink(
   side: "before" | "after",
   navigation?: ReferenceNavigation,
 ): { href: string; inReview: boolean } | undefined {
-  if (!reference.resourcePath || !navigation) return;
-  const path = referencePath(reference.resourcePath, file, side, navigation);
+  if ((!reference.resourcePath && !reference.unityGuid) || !navigation) return;
+  const path = referenceFilePath(reference, file, side, navigation);
   if (!path) return;
   const target =
     navigation.files.find((candidate) =>
@@ -128,8 +150,8 @@ export function referenceImageSource(
   side: "before" | "after",
   navigation?: ReferenceNavigation,
 ): string | undefined {
-  if (!reference.resourcePath || !navigation) return;
-  const path = referencePath(reference.resourcePath, file, side, navigation);
+  if ((!reference.resourcePath && !reference.unityGuid) || !navigation) return;
+  const path = referenceFilePath(reference, file, side, navigation);
   if (!path || !/\.(?:png|apng|jpe?g|gif|webp|svg|avif|bmp|ico)$/i.test(path)) return;
   // Start on github.com so private repositories can use the existing sign-in.
   // Images are rendered as images, including SVG; scene text is never executed.

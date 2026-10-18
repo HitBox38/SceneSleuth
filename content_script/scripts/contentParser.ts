@@ -285,12 +285,13 @@ export function compareSections(
   before: SceneSection[],
   after: SceneSection[],
   partial: boolean,
+  referenceResolver = sceneReferenceResolver,
 ): SectionChange[] {
   const oldMap = new Map(before.map((section) => [section.id, section]));
   const newMap = new Map(after.map((section) => [section.id, section]));
   const changes: SectionChange[] = [];
-  const resolveBefore = sceneReferenceResolver(before);
-  const resolveAfter = sceneReferenceResolver(after);
+  const resolveBefore = referenceResolver(before);
+  const resolveAfter = referenceResolver(after);
   for (const id of new Set([...oldMap.keys(), ...newMap.keys()])) {
     const oldSection = oldMap.get(id),
       newSection = newMap.get(id);
@@ -313,6 +314,8 @@ export function compareSections(
           operation: !oldValue ? "added" : !newValue ? "removed" : "modified",
           before: oldValue?.raw,
           after: newValue?.raw,
+          ...(oldValue?.incomplete ? { beforeIncomplete: true } : {}),
+          ...(newValue?.incomplete ? { afterIncomplete: true } : {}),
           ...(beforeReferences.length ? { beforeReferences } : {}),
           ...(afterReferences.length ? { afterReferences } : {}),
           oldLine: oldValue?.line,

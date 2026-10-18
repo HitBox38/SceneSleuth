@@ -849,3 +849,13 @@
   outline-offset: 1px;
   border-radius: 2px;
 }
+
+.ss-kind-gameobject {
+  color: var(--ss-accent);
+}
+.ss-kind-component {
+  color: var(--ss-success);
+}
+.ss-kind-unity_object {
+  color: var(--ss-resource);
+}

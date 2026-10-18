@@ -14,6 +14,18 @@ import { reviewDiff } from "../content_script/scripts/diffParser.ts";
 import { projectPath, projectLines, projectReview } from "./fixtures/project-settings.ts";
 import { resourcePath, resourceLines, resourceReview } from "./fixtures/resource.ts";
 import {
+  unityPath,
+  unitySource,
+  unityReview,
+  prefabReview,
+  prefabSource,
+  assetReview,
+  assetSource,
+  scriptGuid,
+  imageGuid,
+  prefabGuid,
+} from "./fixtures/unity.ts";
+import {
   referencedScenePath,
   referencedSceneSource,
   referencedSceneReview,
@@ -271,6 +283,32 @@ function verifyResourceDom() {
   if (!fallback?.partialListing || fallback.files[0]?.changes.at(-1)?.kind !== "resource")
     throw new Error("Resource DOM fallback did not discover the main resource");
 }
+function verifyUnityDom() {
+  const lines = [`@@ -0,0 +1,${unitySource.length} @@`, ...unitySource.map((line) => `+${line}`)];
+  const table = makeTable(false, lines, unityPath, "diff-unity");
+  if (
+    JSON.stringify(reviewGithubTable(table, unityReview)?.changes) !==
+    JSON.stringify(unityReview.changes)
+  )
+    throw new Error("Unity DOM extraction lost objects, ownership, or source lines");
+  const doc = document.implementation.createHTMLDocument("Unity fixture");
+  doc.body.append(
+    table,
+    makeTable(
+      false,
+      ["@@ -0,0 +1,1 @@", `+guid: ${scriptGuid}`],
+      "Assets/Player.cs.meta",
+      "diff-unity-meta",
+    ),
+  );
+  const fallback = readGithubReview(doc, "https://github.com/example/game/pull/12/changes");
+  if (
+    fallback?.files.length !== 1 ||
+    fallback.navigation?.files.find((file) => file.path.endsWith(".meta"))?.unityGuidAfter !==
+      scriptGuid
+  )
+    throw new Error("Unity DOM fallback lost metadata or rendered it as a scene");
+}
 let domResult =
   "DOM checks passed: unified and split rows produce identical changes and source lines.";
 try {
@@ -280,6 +318,7 @@ try {
   verifyNullableLineKeys();
   verifyProjectDom();
   verifyResourceDom();
+  verifyUnityDom();
 } catch (error) {
   domResult = String(error);
 }
@@ -348,6 +387,23 @@ nativeFileLink.addEventListener("click", () => {
 });
 nativeItem.append(nativeFileLink);
 nativeTree.append(nativeItem);
+const unityNativeItem = document.createElement("li");
+unityNativeItem.setAttribute("role", "treeitem");
+unityNativeItem.id = "Assets/Player.cs";
+const unityNativeLink = document.createElement("a");
+unityNativeLink.href = "#diff-unity-script";
+unityNativeLink.textContent = "Assets/Player.cs (lazy diff)";
+unityNativeLink.addEventListener("click", () => {
+  unityNativeLink.dataset.visits = String(Number(unityNativeLink.dataset.visits ?? 0) + 1);
+  if (!document.getElementById("diff-unity-script")) {
+    const target = document.createElement("section");
+    target.id = "diff-unity-script";
+    target.textContent = "Assets/Player.cs · native GitHub diff loaded";
+    inlineContainer.append(target);
+  }
+});
+unityNativeItem.append(unityNativeLink);
+nativeTree.append(unityNativeItem);
 inlineContainer.append(nativeTree);
 document.body.prepend(inlineContainer);
 const inlineReviews = createInlineReviews();
@@ -469,6 +525,68 @@ function Fixture() {
           >
             Text resource
           </Button>
+          {[
+            { label: "Unity scene", file: unityReview, source: unitySource },
+            { label: "Unity prefab", file: prefabReview, source: prefabSource },
+            { label: "Unity asset", file: assetReview, source: assetSource },
+          ].map(({ label, file, source }) => (
+            <Button
+              key={label}
+              className="ss-button"
+              onPress={() => {
+                const current = diffBody.querySelector("table")!;
+                const next = makeTable(
+                  false,
+                  [`@@ -0,0 +1,${source.length} @@`, ...source.map((line) => `+${line}`)],
+                  file.filePath,
+                  "diff-unity",
+                );
+                current.replaceChildren(...next.childNodes);
+                current.setAttribute("aria-label", next.getAttribute("aria-label")!);
+                current.setAttribute("data-diff-anchor", "diff-unity");
+                name.textContent = file.filePath;
+                inlineSnapshot = {
+                  ...ready,
+                  files: [
+                    { ...file, reviewUrl: `${location.origin}${location.pathname}#diff-unity` },
+                  ],
+                  navigation: {
+                    ...ready.navigation!,
+                    files: [
+                      { path: file.filePath, status: "added" },
+                      {
+                        path: "Assets/Player.cs",
+                        status: "added",
+                        reviewUrl: `${location.origin}${location.pathname}#diff-unity-script`,
+                      },
+                      {
+                        path: "Assets/Player.cs.meta",
+                        status: "modified",
+                        unityGuidBefore: scriptGuid,
+                        unityGuidAfter: scriptGuid,
+                      },
+                      {
+                        path: "Assets/light.png.meta",
+                        status: "modified",
+                        unityGuidBefore: imageGuid,
+                        unityGuidAfter: imageGuid,
+                      },
+                      {
+                        path: "Assets/Prefabs/Base.prefab.meta",
+                        status: "modified",
+                        unityGuidBefore: prefabGuid,
+                        unityGuidAfter: prefabGuid,
+                      },
+                    ],
+                  },
+                };
+                inlineReviews.update(inlineSnapshot);
+                setSnapshot(inlineSnapshot);
+              }}
+            >
+              {label}
+            </Button>
+          ))}
           <Button
             className="ss-button"
             onPress={() => {

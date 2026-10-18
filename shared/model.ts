@@ -1,5 +1,8 @@
 export type SectionKind =
   | "node"
+  | "gameobject"
+  | "component"
+  | "unity_object"
   | "ext_resource"
   | "sub_resource"
   | "resource_header"
@@ -19,6 +22,7 @@ export interface SceneValue {
   canonical: string;
   line: number;
   changed: boolean;
+  incomplete?: boolean;
 }
 export interface SceneSection {
   id: string;
@@ -36,6 +40,8 @@ export interface PropertyChange {
   operation: Operation;
   before?: string;
   after?: string;
+  beforeIncomplete?: boolean;
+  afterIncomplete?: boolean;
   beforeReferences?: ValueReference[];
   afterReferences?: ValueReference[];
   oldLine?: number;
@@ -49,12 +55,15 @@ export interface ValueReference {
   target: string;
   className: string;
   resourcePath?: string;
+  unityGuid?: string;
 }
 export interface ReviewFileTarget {
   path: string;
   previousPath?: string;
   status: SceneReview["status"];
   reviewUrl?: string;
+  unityGuidBefore?: string | null;
+  unityGuidAfter?: string | null;
 }
 export interface ReferenceNavigation {
   changesUrl: string;

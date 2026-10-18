@@ -5,6 +5,7 @@ import {
   type StructuredValue as Value,
   type ValueSlice,
 } from "./structuredValues.ts";
+import { unityStructuredValue } from "./unityPresentation.ts";
 
 function ValueTree({
   value,
@@ -46,11 +47,13 @@ function ValueTree({
 export function StructuredValue({
   raw,
   renderLiteral,
+  unity = false,
 }: {
   raw: string;
   renderLiteral: (slice: ValueSlice, keyLabel?: string) => ReactNode;
+  unity?: boolean;
 }) {
-  const value = structuredValue(raw);
+  const value = unity ? unityStructuredValue(raw) : structuredValue(raw);
   if (!value) return renderLiteral({ start: 0, end: raw.length });
   return (
     <div className="ss-structured-value">

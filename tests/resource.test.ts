@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { parseScene, sourceLines } from "../content_script/scripts/contentParser.ts";
 import { reviewDiff } from "../content_script/scripts/diffParser.ts";
 import { reviewGithubData } from "../content_script/scripts/githubReview.ts";
-import { godotFileKind, reviewViewLabel } from "../shared/fileTypes.ts";
+import { supportedFileKind, reviewViewLabel } from "../shared/fileTypes.ts";
 import { inlineFileContents } from "../ui/fileContents.ts";
 import { referenceLink, referenceImageSource } from "../shared/referenceLinks.ts";
 import { resourcePath, resourceSource, resourceReview } from "./fixtures/resource.ts";
@@ -109,7 +109,7 @@ test("deleted, renamed, lazy and binary resource files retain their supported bo
   );
   assert.equal(renamed.previousPath, "a.tres");
   assert.equal(renamed.status, "renamed");
-  assert.equal(godotFileKind("a.res"), undefined);
+  assert.equal(supportedFileKind("a.res"), undefined);
   const snapshot = reviewGithubData(
     {
       payload: {

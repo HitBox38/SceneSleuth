@@ -39,14 +39,20 @@ export function inspectorValue(raw: string): InspectorValue | undefined {
   };
 }
 
-export function propertyLabel(name: string): string {
-  return name
+export function propertyLabel(name: string, unity = false): string {
+  return (unity ? name.replace(/^m_/, "").replace(/([a-z\d])([A-Z])/g, "$1 $2") : name)
     .replace(/^@/, "")
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function propertyCategory(change: SectionChange, name: string): string {
+  if (
+    change.kind === "component" &&
+    ["Transform", "RectTransform"].includes(change.className) &&
+    /^m_Local(?:Position|Rotation|Scale|EulerAnglesHint)$/.test(name)
+  )
+    return "Transform";
   if (change.kind !== "node") return "Properties";
   if (
     /[23]D$/.test(change.className) &&
