@@ -53,6 +53,29 @@ function propertyCategory(change: SectionChange, name: string): string {
     /^m_Local(?:Position|Rotation|Scale|EulerAnglesHint)$/.test(name)
   )
     return "Transform";
+  if (change.kind === "unity_object") {
+    if (change.className === "AnimatorController") {
+      if (name === "m_AnimatorParameters") return "Parameters";
+      if (name === "m_AnimatorLayers") return "Layers";
+    }
+    if (
+      change.className === "AnimatorStateMachine" &&
+      /^m_(?:ChildStates|ChildStateMachines|AnyStateTransitions|EntryTransitions|StateMachineTransitions|DefaultState)$/.test(
+        name,
+      )
+    )
+      return "State machine";
+    if (/^Animator(?:State)?Transition$/.test(change.className)) {
+      if (name === "m_Conditions") return "Conditions";
+      if (/^m_(?:DstState|DstStateMachine|IsExit)$/.test(name)) return "Destination";
+      if (
+        /^m_(?:TransitionDuration|TransitionOffset|ExitTime|HasExitTime|HasFixedDuration|InterruptionSource|OrderedInterruption|CanTransitionToSelf)$/.test(
+          name,
+        )
+      )
+        return "Timing";
+    }
+  }
   if (change.kind !== "node") return "Properties";
   if (
     /[23]D$/.test(change.className) &&

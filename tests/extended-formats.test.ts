@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { reviewDiff } from "../content_script/scripts/diffParser.ts";
 import { reviewViewLabel } from "../shared/fileTypes.ts";
 import { unityStructuredValue, unityInspectorValue } from "../ui/unityPresentation.ts";
+import { propertyGroups } from "../ui/propertyPresentation.ts";
 import { unityPatch, imageGuid } from "./fixtures/unity.ts";
 
 function modified(path: string, before: string[], after: string[], start = 1) {
@@ -99,5 +100,62 @@ test("Unity metadata exposes root and importer settings without carrying owners 
     reviewDiff(unityPatch("Assets/x.meta", ["folderAsset: yes", `guid: ${imageGuid}`]))[0]
       .changes[0].properties[0].after,
     "yes",
+  );
+});
+
+test("Unity controllers show states, transitions, parameters and local motion references", () => {
+  const source = [
+    "--- !u!91 &9100000",
+    "AnimatorController:",
+    "  m_Name: Locomotion",
+    "  m_AnimatorParameters:",
+    "  - m_Name: Speed",
+    "    m_Type: 1",
+    "    m_DefaultFloat: 0",
+    "  m_AnimatorLayers:",
+    "  - m_Name: Base Layer",
+    "    m_StateMachine: {fileID: 100}",
+    "--- !u!1107 &100",
+    "AnimatorStateMachine:",
+    "  m_Name: Movement",
+    "  m_DefaultState: {fileID: 200}",
+    "--- !u!1102 &200",
+    "AnimatorState:",
+    "  m_Name: Idle",
+    "  m_Transitions:",
+    "  - {fileID: 300}",
+    "--- !u!1101 &300",
+    "AnimatorStateTransition:",
+    "  m_DstState: {fileID: 200}",
+    "  m_Conditions:",
+    "  - m_ConditionEvent: Speed",
+    "    m_ConditionMode: 3",
+    "    m_EventTreshold: 0.1",
+    "  m_TransitionDuration: 0.25",
+  ];
+  const file = reviewDiff(unityPatch("Assets/Locomotion.controller", source))[0];
+  assert.equal(reviewViewLabel(file), "Controller");
+  assert.deepEqual(file.diagnostics, []);
+  assert.equal(
+    file.changes[1].properties.find((p) => p.name === "m_DefaultState")?.afterReferences?.[0].label,
+    "Idle (AnimatorState)",
+  );
+  assert.ok(propertyGroups(file.changes[0]).some((g) => g.label === "Parameters"));
+  assert.ok(propertyGroups(file.changes[3]).some((g) => g.label === "Conditions"));
+  const changed = modified(
+    "Assets/Locomotion.controller",
+    ["--- !u!1101 &300", "AnimatorStateTransition:", "  m_TransitionDuration: 0.25"],
+    ["--- !u!1101 &300", "AnimatorStateTransition:", "  m_TransitionDuration: 0.5"],
+  );
+  assert.equal(changed.changes[0].properties[0].before, "0.25");
+  assert.equal(changed.changes[0].properties[0].after, "0.5");
+  assert.equal(
+    modified(
+      "Assets/Locomotion.controller",
+      ["    m_EventTreshold: 0.1"],
+      ["    m_EventTreshold: 0.2"],
+      80,
+    ).changes[0].kind,
+    "unknown",
   );
 });

@@ -2,7 +2,7 @@
 
 **See the scene behind the diff.**
 
-SceneSleuth helps Godot and Unity developers review serialized scenes and assets in GitHub pull requests. It supports Godot `.tscn`, `.tres`, and `.godot` files, plus Unity text-serialized `.unity`, `.prefab`, `.asset`, `.mat`, and `.meta` files. Instead of reconstructing changes from serialized lines, you can inspect nodes, resources, properties, signal connections, and project settings directly in each file’s diff area.
+SceneSleuth helps Godot and Unity developers review serialized scenes and assets in GitHub pull requests. It supports Godot `.tscn`, `.tres`, and `.godot` files, plus Unity text-serialized `.unity`, `.prefab`, `.asset`, `.mat`, `.meta`, and `.controller` files. Instead of reconstructing changes from serialized lines, you can inspect nodes, resources, properties, signal connections, and project settings directly in each file’s diff area.
 
 The goal is to answer **“What changed in this scene or asset?”** without opening the project in the editor.
 
@@ -13,6 +13,7 @@ Open a pull request’s **Files changed** tab. SceneSleuth automatically replace
 The inline review follows GitHub’s active color theme, with Godot-inspired scene-type icons, left-hand disclosure arrows, and compact inspector rows. Nodes, resources, and signals have distinct icon colors; before/after values use GitHub’s diff colors. The header switch and image previews share the same theme. The standalone toolbar popup uses a matching dark palette.
 
 - Browse scene files and their changed sections, with node paths and Godot classes.
+- Inspect Unity `.controller` animation state machines as serialized objects, with named local state references and grouped parameters, layers, transition destinations, conditions, and timing. Nested blend trees retain their available properties; no runtime animation graph is evaluated.
 - Review Unity `.meta` files by file metadata and importer, including nested texture, sprite, model, audio, and platform settings. Root GUIDs remain visible, and nested fragments with missing importer context stay unresolved.
 - Inspect Unity `.mat` materials, including shader and texture references, saved property collections, nested color swatches, and exact numeric values. Material properties use the bounded YAML tree; unavailable shader defaults are not inferred.
 - Review Unity scenes, prefabs, and text assets by GameObject, component, and other serialized object. File IDs remain exact, components show their known GameObject owner, Transform values use labeled components, and collections expand as YAML trees. Prefab overrides and stripped objects remain explicit source properties; the review does not instantiate a prefab. Unity assets retain their declared serialized type.
