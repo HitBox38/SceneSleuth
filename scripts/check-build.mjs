@@ -29,7 +29,7 @@ for (const path of new Set(
 )) {
   new Script(readFileSync(asset(path), "utf8"), { filename: path });
 }
-for (const theme of ["github", "godot", "unity"]) {
+for (const theme of ["github", "godot", "unity", "unreal"]) {
   asset(`icons/scene-eye-${theme}.svg`);
   for (const size of [16, 24, 32, 48, 64, 128]) {
     const png = readFileSync(asset(`icons/${theme}/icon-${size}.png`));

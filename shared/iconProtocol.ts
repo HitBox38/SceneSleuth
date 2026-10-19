@@ -25,7 +25,7 @@ export function iconThemeRequest(
   if (
     data.action !== "SET_ICON_THEME" ||
     typeof data.theme !== "string" ||
-    !["godot", "unity", "github"].includes(String(data.theme)) ||
+    !["godot", "unity", "unreal", "github"].includes(String(data.theme)) ||
     typeof data.reviewKey !== "string"
   )
     return;

@@ -1,10 +1,11 @@
 import type { EngineTheme } from "./reviewTheme.ts";
 
 export const iconSizes = [16, 24, 32, 48, 64, 128] as const;
-export const iconThemes: EngineTheme[] = ["github", "godot", "unity"];
+export const iconThemes: EngineTheme[] = ["github", "godot", "unity", "unreal"];
 export const sceneEyePalette = {
   github: { background: "#171c23", surface: "#252d38", primary: "#bdc6d0", secondary: "#8f9caa" },
   godot: { background: "#101820", surface: "#182d3c", primary: "#78b6e8", secondary: "#9ad9bd" },
+  unreal: { background: "#151820", surface: "#25283a", primary: "#b7a7ef", secondary: "#79b6d8" },
   unity: { background: "#171c23", surface: "#242c36", primary: "#e6edf3", secondary: "#7aace8" },
 } as const;
 
@@ -68,5 +69,5 @@ export function actionIconPaths(theme: EngineTheme): Record<string, string> {
 export function actionIconTitle(theme: EngineTheme): string {
   return theme === "github"
     ? "SceneSleuth"
-    : `SceneSleuth · ${theme === "unity" ? "Unity" : "Godot"} review`;
+    : `SceneSleuth · ${theme === "unreal" ? "Unreal" : theme === "unity" ? "Unity" : "Godot"} review`;
 }

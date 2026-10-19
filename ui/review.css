@@ -979,3 +979,27 @@
 [data-ss-engine="unity"] .ss-operation {
   border-radius: 2px;
 }
+
+/* Unreal's Details panel: compact category strips and separated field columns. */
+[data-ss-engine="unreal"] .ss-section {
+  border-radius: 2px;
+  border-color: var(--ss-border-muted);
+}
+[data-ss-engine="unreal"] .ss-section > summary {
+  border-bottom: 1px solid var(--ss-border-muted);
+  box-shadow: inset 3px 0 color-mix(in srgb, var(--ss-resource) 50%, var(--ss-border));
+}
+[data-ss-engine="unreal"] .ss-property-name {
+  border-right: 1px solid var(--ss-border-muted);
+}
+[data-ss-engine="unreal"] .ss-search,
+[data-ss-engine="unreal"].ss-view-switch {
+  border-radius: 2px;
+  background: var(--ss-inset);
+}
+[data-ss-engine="unreal"] .ss-tree-literal {
+  border: 1px solid var(--ss-border-muted);
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ss-inset) 65%, transparent);
+}

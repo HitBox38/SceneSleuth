@@ -178,7 +178,9 @@ function LiteralValue({
     const value = compact
       ? reviewEngine(file) === "unity"
         ? unityInspectorValue(raw)
-        : inspectorValue(raw)
+        : reviewEngine(file) === "godot"
+          ? inspectorValue(raw)
+          : undefined
       : undefined;
     if (!value) return raw;
     return (
@@ -244,7 +246,12 @@ function ReferenceValue(props: Parameters<typeof LiteralValue>[0]) {
   if (props.raw === undefined) return "—";
   const raw = props.raw;
   const unity = reviewEngine(props.file) === "unity";
-  if (props.incomplete || (unity && unityInspectorValue(raw))) return <LiteralValue {...props} />;
+  if (
+    props.incomplete ||
+    reviewFileKind(props.file) === "unreal_config" ||
+    (unity && unityInspectorValue(raw))
+  )
+    return <LiteralValue {...props} />;
   return (
     <StructuredValue
       raw={raw}
@@ -301,7 +308,11 @@ function PropertyRows({
         <span className="ss-property-name" title={property.name}>
           <span>
             {compact
-              ? propertyLabel(property.name, reviewEngine(file) === "unity")
+              ? propertyLabel(
+                  property.name,
+                  reviewEngine(file) === "unity",
+                  reviewEngine(file) !== "godot",
+                )
               : property.name.replace(/^@/, "")}
           </span>
           <small title={property.operation}>
@@ -420,7 +431,9 @@ function ChangedSection({
           aria-hidden="true"
         />
         <span className="ss-section-name">
-          {change.kind === "project" ? propertyLabel(change.label) : change.label}
+          {change.kind === "project" && reviewEngine(file) !== "unreal"
+            ? propertyLabel(change.label)
+            : change.label}
           {path && <span className="ss-section-path">{path}</span>}
         </span>
         <span className="ss-type" title={change.className || labels[change.kind]}>
@@ -517,7 +530,9 @@ export function FileReview({
   const subject = unity
     ? `Unity ${reviewFileKind(file).slice(6)}`
     : project
-      ? "settings"
+      ? reviewEngine(file) === "unreal"
+        ? "Unreal settings"
+        : "settings"
       : resource
         ? "resource"
         : "scene";
@@ -528,7 +543,7 @@ export function FileReview({
         `${change.label} ${change.path} ${change.className} ${change.properties
           .map(
             (p) =>
-              `${p.name} ${propertyLabel(p.name, unity)} ${p.before ?? ""} ${p.after ?? ""} ${(["before", "after"] as const).flatMap((side) => (p[`${side}References`] ?? []).map((reference) => `${reference.label} ${reference.target} ${navigation ? (referenceFilePath(reference, file, side, navigation) ?? "") : ""}`)).join(" ")}`,
+              `${p.name} ${propertyLabel(p.name, unity, reviewEngine(file) !== "godot")} ${p.before ?? ""} ${p.after ?? ""} ${(["before", "after"] as const).flatMap((side) => (p[`${side}References`] ?? []).map((reference) => `${reference.label} ${reference.target} ${navigation ? (referenceFilePath(reference, file, side, navigation) ?? "") : ""}`)).join(" ")}`,
           )
           .join(" ")}`
           .toLowerCase()
@@ -925,7 +940,7 @@ export function Inspector({
           <div className="ss-empty">
             <Layers size={28} />
             <h2>No supported files changed</h2>
-            <p>This pull request has no supported Godot or Unity file changes.</p>
+            <p>This pull request has no supported Godot, Unity, or Unreal file changes.</p>
           </div>
         ))}
       <footer className="ss-footer">

@@ -17,7 +17,7 @@ export function isReviewSnapshot(value: unknown): value is ReviewSnapshot {
     ["loading", "ready", "error"].includes(String(data.status)) &&
     Array.isArray(data.files) &&
     (data.repositoryTheme === undefined ||
-      ["github", "godot", "unity", "mixed"].includes(String(data.repositoryTheme))) &&
+      ["github", "godot", "unity", "unreal", "mixed"].includes(String(data.repositoryTheme))) &&
     (data.colorMode === undefined || ["light", "dark"].includes(String(data.colorMode))) &&
     data.files.every(
       (file) => file && typeof file.filePath === "string" && Array.isArray(file.changes),

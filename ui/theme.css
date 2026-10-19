@@ -100,3 +100,12 @@
   --ss-attention-bg: #fff8c5;
   --ss-resource: #8250df;
 }
+
+/* Unreal Details styling keeps GitHub's semantic colors and contrast. */
+[data-ss-engine="unreal"] {
+  --ss-node: var(--ss-muted);
+  --ss-resource-icon: var(--ss-resource);
+  --ss-gameobject-icon: var(--ss-text);
+  --ss-component-icon: var(--ss-muted);
+  --ss-object-icon: var(--ss-resource);
+}

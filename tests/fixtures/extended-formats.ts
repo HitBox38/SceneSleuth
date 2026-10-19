@@ -166,5 +166,46 @@ extendedFormatSources.push({
     'surface_material_override/0=SubResource("material")',
   ],
 });
+// Unreal project, plugin and ordered configuration examples (UE4/UE5 text formats).
+export const unrealFormatSources = [
+  {
+    path: "Unreal/ReviewGame.uproject",
+    source: [
+      "{",
+      '  "FileVersion": 3,',
+      '  "EngineAssociation": "5.4",',
+      '  "Modules": [{"Name":"ReviewGame","Type":"Runtime","LoadingPhase":"Default"}],',
+      '  "Plugins": [{"Name":"EnhancedInput","Enabled":true}]',
+      "}",
+    ],
+  },
+  {
+    path: "Unreal/Plugins/ReviewTools/ReviewTools.uplugin",
+    source: [
+      "{",
+      '  "FileVersion": 3,',
+      '  "FriendlyName": "Review Tools",',
+      '  "VersionName": "1.0",',
+      '  "CanContainContent": false,',
+      '  "Modules": [{"Name":"ReviewTools","Type":"Editor","LoadingPhase":"Default"}]',
+      "}",
+    ],
+  },
+  {
+    path: "Unreal/Config/DefaultEngine.ini",
+    source: [
+      "[/Script/EngineSettings.GameMapsSettings]",
+      "GameDefaultMap=/Game/Maps/ReviewMap.ReviewMap",
+      "[/Script/Engine.RendererSettings]",
+      "r.DefaultFeature.AutoExposure=False",
+      "[/Script/Engine.InputSettings]",
+      "!AxisMappings=ClearArray",
+      '+AxisMappings=(AxisName="Move",Key=W,Scale=1)',
+      '.AxisMappings=(AxisName="Move",Key=W,Scale=1)',
+      '-AxisMappings=(AxisName="Move",Key=S,Scale=-1)',
+    ],
+  },
+];
+extendedFormatSources.push(...unrealFormatSources);
 export const extendedFormatPatches = () =>
   extendedFormatSources.map(({ path, source }) => unityPatch(path, source));

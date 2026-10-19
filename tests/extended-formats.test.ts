@@ -410,7 +410,7 @@ test("every added format supports GitHub lazy discovery, loaded hunks, deletion 
   };
   const url = "https://github.com/example/game/pull/1/changes";
   const pending = reviewGithubData({ payload: { pullRequestsChangesRoute: route } }, url)!;
-  assert.equal(pending.files.length, 10);
+  assert.equal(pending.files.length, extendedFormatSources.length);
   assert.ok(pending.files.every((f) => f.pending));
   route.diffContents = extendedFormatSources.map((f) => ({
     path: f.path,

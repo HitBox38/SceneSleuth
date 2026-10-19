@@ -39,8 +39,9 @@ export function inspectorValue(raw: string): InspectorValue | undefined {
   };
 }
 
-export function propertyLabel(name: string, unity = false): string {
-  return (unity ? name.replace(/^m_/, "").replace(/([a-z\d])([A-Z])/g, "$1 $2") : name)
+export function propertyLabel(name: string, unity = false, camelCase = unity): string {
+  const label = unity ? name.replace(/^m_/, "") : name;
+  return (camelCase ? label.replace(/([a-z\d])([A-Z])/g, "$1 $2") : label)
     .replace(/^@/, "")
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());

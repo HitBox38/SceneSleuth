@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SceneSleuth",
-  "description": "Review Godot and Unity scene and asset changes in GitHub pull requests: objects, components, properties, resources, and settings.",
+  "description": "Review Godot, Unity and Unreal changes in GitHub pull requests: scenes, assets, project descriptors and configuration settings.",
   "version": "0.1.0",
   "minimum_chrome_version": "121",
   "icons": {

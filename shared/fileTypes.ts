@@ -9,7 +9,10 @@ export type GodotFileKind =
   | "extension"
   | "plugin";
 
+export type UnrealFileKind = "unreal_project" | "unreal_plugin" | "unreal_config";
+
 export type ReviewFileKind =
+  | UnrealFileKind
   | GodotFileKind
   | "unity_scene"
   | "unity_prefab"
@@ -22,6 +25,15 @@ export type ReviewFileKind =
 
 export function supportedFileKind(path?: string): ReviewFileKind | undefined {
   if (path?.split("/").includes(".godot")) return;
+  const parts = path?.toLowerCase().split("/") ?? [];
+  const generated = parts.some((part) =>
+    ["saved", "intermediate", "binaries", "deriveddatacache"].includes(part),
+  );
+  if (!generated) {
+    if (parts.at(-1)?.endsWith(".uproject")) return "unreal_project";
+    if (parts.at(-1)?.endsWith(".uplugin")) return "unreal_plugin";
+    if (parts.includes("config") && parts.at(-1)?.endsWith(".ini")) return "unreal_config";
+  }
   if (path?.endsWith(".tscn") || path?.endsWith(".escn")) return "scene";
   if (path?.endsWith(".godot")) return "project";
   if (path?.endsWith(".tres")) return "resource";
@@ -41,6 +53,9 @@ export function supportedFileKind(path?: string): ReviewFileKind | undefined {
 
 export function reviewViewLabel(file: Pick<SceneReview, "filePath" | "previousPath">): string {
   return {
+    unreal_project: "Project",
+    unreal_plugin: "Plugin",
+    unreal_config: "Settings",
     scene: "Scene",
     project: "Settings",
     resource: "Resource",
@@ -67,12 +82,24 @@ export function reviewFileKind(
 
 export function reviewEngine(
   file: Pick<SceneReview, "filePath" | "previousPath">,
-): "godot" | "unity" {
-  return reviewFileKind(file).startsWith("unity_") ? "unity" : "godot";
+): "godot" | "unity" | "unreal" {
+  const kind = reviewFileKind(file);
+  return kind.startsWith("unreal_") ? "unreal" : kind.startsWith("unity_") ? "unity" : "godot";
 }
 export function reviewEngines(files: Pick<SceneReview, "filePath" | "previousPath">[]): string {
   const engines = new Set(files.map(reviewEngine));
-  return engines.size === 1 ? (engines.has("unity") ? "Unity" : "Godot") : "Godot & Unity";
+  return (
+    (
+      [
+        ["godot", "Godot"],
+        ["unity", "Unity"],
+        ["unreal", "Unreal"],
+      ] as const
+    )
+      .filter(([engine]) => engines.has(engine))
+      .map(([, name]) => name)
+      .join(" & ") || "Godot & Unity & Unreal"
+  );
 }
 
 export function godotSettingsClass(kind: ReviewFileKind): string | undefined {
@@ -83,5 +110,8 @@ export function godotSettingsClass(kind: ReviewFileKind): string | undefined {
   if (kind === "plugin") return "EditorPlugin";
 }
 export function isSettingsFile(file: Pick<SceneReview, "filePath" | "previousPath">): boolean {
-  return godotSettingsClass(reviewFileKind(file)) !== undefined;
+  return (
+    reviewFileKind(file).startsWith("unreal_") ||
+    godotSettingsClass(reviewFileKind(file)) !== undefined
+  );
 }

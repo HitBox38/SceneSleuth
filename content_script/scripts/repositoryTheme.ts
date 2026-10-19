@@ -1,3 +1,4 @@
+import { supportedFileKind } from "../../shared/fileTypes.ts";
 import type { ReferenceNavigation } from "../../shared/model.ts";
 import type { RepositoryTheme } from "../../shared/reviewTheme.ts";
 import { reviewContext } from "../../shared/protocol.ts";
@@ -28,7 +29,22 @@ export function repositoryTreeTheme(value: unknown, revision: string): Repositor
   const unity = ["Assets", "ProjectSettings"].every((path) =>
     entries.some((item) => item.path === path && item.contentType === "directory"),
   );
-  return godot && unity ? "mixed" : godot ? "godot" : unity ? "unity" : "github";
+  const unreal = entries.some(
+    (item) =>
+      typeof item.path === "string" &&
+      !item.path.includes("/") &&
+      item.contentType === "file" &&
+      ["unreal_project", "unreal_plugin"].includes(supportedFileKind(item.path) ?? ""),
+  );
+  return Number(godot) + Number(unity) + Number(unreal) > 1
+    ? "mixed"
+    : godot
+      ? "godot"
+      : unity
+        ? "unity"
+        : unreal
+          ? "unreal"
+          : "github";
 }
 
 // A single root-tree read detects the repository even for documentation-only

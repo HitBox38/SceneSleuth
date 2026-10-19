@@ -228,7 +228,7 @@ function start() {
         title: "SceneSleuth",
         status: "error",
         files: [],
-        error: "Open a GitHub pull request to review its Godot or Unity files.",
+        error: "Open a GitHub pull request to review its Godot, Unity, or Unreal files.",
       };
       publish();
       return;

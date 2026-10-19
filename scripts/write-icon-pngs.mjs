@@ -3,10 +3,10 @@ import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 const file = process.argv[2];
 if (!file) throw new Error("Usage: node scripts/write-icon-pngs.mjs <exported-bundle.json>");
 const bundle = JSON.parse(readFileSync(file, "utf8"));
-const themes = ["github", "godot", "unity"],
+const themes = ["github", "godot", "unity", "unreal"],
   sizes = [16, 24, 32, 48, 64, 128];
 for (const [path, value] of Object.entries(bundle)) {
-  const match = /^icons\/(github|godot|unity)\/icon-(16|24|32|48|64|128)\.png$/.exec(path);
+  const match = /^icons\/(github|godot|unity|unreal)\/icon-(16|24|32|48|64|128)\.png$/.exec(path);
   assert.ok(
     match && themes.includes(match[1]) && sizes.includes(Number(match[2])),
     "Unexpected icon path",

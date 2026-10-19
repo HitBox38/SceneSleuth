@@ -84,7 +84,7 @@ export default function App() {
         if (!tab?.id || !tab.url || !reviewContext(tab.url)) {
           setState({
             kind: "unsupported",
-            message: "Open a GitHub pull request to see its Godot or Unity changes.",
+            message: "Open a GitHub pull request to see its Godot, Unity, or Unreal changes.",
           });
           return;
         }
@@ -161,7 +161,7 @@ export default function App() {
         )}
         {state.kind === "unsupported" && (
           <>
-            <h1>Ready for Godot and Unity reviews</h1>
+            <h1>Ready for Godot, Unity, and Unreal reviews</h1>
             <p className="ss-muted">{state.message}</p>
           </>
         )}
@@ -268,8 +268,8 @@ export default function App() {
             ) : (
               <p className="ss-muted">
                 {snapshot.partialListing
-                  ? "No loaded Godot or Unity diffs found. GitHub may load more files as you browse."
-                  : "No supported Godot or Unity files changed in this pull request."}
+                  ? "No loaded Godot, Unity, or Unreal diffs found. GitHub may load more files as you browse."
+                  : "No supported Godot, Unity, or Unreal files changed in this pull request."}
               </p>
             )}
           </>

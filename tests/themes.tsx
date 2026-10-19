@@ -3,6 +3,8 @@ import App from "../popup/src/App.tsx";
 import { createInlineReviews } from "../ui/contentRoot.tsx";
 import { createRepositoryThemeLoader } from "../content_script/scripts/repositoryTheme.ts";
 import { reviewUnityContext } from "../content_script/scripts/unityContext.ts";
+import { unrealFormatSources } from "./fixtures/extended-formats.ts";
+import { unityPatch } from "./fixtures/unity.ts";
 import { reviewDiff } from "../content_script/scripts/diffParser.ts";
 import { reviewTheme } from "../shared/reviewTheme.ts";
 import type { ReviewSnapshot } from "../shared/model.ts";
@@ -22,6 +24,9 @@ if ("serviceWorker" in navigator) {
 const unity = reviewUnityContext(contextReview, contextBefore, contextAfter);
 const godot = reviewDiff(
   'diff --git a/Player.tscn b/Player.tscn\n--- a/Player.tscn\n+++ b/Player.tscn\n@@ -1,3 +1,3 @@\n [node name="Player" type="CharacterBody3D"]\n-position = Vector3(0, 1, 2)\n+position = Vector3(1, 2, 3)\n visible = true\n',
+)[0];
+const unreal = reviewDiff(
+  unityPatch(unrealFormatSources[0].path, unrealFormatSources[0].source),
 )[0];
 let environment = "unity",
   currentFile = unity;
@@ -125,13 +130,18 @@ const loader = createRepositoryThemeLoader({
   readData: JSON.parse,
   async fetch() {
     const items = [
-      ...(environment !== "godot"
+      ...(["unity", "mixed"].includes(environment)
         ? [
             { path: "Assets", contentType: "directory" },
             { path: "ProjectSettings", contentType: "directory" },
           ]
         : []),
-      ...(environment !== "unity" ? [{ path: "project.godot", contentType: "file" }] : []),
+      ...(["godot", "mixed"].includes(environment)
+        ? [{ path: "project.godot", contentType: "file" }]
+        : []),
+      ...(["unreal", "mixed"].includes(environment)
+        ? [{ path: "Game.uproject", contentType: "file" }]
+        : []),
     ];
     return Response.json({
       payload: {
@@ -140,17 +150,28 @@ const loader = createRepositoryThemeLoader({
     });
   },
 });
-const fileSelect = select("File", ["Unity scene", "Godot scene", "Graphic reference"], (value) => {
-  currentFile =
-    value === "Unity scene" ? unity : value === "Godot scene" ? godot : imageReferenceReview;
-  publish();
-});
-select("Repository", ["unity", "godot", "mixed"], (value) => {
+const fileSelect = select(
+  "File",
+  ["Unity scene", "Godot scene", "Unreal project", "Graphic reference"],
+  (value) => {
+    currentFile =
+      value === "Unity scene"
+        ? unity
+        : value === "Godot scene"
+          ? godot
+          : value === "Unreal project"
+            ? unreal
+            : imageReferenceReview;
+    publish();
+  },
+);
+select("Repository", ["unity", "godot", "unreal", "mixed"], (value) => {
   environment = value;
   snapshot.repositoryTheme = undefined;
   snapshot.reviewKey = `theme-${value}`;
-  currentFile = value === "godot" ? godot : unity;
-  fileSelect.value = value === "godot" ? "Godot scene" : "Unity scene";
+  currentFile = value === "unreal" ? unreal : value === "godot" ? godot : unity;
+  fileSelect.value =
+    value === "unreal" ? "Unreal project" : value === "godot" ? "Godot scene" : "Unity scene";
   publish();
   loader.update(snapshot.reviewKey, snapshot.navigation);
 });

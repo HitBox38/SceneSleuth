@@ -5,6 +5,7 @@ import {
   reviewFileKind,
   isSettingsFile,
   type GodotFileKind,
+  type UnrealFileKind,
 } from "../../shared/fileTypes.ts";
 import {
   parseUnity,
@@ -12,6 +13,8 @@ import {
   describeUnitySections,
   unityReferenceResolver,
 } from "./unityParser.ts";
+
+import { parseUnreal, unrealFallback } from "./unrealParser.ts";
 
 interface Hunk {
   oldStart: number;
@@ -104,6 +107,7 @@ export function parseUnifiedDiff(text: string): PatchFile[] {
 export function reviewPatch(file: PatchFile): SceneReview {
   const format = reviewFileKind(file);
   const unity = format.startsWith("unity_");
+  const unreal = format.startsWith("unreal_");
   const unityParser = format === "unity_metadata" ? parseUnityMetadata : parseUnity;
   const before = new Map<string, SceneSection>();
   const after = new Map<string, SceneSection>();
@@ -126,18 +130,44 @@ export function reviewPatch(file: PatchFile): SceneReview {
     ((file.status === "added" && file.hunks[0].newStart === 1 && file.hunks[0].oldCount === 0) ||
       (file.status === "removed" && file.hunks[0].oldStart === 1 && file.hunks[0].newCount === 0));
   for (const [index, hunk] of file.hunks.entries()) {
-    const oldScene = unity
-      ? unityParser(hunk.before, `hunk-${index}`, complete && hunk.before.length === hunk.oldCount)
-      : parseScene(hunk.before, `hunk-${index}`, {
-          format: format as GodotFileKind,
-          startsAtFileBeginning: hunk.oldStart <= 1,
-        });
-    const newScene = unity
-      ? unityParser(hunk.after, `hunk-${index}`, complete && hunk.after.length === hunk.newCount)
-      : parseScene(hunk.after, `hunk-${index}`, {
-          format: format as GodotFileKind,
-          startsAtFileBeginning: hunk.newStart <= 1,
-        });
+    let oldScene = unreal
+      ? parseUnreal(hunk.before, `hunk-${index}`, format as UnrealFileKind, hunk.oldStart <= 1)
+      : unity
+        ? unityParser(
+            hunk.before,
+            `hunk-${index}`,
+            complete && hunk.before.length === hunk.oldCount,
+          )
+        : parseScene(hunk.before, `hunk-${index}`, {
+            format: format as GodotFileKind,
+            startsAtFileBeginning: hunk.oldStart <= 1,
+          });
+    let newScene = unreal
+      ? parseUnreal(hunk.after, `hunk-${index}`, format as UnrealFileKind, hunk.newStart <= 1)
+      : unity
+        ? unityParser(hunk.after, `hunk-${index}`, complete && hunk.after.length === hunk.newCount)
+        : parseScene(hunk.after, `hunk-${index}`, {
+            format: format as GodotFileKind,
+            startsAtFileBeginning: hunk.newStart <= 1,
+          });
+    // Compare the same source block on both sides when a descriptor is partial.
+    // Otherwise complete fields on just one side could look falsely deleted.
+    if (
+      unreal &&
+      format !== "unreal_config" &&
+      [...oldScene.sections, ...newScene.sections].some((section) => section.kind === "unknown")
+    ) {
+      oldScene = unrealFallback(
+        hunk.before,
+        `hunk-${index}`,
+        "Descriptor context is incomplete on one side",
+      );
+      newScene = unrealFallback(
+        hunk.after,
+        `hunk-${index}`,
+        "Descriptor context is incomplete on one side",
+      );
+    }
     for (const note of [...oldScene.diagnostics, ...newScene.diagnostics]) diagnostics.add(note);
     if (hunk.before.length !== hunk.oldCount || hunk.after.length !== hunk.newCount) {
       complete = false;
@@ -157,7 +187,7 @@ export function reviewPatch(file: PatchFile): SceneReview {
   if (unity) {
     describeUnitySections([...before.values()], format);
     describeUnitySections([...after.values()], format);
-  } else {
+  } else if (!unreal) {
     describeGodotSettings([...before.values()], format as GodotFileKind);
     describeGodotSettings([...after.values()], format as GodotFileKind);
   }
@@ -165,15 +195,17 @@ export function reviewPatch(file: PatchFile): SceneReview {
     [...before.values()],
     [...after.values()],
     !complete,
-    unity ? unityReferenceResolver : undefined,
+    unity ? unityReferenceResolver : unreal ? () => () => [] : undefined,
   );
   if (changes.some((change) => change.kind === "unknown"))
     diagnostics.add(
-      unity
-        ? "Some Unity objects or property owners are outside the diff. Their context remains unresolved."
-        : isSettingsFile(file)
-          ? "Some settings sections are outside the diff. Their changes are listed without guessing a section."
-          : "Some owning sections are outside the diff. Their changes are listed without guessing a node or resource.",
+      unreal
+        ? "Some Unreal context is outside the diff. Available source is preserved without guessing settings or descriptor fields."
+        : unity
+          ? "Some Unity objects or property owners are outside the diff. Their context remains unresolved."
+          : isSettingsFile(file)
+            ? "Some settings sections are outside the diff. Their changes are listed without guessing a section."
+            : "Some owning sections are outside the diff. Their changes are listed without guessing a node or resource.",
     );
   return {
     filePath: file.filePath,
