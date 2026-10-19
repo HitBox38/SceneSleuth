@@ -7,6 +7,8 @@ import styles from "./review.css?inline";
 import type { ReviewSnapshot, SceneReview, ReferenceNavigation } from "../shared/model.ts";
 import { reviewViewLabel } from "../shared/fileTypes.ts";
 import { reviewTheme } from "../shared/reviewTheme.ts";
+import { createNativeComments, nativeCommentStyles } from "./nativeComments.ts";
+import { ReviewCommentsContext } from "./ReviewComments.tsx";
 
 class ReviewBoundary extends Component<
   { children: ReactNode; onError: () => void },
@@ -39,8 +41,13 @@ export function createInlineReviews(doc: Document = document) {
   let reviewKey = "";
   let navigation: ReferenceNavigation | undefined;
   let themeSnapshot: ReviewSnapshot;
+  const commentStyle = doc.createElement("style");
+  commentStyle.textContent = nativeCommentStyles;
+  doc.head.append(commentStyle);
   function switchAnchor(table: HTMLTableElement) {
-    const header = table.closest('[role="region"]')?.querySelector("[data-diff-header-wrapper]");
+    const header = table
+      .closest('[role="region"], section[aria-label]')
+      ?.querySelector("[data-diff-header-wrapper]");
     const viewed = header?.querySelector(
       'button[aria-label="Not Viewed"], button[aria-label="Viewed"], input[type="checkbox"]',
     );
@@ -53,6 +60,15 @@ export function createInlineReviews(doc: Document = document) {
       hash.startsWith(`#${anchor}`) &&
       /^[LR]\d+(?:-.*)?$/.test(hash.slice(anchor.length + 1))
     );
+  }
+  function isCommentHash(table: HTMLTableElement, hash: string) {
+    let target: HTMLElement | null;
+    try {
+      target = doc.getElementById(decodeURIComponent(hash.slice(1)));
+    } catch {
+      return false;
+    }
+    return !!target && table.contains(target) && !!target.closest("[data-inline-markers]");
   }
 
   function mount(table: HTMLTableElement, initial: SceneReview, anchor: Element) {
@@ -82,24 +98,51 @@ export function createInlineReviews(doc: Document = document) {
     let file = initial;
     let signature = "";
     let failed = false;
+    const comments = createNativeComments(
+      table,
+      host,
+      () => flushSync(render),
+      (anchor) => {
+        setOriginal(true);
+        const cell = table.querySelector<HTMLElement>(
+          `[data-line-anchor="${table.getAttribute("data-diff-anchor")}${anchor.side === "before" ? "L" : "R"}${anchor.line}"]`,
+        );
+        cell?.scrollIntoView({ block: "center" });
+        cell?.focus({ preventScroll: true });
+      },
+    );
 
     function showTable(show: boolean) {
+      comments.show(!show);
       if (show) {
         if (display) table.style.setProperty("display", display, priority);
         else table.style.removeProperty("display");
-      } else table.style.setProperty("display", "none", "important");
+      } else table.style.removeProperty("display");
     }
     function setOriginal(original: boolean) {
       originalFiles.set(file.filePath, original);
       flushSync(render);
     }
     function render() {
+      const commentState = comments.read();
+      // Keep native threads visible if GitHub introduces an unfamiliar layout.
+      if (!comments.supported) originalFiles.set(file.filePath, true);
       if (!originalFiles.has(file.filePath))
-        originalFiles.set(file.filePath, isLineHash(table, doc.location.hash));
+        originalFiles.set(
+          file.filePath,
+          isLineHash(table, doc.location.hash) || isCommentHash(table, doc.location.hash),
+        );
       const original = originalFiles.get(file.filePath)!;
       showTable(original || failed);
       const theme = reviewTheme(themeSnapshot, file);
-      const next = JSON.stringify([file, original, navigation, theme]);
+      const next = JSON.stringify([
+        file,
+        original,
+        navigation,
+        theme,
+        commentState.anchors,
+        commentState.available,
+      ]);
       if (signature === next) return;
       signature = next;
       root.render(
@@ -109,13 +152,15 @@ export function createInlineReviews(doc: Document = document) {
             showTable(true);
           }}
         >
-          <InlineSceneReview
-            key={file.filePath}
-            file={file}
-            original={original}
-            navigation={navigation}
-            theme={theme}
-          />
+          <ReviewCommentsContext.Provider value={commentState}>
+            <InlineSceneReview
+              key={file.filePath}
+              file={file}
+              original={original}
+              navigation={navigation}
+              theme={theme}
+            />
+          </ReviewCommentsContext.Provider>
         </ReviewBoundary>,
       );
       switchRoot.render(
@@ -140,7 +185,9 @@ export function createInlineReviews(doc: Document = document) {
         render();
       },
       setOriginal,
+      layoutComments: comments.layout,
       dispose() {
+        comments.dispose();
         showTable(true);
         root.unmount();
         switchRoot.unmount();
@@ -155,7 +202,7 @@ export function createInlineReviews(doc: Document = document) {
   }
   function revealLine(hash: string) {
     for (const [table, entry] of entries) {
-      if (isLineHash(table, hash)) entry.setOriginal(true);
+      if (isLineHash(table, hash) || isCommentHash(table, hash)) entry.setOriginal(true);
     }
   }
   function onHashChange() {
@@ -205,7 +252,7 @@ export function createInlineReviews(doc: Document = document) {
       }
       const win = doc.defaultView;
       const anchor = [...doc.querySelectorAll('table[aria-label^="Diff for: "]')]
-        .map((table) => table.closest('[role="region"]'))
+        .map((table) => table.closest('[role="region"], section[aria-label]'))
         .find((region) => {
           const rect = region?.getBoundingClientRect();
           return (
@@ -252,6 +299,7 @@ export function createInlineReviews(doc: Document = document) {
           }
         }
       });
+      for (const entry of entries.values()) entry.layoutComments();
       if (scrolled && anchor?.isConnected && top !== undefined && win) {
         const delta = anchor.getBoundingClientRect().top - top;
         if (Math.abs(delta) > 1) win.scrollBy({ top: delta, behavior: "instant" });
@@ -274,6 +322,7 @@ export function createInlineReviews(doc: Document = document) {
       originalFiles.clear();
       doc.removeEventListener("click", onSourceClick, true);
       doc.defaultView?.removeEventListener("hashchange", onHashChange);
+      commentStyle.remove();
     },
   };
 }

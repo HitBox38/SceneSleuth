@@ -62,7 +62,8 @@ export function githubTableLines(table: Element): string[] {
     for (const cell of cells) {
       const key = cell.getAttribute("data-diff-line-key") ?? "";
       if (!/^b:\d+-l:(?:\d+|null)-r:(?:\d+|null)$/.test(key)) continue;
-      const text = cell.textContent ?? "";
+      // Native threads and composers are siblings of the source code in this cell.
+      const text = (cell.querySelector(".diff-text") ?? cell).textContent ?? "";
       const operation = text.startsWith("+") ? "+" : text.startsWith("-") ? "-" : " ";
       const id = `${operation}:${key}`;
       if (seen.has(id)) continue; // Split view repeats context on both sides.

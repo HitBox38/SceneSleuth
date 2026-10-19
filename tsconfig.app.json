@@ -38,6 +38,7 @@
     "tests/virtualized.ts",
     "tests/unity-inspector.ts",
     "tests/themes.tsx",
-    "tests/icon-assets.ts"
+    "tests/icon-assets.ts",
+    "tests/comments.tsx"
   ]
 }

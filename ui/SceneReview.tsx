@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   Search,
   Layers,
@@ -54,6 +54,8 @@ import { unityInspectorValue } from "./unityPresentation.ts";
 import { reviewTheme, type EngineTheme } from "../shared/reviewTheme.ts";
 import { EngineThemeContext } from "./EngineTheme.ts";
 import { SceneEyeIcon } from "./SceneEyeIcon.tsx";
+import { AddReviewComment, ReviewCommentSlots, OtherReviewComments } from "./ReviewComments.tsx";
+import { propertyCommentTarget, sectionCommentTarget } from "../shared/reviewComments.ts";
 
 const labels: Record<SectionKind, string> = {
   node: "Node",
@@ -285,71 +287,84 @@ function PropertyRows({
   compact,
   file,
   navigation,
+  sectionId,
 }: {
   properties: PropertyChange[];
   compact: boolean;
   file: SceneReview;
   navigation?: ReferenceNavigation;
+  sectionId: string;
 }) {
   return properties.map((property, index) => (
-    <div className={`ss-property ss-${property.operation}`} key={`${property.name}:${index}`}>
-      <span className="ss-property-name" title={property.name}>
-        <span>
-          {compact
-            ? propertyLabel(property.name, reviewEngine(file) === "unity")
-            : property.name.replace(/^@/, "")}
-        </span>
-        <small title={property.operation}>
-          {compact ? (
-            <>
-              <span className="ss-sr-only">{property.operation}</span>
-              <span aria-hidden="true">
-                {property.operation === "added"
-                  ? "+"
-                  : property.operation === "removed"
-                    ? "−"
-                    : "~"}
-              </span>
-            </>
-          ) : (
-            property.operation
-          )}
-          {(property.newLine ?? property.oldLine) &&
-            (compact && file.reviewUrl ? (
-              <a
-                href={
-                  file.reviewUrl
-                    ? `${file.reviewUrl}${property.newLine ? "R" : "L"}${property.newLine ?? property.oldLine}`
-                    : undefined
-                }
-                aria-label={`${property.newLine ? "After" : "Before"} line ${property.newLine ?? property.oldLine}`}
-              >
-                {` L${property.newLine ?? property.oldLine}`}
-              </a>
+    <Fragment key={`${property.name}:${index}`}>
+      <div className={`ss-property ss-${property.operation}`}>
+        <span className="ss-property-name" title={property.name}>
+          <span>
+            {compact
+              ? propertyLabel(property.name, reviewEngine(file) === "unity")
+              : property.name.replace(/^@/, "")}
+          </span>
+          <small title={property.operation}>
+            {compact ? (
+              <>
+                <span className="ss-sr-only">{property.operation}</span>
+                <span aria-hidden="true">
+                  {property.operation === "added"
+                    ? "+"
+                    : property.operation === "removed"
+                      ? "−"
+                      : "~"}
+                </span>
+              </>
             ) : (
-              ` · L${property.newLine ?? property.oldLine}`
-            ))}
-        </small>
-      </span>
-      {(["before", "after"] as const).map((side) => (
-        <div
-          key={side}
-          className={`ss-value-cell ss-${side}`}
-          data-empty={property[side] === undefined}
-        >
-          <span className="ss-sr-only">{side === "before" ? "Before: " : "After: "}</span>
-          <ReferenceValue
-            raw={property[side]}
-            references={property[`${side}References`]}
-            file={file}
-            side={side}
-            navigation={navigation}
-            compact={compact}
-            incomplete={property[`${side}Incomplete`]}
-          />
-        </div>
-      ))}
-    </div>
+              property.operation
+            )}
+            {(property.newLine ?? property.oldLine) &&
+              (compact && file.reviewUrl ? (
+                <a
+                  href={
+                    file.reviewUrl
+                      ? `${file.reviewUrl}${property.newLine ? "R" : "L"}${property.newLine ?? property.oldLine}`
+                      : undefined
+                  }
+                  aria-label={`${property.newLine ? "After" : "Before"} line ${property.newLine ?? property.oldLine}`}
+                >
+                  {` L${property.newLine ?? property.oldLine}`}
+                </a>
+              ) : (
+                ` · L${property.newLine ?? property.oldLine}`
+              ))}
+          </small>
+        </span>
+        {(["before", "after"] as const).map((side) => (
+          <div
+            key={side}
+            className={`ss-value-cell ss-${side}`}
+            data-empty={property[side] === undefined}
+          >
+            <span className="ss-sr-only">{side === "before" ? "Before: " : "After: "}</span>
+            {compact && (
+              <AddReviewComment
+                side={side}
+                line={side === "before" ? property.oldLine : property.newLine}
+              />
+            )}
+            <ReferenceValue
+              raw={property[side]}
+              references={property[`${side}References`]}
+              file={file}
+              side={side}
+              navigation={navigation}
+              compact={compact}
+              incomplete={property[`${side}Incomplete`]}
+            />
+          </div>
+        ))}
+      </div>
+      {compact && (
+        <ReviewCommentSlots file={file} target={propertyCommentTarget(sectionId, property.name)} />
+      )}
+    </Fragment>
   ));
 }
 function ChangedSection({
@@ -412,10 +427,13 @@ function ChangedSection({
           {change.className || labels[change.kind]}
         </span>
         {compact && <SourceLinks change={change} reviewUrl={reviewUrl} />}
+        {compact && <AddReviewComment side="before" line={change.oldLine} />}
+        {compact && <AddReviewComment side="after" line={change.newLine} />}
         <span className={`ss-operation ss-${change.operation}`} aria-label={change.operation}>
           {change.operation === "added" ? "+" : change.operation === "removed" ? "−" : "~"}
         </span>
       </summary>
+      {compact && <ReviewCommentSlots file={file} target={sectionCommentTarget(change.id)} />}
       {!compact && (
         <div className="ss-section-meta">
           <span>
@@ -442,6 +460,7 @@ function ChangedSection({
                   compact
                   file={file}
                   navigation={navigation}
+                  sectionId={change.id}
                 />
               ) : (
                 <details className="ss-property-group" key={group.label} open>
@@ -454,6 +473,7 @@ function ChangedSection({
                     compact
                     file={file}
                     navigation={navigation}
+                    sectionId={change.id}
                   />
                 </details>
               ),
@@ -464,6 +484,7 @@ function ChangedSection({
               compact={false}
               file={file}
               navigation={navigation}
+              sectionId={change.id}
             />
           )}
         </div>
@@ -588,6 +609,7 @@ export function FileReview({
                 : "No structured changes found. Inspect the original diff below."}
           </p>
         )}
+        {embedded && <OtherReviewComments file={file} changes={changes} />}
         {!file.pending && !embedded && (
           <details className="ss-raw">
             <summary>
@@ -714,9 +736,12 @@ export function InlineSceneReview({
       </div>
       <div className="ss-files">
         {!contents.changes.length && file.changes.length ? (
-          <p className="ss-empty">
-            No local changes in this file. Select Original diff to inspect its file references.
-          </p>
+          <>
+            <p className="ss-empty">
+              No local changes in this file. Select Original diff to inspect its file references.
+            </p>
+            <OtherReviewComments file={contents} changes={[]} />
+          </>
         ) : (
           <FileReview
             file={contents}
