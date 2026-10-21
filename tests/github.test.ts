@@ -29,6 +29,32 @@ function payload(diffSummaries: unknown[], diffContents: unknown[]) {
     },
   };
 }
+test("CRLF GitHub rows preserve the final Unreal setting without a trailing patch newline", () => {
+  const path = "Config/DefaultEngine.ini";
+  const result = reviewGithubData(
+    payload(
+      [{ path, changeType: "MODIFIED", linesAdded: 1 }],
+      [
+        {
+          path,
+          diffLines: [
+            { type: "HUNK", text: "@@ -20,1 +20,2 @@" },
+            { type: "CONTEXT", text: " [ConsoleVariables]\r" },
+            { type: "ADDITION", text: "+r.ExampleDiagnostic=1\r" },
+          ],
+        },
+      ],
+    ),
+    url,
+  )!;
+  const file = result.files[0];
+  assert.deepEqual(file.diagnostics, []);
+  assert.equal(file.changes[0].label, "ConsoleVariables");
+  assert.deepEqual(
+    file.changes[0].properties.map((p) => [p.name, p.after, p.newLine]),
+    [["r.ExampleDiagnostic", "1", 21]],
+  );
+});
 test("GitHub data yields structured scenes, skips other files and tracks unloaded diffs", () => {
   const result = reviewGithubData(
     payload(

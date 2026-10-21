@@ -49,7 +49,9 @@ export function parseUnifiedDiff(text: string): PatchFile[] {
   let file: PatchFile | undefined, hunk: Hunk | undefined;
   let oldLine = 0,
     newLine = 0;
-  for (const line of text.replace(/\r\n/g, "\n").split("\n")) {
+  // GitHub's last JSON diff row can retain CR without a following patch LF.
+  // Normalize that line ending too, without stripping carriage returns in values.
+  for (const line of text.replace(/\r\n/g, "\n").replace(/\r$/, "").split("\n")) {
     if (line.startsWith("diff --git ")) {
       file = { filePath: "", status: "modified", hunks: [], rawDiff: line + "\n" };
       files.push(file);
