@@ -88,7 +88,7 @@ pnpm install --frozen-lockfile
 pnpm run build
 ```
 
-The build writes the complete extension to `dist/`. The older `build/` directory is not used.
+The build writes the Chrome extension to `dist/` and the Firefox extension to `dist-firefox/`. Both use the same compiled code and assets, with separate browser manifests. The older `build/` directory is not used.
 
 In Chrome:
 
@@ -99,7 +99,19 @@ In Chrome:
 
 After editing code, rebuild, reload the extension in `chrome://extensions`, and reload the GitHub page. Chrome can keep an older registered content script even while the popup reads newer files from `dist/`. If the popup reports an unexpected response, reload **the extension first**, then reload the PR tab; refreshing the page alone may keep running the old script.
 
-The manifest uses Manifest V3 with a small background handler solely for tab-specific toolbar icons and titles. The popup still requests review data directly from its tab’s content script. Chrome 121+ uses the packaged service worker; Firefox 121+ uses the same classic script as a background event page through the [cross-browser background declaration](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background#cross-browser_manifest_v3_background_scripts). Firefox can load `dist/manifest.json` through [temporary add-on debugging](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/), but Firefox runtime compatibility still needs separate verification.
+In Firefox desktop 140+:
+
+1. Run `pnpm run build`.
+2. Open `about:debugging#/runtime/this-firefox` in Firefox.
+3. Choose **Load Temporary Add-on…** and select `dist-firefox/manifest.json`.
+4. Sign into GitHub and open a PR’s **Files changed** page. SceneSleuth targets GitHub’s modern review layout; signed-out GitHub can serve an older layout that is not supported.
+5. Use the extension’s toolbar button for the current tab’s summary. If it is hidden, open Firefox’s Extensions menu and choose SceneSleuth.
+
+For an isolated development session, `pnpm run firefox:run` builds and launches Firefox with a temporary profile and the add-on installed. Mozilla’s pinned `web-ext` tool watches `dist-firefox/`; rebuild with `pnpm run build` to reload it after source changes. Use `pnpm run firefox:run --firefox /path/to/firefox` for another Firefox binary. This workflow does not change your normal browser profile.
+
+Temporary add-ons are removed when Firefox exits. `pnpm run firefox:package` builds, validates, and writes an unsigned ZIP to `web-ext-artifacts/` for review or temporary installation. Permanent installation in standard Firefox requires [Mozilla signing](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/). This project has not been submitted to Mozilla Add-ons. Temporary installation has been verified in Firefox 158.0.1. Signed-in GitHub review behavior still needs end-to-end Firefox verification; Firefox Android has not been verified.
+
+Both packages use Manifest V3. Chrome uses the background service worker; Firefox uses a nonpersistent background script. That handler only updates per-tab icons and titles; popup review messages still go directly to the active tab. The Firefox manifest supplies the stable ID `scenesleuth@hitbox38` and declares no data collection. Browser-specific packaging adds no permissions. [Mozilla’s manifest documentation](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings) describes the Firefox fields.
 
 ## Development
 
@@ -110,10 +122,15 @@ pnpm run typecheck   # TypeScript 7 checks for source, tests, and Vite configs
 pnpm run lint        # Oxlint, including React and accessibility checks
 pnpm run fmt         # Format with Oxfmt
 pnpm run fmt:check   # Check formatting
-pnpm run build       # Type-check, bundle, and verify manifest assets
+pnpm run build       # Type-check, bundle Chrome/Firefox, and verify both packages
+pnpm run firefox:lint    # Mozilla add-on validation of dist-firefox/
+pnpm run firefox:run     # Build and launch an isolated Firefox test session
+pnpm run firefox:package # Build, validate and create an unsigned Firefox ZIP
 pnpm run preview     # Serve built pages; does not install the extension
 pnpm run ui info     # Inspect the pinned shadcn React Aria configuration
 ```
+
+`firefox:lint` reports Mozilla validation errors and warnings without suppressions. The current bundled React DOM code produces four `UNSAFE_VAR_ASSIGNMENT` warnings in its generic `dangerouslySetInnerHTML` handlers (two per UI bundle). SceneSleuth renders review data as text; these third-party handlers are retained by React’s production bundle. Review those warnings when preparing a signed release. Validation errors fail the command.
 
 The tests use Node’s built-in test runner and TypeScript stripping; Node 22 may print an experimental warning. No separate test framework is installed. Committed regression fixtures are synthetic; do not add private game source or captured authenticated GitHub pages to this repository.
 
@@ -156,6 +173,7 @@ The Scene Eye geometry and engine palettes live in `shared/sceneEye.ts`. `pnpm r
 - `ui/`: shared review presentation and per-file shadow-root mounting, original-diff toggles, and cleanup.
 - `popup/src/`: React toolbar popup and React Aria primitives.
 - `tests/`: focused regression coverage with Node’s built-in runner.
+- `scripts/build-firefox.mjs`: generates the Firefox manifest and package from the Chrome build without changing capabilities.
 - `public/manifest.json`: permissions and entry points.
 - `background/`: tab-scoped Scene Eye icon/title updates and navigation resets; no scene loading or review storage.
 - `shared/sceneEye.ts`, `ui/SceneEyeIcon.tsx`, `public/icons/`: shared vector branding, engine palettes, and browser assets.

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "pnpm run typecheck && vite build --config vite.config.ts && vite build --config vite-content.config.ts && vite build --config vite-background.config.ts && pnpm run build:check",
+    "build": "pnpm run typecheck && vite build --config vite.config.ts && vite build --config vite-content.config.ts && vite build --config vite-background.config.ts && node scripts/build-firefox.mjs && pnpm run build:check",
     "icons:svg": "node --experimental-strip-types scripts/write-icon-svgs.ts",
     "lint": "oxlint --deny-warnings",
     "preview": "vite preview",
@@ -14,7 +14,10 @@
     "fmt:check": "oxfmt --check",
     "build:check": "node scripts/check-build.mjs",
     "ui": "pnpm dlx shadcn@4.21.5",
-    "test": "node --experimental-strip-types --test tests/*.test.ts"
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "firefox:lint": "web-ext lint --source-dir dist-firefox --no-config-discovery",
+    "firefox:run": "pnpm run build && web-ext run --source-dir dist-firefox --no-config-discovery",
+    "firefox:package": "pnpm run build && pnpm run firefox:lint && web-ext build --source-dir dist-firefox --overwrite-dest --no-config-discovery"
   },
   "dependencies": {
     "@react-stately/flags": "3.2.1",
@@ -40,7 +43,8 @@
     "oxlint": "^1.88.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
-    "vite": "^8.3.4"
+    "vite": "^8.3.4",
+    "web-ext": "10.8.0"
   },
   "engines": {
     "node": "^22.12.0 || >=24.0.0"

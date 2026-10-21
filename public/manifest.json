@@ -11,8 +11,7 @@
     "128": "icons/github/icon-128.png"
   },
   "background": {
-    "service_worker": "assets/background.js",
-    "scripts": ["assets/background.js"]
+    "service_worker": "assets/background.js"
   },
   "permissions": ["activeTab"],
   "action": {

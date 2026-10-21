@@ -8,7 +8,7 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 
 ## Repository map
 
-- `public/manifest.json`: source manifest and permissions.
+- `public/manifest.json`: Chrome source manifest and permissions. `scripts/build-firefox.mjs` derives the Firefox event-page manifest with a stable Gecko ID and data-collection declaration.
 - `content_script/content-script.ts`: active GitHub integration and message handling.
 - `content_script/scripts/`: GitHub data/DOM adapters, unified patch parsing, scene parsing, and comparisons.
 - `shared/`, `ui/`: domain/message types, shared scene presentation, and per-file shadow-root reviews.
@@ -16,7 +16,7 @@ This is a TypeScript 7 browser extension with a React popup, Vite 8 builds, Tail
 - `popup/src/`: popup components, styles, and browser messaging consumer.
 - `vite.config.ts`, `vite-content.config.ts`, `vite-background.config.ts`: popup, classic IIFE content-script, and icon-handler builds. `background/` only updates per-tab toolbar icons/titles; the popup still talks directly to the content script.
 - `scripts/check-build.mjs`: verifies built manifest assets and classic content script syntax; runs at the end of the build.
-- `dist/`: current generated output, ignored by Git. `build/`: older generated output. Edit source files rather than either output directory.
+- `dist/`: generated Chrome output; `dist-firefox/`: generated Firefox output. Both are ignored by Git. `build/`: older generated output. Edit source files rather than either output directory.
 
 ## Implementation conventions
 
@@ -64,9 +64,10 @@ pnpm run fmt:check
 pnpm run typecheck
 pnpm test
 pnpm run build
+pnpm run firefox:lint
 ```
 
-TypeScript 7 checks the popup, content scripts, shared UI, tests, and all Vite configurations. The build runs this check before bundling with Vite 8 and verifying the built manifest assets. Use `build.rolldownOptions` for bundler configuration. Manifest content scripts must remain classic JavaScript without module imports or exports. Use Oxlint's built-in TypeScript, React, and accessibility plugins rather than adding ESLint dependencies or suppression comments. Oxfmt defines formatting. Any local legacy `test.html` capture is ignored and must remain untracked; use synthetic fixtures in `tests/` for shared coverage.
+TypeScript 7 checks the popup, content scripts, shared UI, tests, and all Vite configurations. The build runs this check before bundling with Vite 8, generating the Firefox package, and verifying both sets of manifest assets. Chrome uses a service worker; Firefox desktop 140+ uses a nonpersistent background script. Keep their permissions, match patterns, popup and assets aligned. `web-ext` is pinned for Firefox validation, temporary-profile runs and unsigned ZIP packaging. Never use `--keep-profile-changes` with a user profile for verification. Mozilla validation warnings from bundled React DOM must remain visible and documented; do not suppress them or alter third-party internals as a packaging workaround. Use `build.rolldownOptions` for bundler configuration. Manifest content scripts must remain classic JavaScript without module imports or exports. Use Oxlint's built-in TypeScript, React, and accessibility plugins rather than adding ESLint dependencies or suppression comments. Oxfmt defines formatting. Any local legacy `test.html` capture is ignored and must remain untracked; use synthetic fixtures in `tests/` for shared coverage.
 
 For extension behavior, verify the built extension in a supported browser: a PR with scene changes, a PR without scene changes, delayed diff loading, navigation between PRs, and popup close/reopen. Confirm that data does not duplicate or leak across tabs. Check relevant page and popup consoles. State which browser and paths you actually exercised.
 
